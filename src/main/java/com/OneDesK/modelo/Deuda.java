@@ -4,8 +4,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Deuda {
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name="Deuda")
+public class Deuda extends Persistible{
+	@Column(name="monto")
     private int monto;
+
+	@OneToMany(cascade= CascadeType.ALL, orphanRemoval = true )
+	@JoinColumn(name = "ID_DEUDA", referencedColumnName= "ID")
     private final List<Compra> compras;
 
     public Deuda() {

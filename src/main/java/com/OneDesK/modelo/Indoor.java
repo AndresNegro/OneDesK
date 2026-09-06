@@ -2,17 +2,43 @@ package com.OneDesK.modelo;
 
 import com.OneDesK.evento.Evento;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Indoor {
+@Entity
+@Table(name="Indoor")
+public class Indoor extends Persistible{
+	@CollectionTable(name= "Trabaja", joinColumns =	@JoinColumn(name ="ID_INDOOR",referencedColumnName ="ID"))
+	@Column(name ="ID_EMPLEADO_INDOOR")
+	private final List<EmpleadoIndoor> empleadosAsignados;
+	@OneToMany(cascade= CascadeType.ALL, orphanRemoval = true )
+	@JoinColumn(name = "ID_INDOOR", referencedColumnName= "ID")
     private final List<Planta> plantas;
+	@OneToMany(cascade= CascadeType.ALL, orphanRemoval = true )
+	@JoinColumn(name = "ID_INDOOR", referencedColumnName="ID")
     private final List<Evento> colaEventos;
 
     public Indoor() {
+    	this.empleadosAsignados = new ArrayList<>();
         this.plantas = new ArrayList<>();
         this.colaEventos = new ArrayList<>();
+    }
+    
+    public void addEmpleado(EmpleadoIndoor E) {
+    	this.empleadosAsignados.add(E);
+    }
+    
+    public void deleteEmpleado(EmpleadoIndoor E) {
+    	this.empleadosAsignados.remove(E);
     }
 
     public Planta addPlanta(Planta p) {
@@ -28,23 +54,21 @@ public class Indoor {
 
     public List<Planta> getPlantas() { return Collections.unmodifiableList(plantas); }
 
-    // Cola de eventos hacia el empleado a cargo (wait/notifyAll):
-    // las Plantas producen, el menú del empleado consume (atender).
-    public synchronized void recibirEvento(Evento e) {
+    
+    public void recibirEvento(Evento e) {
         colaEventos.add(e);
-        notifyAll();
     }
 
-    public synchronized List<Evento> eventosEnCola() {
-        return new ArrayList<>(colaEventos);
+    public List<Evento> getColaEventos() {
+        return new ArrayList<Evento>(colaEventos);
     }
 
-    public synchronized Evento consumirEvento(int index) {
+    public Evento consumirEvento(int index) {
         if (index < 0 || index >= colaEventos.size()) return null;
         return colaEventos.remove(index);
     }
 
-    public synchronized int colaSize() { return colaEventos.size(); }
+    public int colaSize() { return colaEventos.size(); }
 
     @Override
     public String toString() {

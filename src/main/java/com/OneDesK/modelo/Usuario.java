@@ -5,8 +5,20 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+@Entity
+@Table(name="Usuario")
 public class Usuario extends Persona {
+	@OneToMany (cascade= CascadeType.ALL, orphanRemoval = true )
+	@JoinColumn(name="ID_USUARIO",referencedColumnName="ID")
     private final List<Compra> compras;
+	@OneToOne(cascade=CascadeType.ALL,  orphanRemoval=true)
+	@JoinColumn(name="ID_DEUDA")
     private final Deuda deuda;
 
     public Usuario(String nombre, String apellido, String email, String contrasenia) {

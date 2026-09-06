@@ -1,9 +1,22 @@
 package com.OneDesK.modelo;
 
-public abstract class Persona {
-    private String nombre;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name="Persona")
+@Inheritance(strategy = InheritanceType.JOINED)
+public abstract class Persona extends Persistible {
+    @Column(name="nombre")
+	private String nombre;
+    @Column(name="apellido")
     private String apellido;
+    @Column(name="email")
     private String email;
+    @Column(name="contraseña")
     private String contrasenia;
 
     protected Persona(String nombre, String apellido, String email, String contrasenia) {

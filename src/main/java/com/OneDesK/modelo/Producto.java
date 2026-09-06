@@ -1,8 +1,17 @@
 package com.OneDesK.modelo;
 
-public class Producto {
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name="Producto")
+public class Producto extends Persistible{
+	@Column(name="genetica")
     private String genetica;
+	@Column(name="stock")
     private int stock;
+	@Column(name="precio")
     private int precio;
 
     public Producto(String genetica, int stock, int precio) {

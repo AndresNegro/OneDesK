@@ -2,35 +2,44 @@ package com.OneDesK.modelo;
 
 
 import com.OneDesK.evento.*;
+
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+
+@Entity
+@Table(name ="EmpleadoIndoor")
 public class EmpleadoIndoor extends Empleado {
+	@CollectionTable(name= "Trabaja", joinColumns =	@JoinColumn(name ="ID_EMPLEADO_INDOOR", referencedColumnName="ID"))
+	@Column(name ="ID_INDOOR")
     private final List<Indoor> sectoresACargo;
+	@Column(name ="salarioMensual")
     private int salarioMensual;
-    private final List<Evento> eventos;
 
     public EmpleadoIndoor(String nombre, String apellido, String email, String contrasenia, int salarioMensual) {
         super(nombre, apellido, email, contrasenia);
         this.sectoresACargo = new ArrayList<>();
         this.salarioMensual = salarioMensual;
-        this.eventos = new ArrayList<>();
     }
 
-    public void cargarRegistroProduccion(Indoor indoor, String genetica, int cantidad) {
-        RegistroProduccion r = new RegistroProduccion(indoor, this, genetica, cantidad);
+    public void cargarRegistroProduccion(Indoor indoor, Producto p, int cantidad) {
+        RegistroProduccion r = new RegistroProduccion(indoor, this, p, cantidad);
         System.out.println("  Registro de produccion cargado: " + r);
-    }
-
-    public RegistroProduccion armarRegistroProduccion(Indoor indoor, String genetica, int cantidad) {
-        return new RegistroProduccion(indoor, this, genetica, cantidad);
+        modificarProducto(p,p.getStock()+cantidad,null);
     }
 
     // Alta de producto: agrega un nuevo Producto a la lista recibida.
     public void agregarProducto(List<Producto> lista, Producto p) {
         if (p == null) return;
-        lista.add(p);
+        if (!lista.contains(p)) {
+            lista.add(p);
+        }
     }
 
     // Modificacion: actualiza stock y/o precio de un producto existente.
@@ -44,10 +53,6 @@ public class EmpleadoIndoor extends Empleado {
         if (e == null) return;
         e.setRealizado(true);
         aplicarEfectoEnPlanta(e);
-        synchronized (eventos) {
-            eventos.add(e);
-        }
-        e.getPlanta().notificarAtendido();
     }
 
     private void aplicarEfectoEnPlanta(Evento e) {
@@ -66,22 +71,10 @@ public class EmpleadoIndoor extends Empleado {
     public List<Indoor> getSectoresACargo() { return Collections.unmodifiableList(sectoresACargo); }
     public void setSalarioMensual(int sm) { this.salarioMensual = sm; }
     public int getSalarioMensual() { return salarioMensual; }
-    public List<Evento> getEventos() {
-        synchronized (eventos) {
-            return new ArrayList<>(eventos);
-        }
-    }
-    public List<Evento> eventosAtendidos() {
-        synchronized (eventos) {
-            List<Evento> hechos = new ArrayList<>();
-            for (Evento e : eventos) if (e.getRealizado()) hechos.add(e);
-            return hechos;
-        }
-    }
 
     public List<Evento> eventosPendientesDeIndoor() {
         List<Evento> pendientes = new ArrayList<>();
-        for (Indoor in : sectoresACargo) pendientes.addAll(in.eventosEnCola());
+        for (Indoor in : sectoresACargo) pendientes.addAll(in.getColaEventos());
         return pendientes;
     }
 
@@ -98,6 +91,6 @@ public class EmpleadoIndoor extends Empleado {
     @Override
     public String toString() {
         return "EmpleadoIndoor{" + getNombre() + " " + getApellido() +
-                ", sectores=" + sectoresACargo.size() + ", atendidos=" + eventos.size() + '}';
+                ", sectores=" + sectoresACargo.size();
     }
 }

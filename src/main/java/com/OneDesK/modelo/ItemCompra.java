@@ -1,7 +1,20 @@
 package com.OneDesK.modelo;
 
-public class ItemCompra {
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name="ItemCompra")
+public class ItemCompra extends Persistible {
+
+	@OneToOne (cascade= CascadeType.ALL, orphanRemoval = true )
+	@JoinColumn(name="ID_PRODUCTO")
     private Producto producto;
+	@Column(name="cantidad")
     private int cantidad;
 
     public ItemCompra(Producto producto, int cantidad) {
