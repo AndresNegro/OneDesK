@@ -1,5 +1,7 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.helpers.ValidationUtils;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Inheritance;
@@ -18,11 +20,21 @@ public abstract class Persona extends Persistible {
     private String email;
     @Column(name="contraseña")
     private String contrasenia;
+    
+    Persona(){
+    	
+    }
 
     protected Persona(String nombre, String apellido, String email, String contrasenia) {
         this.nombre = nombre;
         this.apellido = apellido;
+        if(!ValidationUtils.isValidEmail(email)) {
+        	throw new IllegalArgumentException("el Email no es valido");
+        }
         this.email = email;
+        if(!ValidationUtils.tieneMasDe(contrasenia, 5)) {
+        	throw new IllegalArgumentException("La contraseña es menor a 5 caracteres");
+        }
         this.contrasenia = contrasenia;
     }
 

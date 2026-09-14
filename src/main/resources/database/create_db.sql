@@ -17,11 +17,13 @@ CREATE TABLE Deuda (
 CREATE TABLE Usuario (
     ID INT NOT NULL,
     ID_DEUDA INT NOT NULL,
+    topeCredito INT NOT NULL DEFAULT 0,
     PRIMARY KEY (ID)
 );
 
 CREATE TABLE Producto (
     ID INT AUTO_INCREMENT,
+    genetica VARCHAR(255) NOT NULL UNIQUE,
     precio INT NOT NULL,
     stock INT NOT NULL,
     PRIMARY KEY (ID)
@@ -64,6 +66,7 @@ CREATE TABLE ItemCompra (
     ID_COMPRA INT NOT NULL,
     ID_PRODUCTO INT NOT NULL,
     cantidad INT NOT NULL,
+    precioUnitario INT NOT NULL,
     PRIMARY KEY (ID)
 );
 

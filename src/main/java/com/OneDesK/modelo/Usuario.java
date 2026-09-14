@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
@@ -14,17 +15,22 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name="Usuario")
 public class Usuario extends Persona {
-	@OneToMany (cascade= CascadeType.ALL, orphanRemoval = true )
-	@JoinColumn(name="ID_USUARIO",referencedColumnName="ID")
-    private final List<Compra> compras;
+	@OneToMany (mappedBy="usuario", cascade= CascadeType.ALL, orphanRemoval = true )
+    private List<Compra> compras;
 	@OneToOne(cascade=CascadeType.ALL,  orphanRemoval=true)
 	@JoinColumn(name="ID_DEUDA")
-    private final Deuda deuda;
+    private Deuda deuda;
+	@Column(name="topeCredito")
+    private int topeCredito;
 
+	Usuario(){
+	}
+	
     public Usuario(String nombre, String apellido, String email, String contrasenia) {
         super(nombre, apellido, email, contrasenia);
         this.compras = new ArrayList<>();
         this.deuda = new Deuda();
+        this.topeCredito = 0;
     }
 
     public void verProductos(List<Producto> productos) {
@@ -53,25 +59,39 @@ public class Usuario extends Persona {
         return copia;
     }
 
-    public void realizarCompra(Compra c) {
+    public void agregarCompra(Compra c) {
         if (c == null) return;
-        for (ItemCompra it : c.getItems()) {
-            Producto p = it.getProducto();
-            p.setStock(p.getStock() - it.getCantidad());
-        }
         compras.add(c);
-        if (!c.isPagado()) {
-            deuda.addCompra(c);
-        }
+        recalcularDeuda();
     }
 
     public void registrarPago(Compra c) {
         if (c == null || c.isPagado()) return;
         c.setPagado(true);
-        deuda.deleteCompra(c);
+        recalcularDeuda();
+    }
+
+    public void recalcularDeuda() {
+        int total = 0;
+        for (Compra c : compras) {
+            if (!c.isPagado()) total += c.getPrecio();
+        }
+        deuda.setMonto(total);
+    }
+
+    public List<Compra> comprasImpagas() {
+        List<Compra> impagas = new ArrayList<>();
+        for (Compra c : compras) {
+            if (!c.isPagado()) impagas.add(c);
+        }
+        return impagas;
     }
 
     public List<Compra> getCompras() { return compras; }
     public Deuda getDeuda() { return deuda; }
-    public void deleteCompra(Compra c) { compras.remove(c); }
+    public int getTopeCredito() { return topeCredito; }
+    public void setTopeCredito(int topeCredito) { this.topeCredito = topeCredito; }
+    public void deleteCompra(Compra c) {
+        if (compras.remove(c)) recalcularDeuda();
+    }
 }

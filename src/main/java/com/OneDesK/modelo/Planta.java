@@ -1,11 +1,10 @@
 package com.OneDesK.modelo;
 import com.OneDesK.evento.*;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
@@ -13,7 +12,7 @@ import java.time.LocalDate;
 @Entity
 @Table(name="Planta")
 public class Planta extends Persistible{
-	@Column(name="genteica")
+	@Column(name="genetica")
     private String genetica;
 	@Column(name="fechaPlantado")
     private LocalDate fechaPlantado;
@@ -31,7 +30,7 @@ public class Planta extends Persistible{
     private boolean luz;
 	@Column(name="ventilador")
     private boolean ventilador;
-	@OneToOne (cascade= CascadeType.ALL, orphanRemoval = true )
+	@ManyToOne
 	@JoinColumn(name="ID_INDOOR")
     private Indoor indoor;
     @Column(name="ultimoRegado")
@@ -40,6 +39,10 @@ public class Planta extends Persistible{
     private LocalDate ultimoLuz;
     @Column(name="ultimoVentilacion")
     private LocalDate ultimoVentilacion;
+    
+    Planta(){
+    	
+    }
     
     public Planta(String genetica, LocalDate fechaPlantado, LocalDate fechaGerminado,
                   int tiempoRegado, int tiempoLuz, int tiempoVentilacion) {

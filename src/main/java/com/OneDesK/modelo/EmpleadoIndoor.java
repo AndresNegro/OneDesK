@@ -3,9 +3,10 @@ package com.OneDesK.modelo;
 
 import com.OneDesK.evento.*;
 
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
@@ -16,12 +17,18 @@ import java.util.List;
 @Entity
 @Table(name ="EmpleadoIndoor")
 public class EmpleadoIndoor extends Empleado {
-	@CollectionTable(name= "Trabaja", joinColumns =	@JoinColumn(name ="ID_EMPLEADO_INDOOR", referencedColumnName="ID"))
-	@Column(name ="ID_INDOOR")
-    private final List<Indoor> sectoresACargo;
+	@ManyToMany
+	@JoinTable(name = "Trabaja",
+		joinColumns = @JoinColumn(name = "ID_EMPLEADO_INDOOR"),
+		inverseJoinColumns = @JoinColumn(name = "ID_INDOOR"))
+    private List<Indoor> sectoresACargo;
 	@Column(name ="salarioMensual")
     private int salarioMensual;
 
+	EmpleadoIndoor(){
+		super();
+	}
+	
     public EmpleadoIndoor(String nombre, String apellido, String email, String contrasenia, int salarioMensual) {
         super(nombre, apellido, email, contrasenia);
         this.sectoresACargo = new ArrayList<>();

@@ -1,27 +1,30 @@
 package com.OneDesK.modelo;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name="RegistroProduccion")
 public class RegistroProduccion extends Persistible {
-	@OneToOne(cascade= CascadeType.ALL, orphanRemoval = true )
+	@ManyToOne
 	@JoinColumn(name="ID_INDOOR")
     private Indoor indoor;
-	@OneToOne(cascade= CascadeType.ALL, orphanRemoval = true )
+	@ManyToOne
 	@JoinColumn(name="ID_EMPLEADO_INDOOR")
     private EmpleadoIndoor empleado;
-	@OneToOne(cascade= CascadeType.ALL, orphanRemoval = true )
+	@ManyToOne
 	@JoinColumn(name="ID_PRODUCTO")
     private Producto producto;
 	@Column(name="cantidad")
     private int cantidad;
 
+	RegistroProduccion(){
+		
+	}
+	
     public RegistroProduccion(Indoor indoor, EmpleadoIndoor empleado, Producto producto, int cantidad) {
         this.indoor = indoor;
         this.empleado = empleado;
