@@ -2,6 +2,7 @@ package com.OneDesK.modelo;
 
 
 import com.OneDesK.evento.*;
+import com.OneDesK.excepciones.OperacionInvalidaException;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.JoinColumn;
@@ -28,34 +29,25 @@ public class EmpleadoIndoor extends Empleado {
 	EmpleadoIndoor(){
 		super();
 	}
-	
+
     public EmpleadoIndoor(String nombre, String apellido, String email, String contrasenia, int salarioMensual) {
         super(nombre, apellido, email, contrasenia);
         this.sectoresACargo = new ArrayList<>();
-        this.salarioMensual = salarioMensual;
+        setSalarioMensual(salarioMensual);
     }
 
     public boolean estaAsignadoA(Indoor indoor) {
         return sectoresACargo.contains(indoor);
     }
 
-    // Alta de producto: agrega un nuevo Producto a la lista recibida.
-    public void agregarProducto(List<Producto> lista, Producto p) {
-        if (p == null) return;
-        if (!lista.contains(p)) {
-            lista.add(p);
-        }
-    }
-
-    // Modificacion: actualiza stock y/o precio de un producto existente.
-    public void modificarProducto(Producto p, Integer nuevoStock, Integer nuevoPrecio) {
-        if (p == null) return;
-        if (nuevoStock != null) p.setStock(nuevoStock);
-        if (nuevoPrecio != null) p.setPrecio(nuevoPrecio);
-    }
-
     public void atenderEvento(Evento e) {
-        if (e == null) return;
+        if (!estaAsignadoA(e.getPlanta().getIndoor())) {
+            throw new OperacionInvalidaException(
+                    "El empleado " + getNombre() + " no esta asignado al indoor de ese evento");
+        }
+        if (e.getRealizado()) {
+            throw new OperacionInvalidaException("El evento ya fue atendido");
+        }
         e.setRealizado(true);
         aplicarEfectoEnPlanta(e);
     }
@@ -71,31 +63,42 @@ public class EmpleadoIndoor extends Empleado {
         }
     }
 
-    public void addIndoor(Indoor i) { sectoresACargo.add(i); }
-    public void deleteIndoor(Indoor i) { sectoresACargo.remove(i); }
-    public List<Indoor> getSectoresACargo() { return Collections.unmodifiableList(sectoresACargo); }
-    public void setSalarioMensual(int sm) { this.salarioMensual = sm; }
-    public int getSalarioMensual() { return salarioMensual; }
-
-    public List<Evento> eventosPendientesDeIndoor() {
-        List<Evento> pendientes = new ArrayList<>();
-        for (Indoor in : sectoresACargo) pendientes.addAll(in.getColaEventos());
-        return pendientes;
+    public void addIndoor(Indoor i) {
+        if (estaAsignadoA(i)) {
+            throw new OperacionInvalidaException("El empleado " + getNombre() + " ya esta asignado a ese indoor");
+        }
+        sectoresACargo.add(i);
     }
 
-    public Evento tomarEventoPendiente(int index) {
-        int offset = index;
-        for (Indoor in : sectoresACargo) {
-            int n = in.colaSize();
-            if (offset < n) return in.consumirEvento(offset);
-            offset -= n;
+    public void deleteIndoor(Indoor i) {
+        if (!sectoresACargo.remove(i)) {
+            throw new OperacionInvalidaException("El empleado " + getNombre() + " no esta asignado a ese indoor");
         }
-        return null;
+    }
+
+    public List<Indoor> getSectoresACargo() { return Collections.unmodifiableList(sectoresACargo); }
+
+    public void setSalarioMensual(int sm) {
+        if (sm <= 0) {
+            throw new IllegalArgumentException("El salario mensual debe ser mayor a cero");
+        }
+        this.salarioMensual = sm;
+    }
+
+    public int getSalarioMensual() { return salarioMensual; }
+
+    /** Los eventos sin atender de todos los indoors a cargo del empleado. */
+    public List<Evento> eventosPendientes() {
+        List<Evento> pendientes = new ArrayList<>();
+        for (Indoor indoor : sectoresACargo) {
+            pendientes.addAll(indoor.getEventosPendientes());
+        }
+        return pendientes;
     }
 
     @Override
     public String toString() {
         return "EmpleadoIndoor{" + getNombre() + " " + getApellido() +
-                ", sectores=" + sectoresACargo.size();
+                ", sectores=" + sectoresACargo.size() + '}';
     }
 }

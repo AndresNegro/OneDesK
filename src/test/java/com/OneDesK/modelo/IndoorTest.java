@@ -54,6 +54,18 @@ public class IndoorTest {
 		assertEquals(1, indoor.getColaEventos().size());
 	}
 
+	@Test
+	public void losEventosAtendidosNoFiguranComoPendientes() {
+		EventoLuz luz = new EventoLuz(kush);
+		indoor.recibirEvento(luz);
+		indoor.recibirEvento(new EventoRegado(amnesia));
+
+		luz.setRealizado(true);
+
+		assertEquals(1, indoor.getEventosPendientes().size());
+		assertEquals(2, indoor.getColaEventos().size());
+	}
+
 	private Planta nuevaPlanta(String genetica) {
 		return new Planta(genetica, LocalDate.now().minusDays(10), LocalDate.now().minusDays(20), 60, 120, 30);
 	}

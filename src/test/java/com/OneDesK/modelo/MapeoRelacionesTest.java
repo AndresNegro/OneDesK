@@ -202,19 +202,24 @@ public class MapeoRelacionesTest {
 	}
 
 	@Test
-	public void borrarUnEventoNoBorraLaPlanta() {
+	public void unEventoAtendidoQuedaGuardadoComoRealizado() {
 		Indoor indoor = new Indoor();
 		Planta planta = nuevaPlanta("OG Kush");
 		indoor.addPlanta(planta);
-		indoor.recibirEvento(new EventoLuz(planta));
+		EventoVentilador evento = new EventoVentilador(planta);
+		indoor.recibirEvento(evento);
 		em.persistAndFlush(indoor);
-		int idPlanta = planta.getId();
+		int idIndoor = indoor.getId();
 
-		indoor.consumirEvento(0);
+		// realizado se mapea por separado en cada subclase de Evento, sobre la misma columna
+		evento.setRealizado(true);
 		em.flush();
 		em.clear();
 
-		assertNotNull(em.find(Planta.class, idPlanta));
+		Indoor recargado = em.find(Indoor.class, idIndoor);
+		assertEquals(1, recargado.getColaEventos().size());
+		assertEquals(true, recargado.getColaEventos().get(0).getRealizado());
+		assertEquals(0, recargado.getEventosPendientes().size());
 	}
 
 	// --- Persona ---

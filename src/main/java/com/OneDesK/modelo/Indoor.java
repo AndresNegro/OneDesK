@@ -17,6 +17,7 @@ import java.util.List;
 @Entity
 @Table(name="Indoor")
 public class Indoor extends Persistible{
+	// lado inverso: las asignaciones se hacen desde EmpleadoIndoor, que es quien escribe en Trabaja
 	@ManyToMany(mappedBy = "sectoresACargo")
 	private List<EmpleadoIndoor> empleadosAsignados;
 	@OneToMany(mappedBy = "indoor", cascade= CascadeType.ALL, orphanRemoval = true )
@@ -31,21 +32,13 @@ public class Indoor extends Persistible{
         this.colaEventos = new ArrayList<>();
     }
 
-    public void addEmpleado(EmpleadoIndoor E) {
-    	this.empleadosAsignados.add(E);
-    }
-
-    public void deleteEmpleado(EmpleadoIndoor E) {
-    	this.empleadosAsignados.remove(E);
-    }
-
     public Planta addPlanta(Planta p) {
         plantas.add(p);
         p.setIndoor(this);
         return p;
     }
 
-    /** Quita una planta no cosechada y descarta sus eventos, que sin la planta no tienen sentido. */
+    /** Quita una planta no cosechada junto con todos sus eventos, que sin la planta no tienen sentido. */
     public void deletePlanta(Planta p) {
         if (p.isCosechada()) {
             throw new OperacionInvalidaException("No se puede quitar la planta " + p.getGenetica()
@@ -73,19 +66,32 @@ public class Indoor extends Persistible{
         colaEventos.add(e);
     }
 
+    /** Todos los eventos del indoor, atendidos o no: los atendidos quedan como historial. */
     public List<Evento> getColaEventos() {
         return new ArrayList<Evento>(colaEventos);
     }
 
-    public Evento consumirEvento(int index) {
-        if (index < 0 || index >= colaEventos.size()) return null;
-        return colaEventos.remove(index);
+    public List<Evento> getEventosPendientes() {
+        List<Evento> pendientes = new ArrayList<>();
+        for (Evento evento : colaEventos) {
+            if (!evento.getRealizado()) {
+                pendientes.add(evento);
+            }
+        }
+        return pendientes;
     }
 
-    public int colaSize() { return colaEventos.size(); }
+    public Evento buscarEvento(int eventoId) {
+        for (Evento evento : colaEventos) {
+            if (evento.getId() == eventoId) {
+                return evento;
+            }
+        }
+        return null;
+    }
 
     @Override
     public String toString() {
-        return "Indoor{plantas=" + plantas.size() + ", cola=" + colaEventos.size() + '}';
+        return "Indoor{plantas=" + plantas.size() + ", eventos=" + colaEventos.size() + '}';
     }
 }
