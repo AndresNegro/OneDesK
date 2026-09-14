@@ -47,13 +47,29 @@ public class Planta extends Persistible{
     
     public Planta(String genetica, LocalDate fechaPlantado, LocalDate fechaGerminado,
                   int tiempoRegado, int tiempoLuz, int tiempoVentilacion) {
-        this.genetica = genetica;
+        if (genetica == null || genetica.isBlank()) {
+            throw new IllegalArgumentException("La genetica no puede estar vacia");
+        }
+        if (fechaPlantado == null || fechaGerminado == null) {
+            throw new IllegalArgumentException("Las fechas de germinado y plantado son obligatorias");
+        }
+        if (fechaPlantado.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("La fecha de plantado no puede ser futura");
+        }
+        // la semilla germina antes de plantarse: como el plantado no es futuro, el germinado tampoco
+        if (fechaGerminado.isAfter(fechaPlantado)) {
+            throw new IllegalArgumentException("La planta no puede germinar despues de plantada");
+        }
+        if (tiempoRegado <= 0 || tiempoLuz <= 0 || tiempoVentilacion <= 0) {
+            throw new IllegalArgumentException("Los tiempos de riego, luz y ventilacion tienen que ser positivos");
+        }
+        this.genetica = genetica.trim();
         this.fechaPlantado = fechaPlantado;
         this.fechaGerminado = fechaGerminado;
         this.tiempoRegado = tiempoRegado;
         this.tiempoLuz = tiempoLuz;
         this.tiempoVentilacion = tiempoVentilacion;
-        }
+    }
 
     public void setIndoor(Indoor indoor) { this.indoor = indoor; }
     public Indoor getIndoor() { return indoor; }

@@ -1,6 +1,7 @@
 package com.OneDesK.modelo;
 
 import com.OneDesK.evento.Evento;
+import com.OneDesK.excepciones.OperacionInvalidaException;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -23,17 +24,17 @@ public class Indoor extends Persistible{
 	@OneToMany(cascade= CascadeType.ALL, orphanRemoval = true )
 	@JoinColumn(name = "ID_INDOOR", referencedColumnName="ID", nullable = false)
     private List<Evento> colaEventos;
-	
+
     public Indoor() {
     	this.empleadosAsignados = new ArrayList<>();
         this.plantas = new ArrayList<>();
         this.colaEventos = new ArrayList<>();
     }
-    
+
     public void addEmpleado(EmpleadoIndoor E) {
     	this.empleadosAsignados.add(E);
     }
-    
+
     public void deleteEmpleado(EmpleadoIndoor E) {
     	this.empleadosAsignados.remove(E);
     }
@@ -44,14 +45,30 @@ public class Indoor extends Persistible{
         return p;
     }
 
+    /** Quita una planta no cosechada y descarta sus eventos, que sin la planta no tienen sentido. */
     public void deletePlanta(Planta p) {
-        plantas.remove(p);
-        if (p.getIndoor() == this) p.setIndoor(null);
+        if (p.isCosechada()) {
+            throw new OperacionInvalidaException("No se puede quitar la planta " + p.getGenetica()
+                    + ": ya fue cosechada y su registro de produccion la necesita");
+        }
+        if (plantas.remove(p)) {
+            colaEventos.removeIf(evento -> evento.getPlanta() == p);
+            p.setIndoor(null);
+        }
+    }
+
+    public Planta buscarPlanta(int plantaId) {
+        for (Planta planta : plantas) {
+            if (planta.getId() == plantaId) {
+                return planta;
+            }
+        }
+        return null;
     }
 
     public List<Planta> getPlantas() { return Collections.unmodifiableList(plantas); }
 
-    
+
     public void recibirEvento(Evento e) {
         colaEventos.add(e);
     }

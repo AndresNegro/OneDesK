@@ -172,14 +172,12 @@ public class RegistroProduccionServiceImplTest {
 	}
 
 	@Test
-	public void unaPlantaCosechadaNoSePuedeBorrar() {
+	public void unaPlantaCosechadaNoSePuedeQuitar() {
 		cosecharKush(50);
-		em.flush();
 
-		indoor.deletePlanta(plantaKush);
+		assertThrows(OperacionInvalidaException.class, () -> indoor.deletePlanta(plantaKush));
 
-		// Hibernate ve que el registro todavia apunta a la planta y corta el borrado antes de llegar a la base
-		assertThrows(IllegalStateException.class, () -> em.flush());
+		assertTrue(indoor.getPlantas().contains(plantaKush));
 	}
 
 	// --- helpers ---
@@ -196,7 +194,8 @@ public class RegistroProduccionServiceImplTest {
 	}
 
 	private Planta nuevaPlanta(String genetica) {
-		return new Planta(genetica, LocalDate.now().minusDays(90), LocalDate.now().minusDays(80), 60, 60, 60);
+		// germino hace 90 dias y se planto hace 80
+		return new Planta(genetica, LocalDate.now().minusDays(80), LocalDate.now().minusDays(90), 60, 60, 60);
 	}
 
 	private EmpleadoIndoor nuevoEmpleado(String email) {

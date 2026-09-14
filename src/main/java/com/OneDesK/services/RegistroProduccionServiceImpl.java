@@ -36,7 +36,11 @@ public class RegistroProduccionServiceImpl implements RegistroProduccionService 
 				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el empleado " + empleadoId));
 		Indoor indoor = indoorRepository.findById(indoorId)
 				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el indoor " + indoorId));
-		Planta planta = buscarPlanta(indoor, plantaId);
+
+		Planta planta = indoor.buscarPlanta(plantaId);
+		if (planta == null) {
+			throw new RecursoNoEncontradoException("El indoor " + indoorId + " no tiene la planta " + plantaId);
+		}
 
 		if (!empleado.estaAsignadoA(indoor)) {
 			throw new OperacionInvalidaException(
@@ -52,14 +56,5 @@ public class RegistroProduccionServiceImpl implements RegistroProduccionService 
 		producto.reponerStock(cantidad);
 
 		return repositorio.save(registro);
-	}
-
-	private Planta buscarPlanta(Indoor indoor, int plantaId) {
-		for (Planta planta : indoor.getPlantas()) {
-			if (planta.getId() == plantaId) {
-				return planta;
-			}
-		}
-		throw new RecursoNoEncontradoException("El indoor " + indoor.getId() + " no tiene la planta " + plantaId);
 	}
 }
