@@ -21,7 +21,7 @@ public class Indoor extends Persistible{
 	@OneToMany(mappedBy = "indoor", cascade= CascadeType.ALL, orphanRemoval = true )
     private List<Planta> plantas;
 	@OneToMany(cascade= CascadeType.ALL, orphanRemoval = true )
-	@JoinColumn(name = "ID_INDOOR", referencedColumnName="ID")
+	@JoinColumn(name = "ID_INDOOR", referencedColumnName="ID", nullable = false)
     private List<Evento> colaEventos;
 	
     public Indoor() {

@@ -28,7 +28,7 @@ public class Compra extends Persistible{
     private Usuario usuario;
 	
 	@OneToMany(cascade= CascadeType.ALL, orphanRemoval = true )
-	@JoinColumn(name = "ID_COMPRA", referencedColumnName= "ID")
+	@JoinColumn(name = "ID_COMPRA", referencedColumnName= "ID", nullable = false)
     private List<ItemCompra> items;
 
 	Compra(){
