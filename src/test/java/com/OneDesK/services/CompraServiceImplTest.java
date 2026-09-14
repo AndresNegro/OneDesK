@@ -57,6 +57,7 @@ public class CompraServiceImplTest {
 
 	// --- realizarCompra: camino feliz ---
 
+	// Una compra pagada descuenta el stock, calcula el total y no genera deuda
 	@Test
 	public void compraPagadaDescuentaStockYNoGeneraDeuda() {
 		existeUsuario();
@@ -71,6 +72,7 @@ public class CompraServiceImplTest {
 		assertEquals(0, usuario.getDeuda().getMonto());
 	}
 
+	// Una compra impaga dentro del tope descuenta el stock y suma su total a la deuda
 	@Test
 	public void compraImpagaDentroDelTopeGeneraDeuda() {
 		usuario.setTopeCredito(5000);
@@ -87,6 +89,7 @@ public class CompraServiceImplTest {
 
 	// --- realizarCompra: stock ---
 
+	// Pedir mas de lo que hay rechaza toda la compra sin descontar nada del stock
 	@Test
 	public void stockInsuficienteRechazaLaCompraYNoTocaElStock() {
 		existeUsuario();
@@ -98,6 +101,7 @@ public class CompraServiceImplTest {
 		assertEquals(10, kush.getStock());
 	}
 
+	// Dos lineas del mismo producto se suman antes de validar el stock: 6 + 6 no entran en un stock de 10
 	@Test
 	public void elMismoProductoEnDosLineasSumaCantidadesParaValidarStock() {
 		existeUsuario();
@@ -110,6 +114,7 @@ public class CompraServiceImplTest {
 		assertEquals(10, kush.getStock());
 	}
 
+	// Dos lineas del mismo producto se juntan en un unico item con la cantidad total
 	@Test
 	public void elMismoProductoEnDosLineasGeneraUnSoloItem() {
 		existeUsuario();
@@ -126,6 +131,7 @@ public class CompraServiceImplTest {
 
 	// --- realizarCompra: tope de credito ---
 
+	// Una compra impaga que deja la deuda por encima del tope se rechaza sin tocar el stock ni la deuda
 	@Test
 	public void topeExcedidoRechazaLaCompra() {
 		usuario.setTopeCredito(2000);
@@ -139,6 +145,7 @@ public class CompraServiceImplTest {
 		assertEquals(0, usuario.getDeuda().getMonto());
 	}
 
+	// Una compra que deja la deuda justo en el tope se permite
 	@Test
 	public void topeExactoPermiteLaCompra() {
 		usuario.setTopeCredito(3000);
@@ -151,6 +158,7 @@ public class CompraServiceImplTest {
 		assertEquals(3000, usuario.getDeuda().getMonto());
 	}
 
+	// Una compra pagada no se controla contra el tope, aunque el usuario tenga tope 0
 	@Test
 	public void laCompraPagadaNoValidaElTope() {
 		// el usuario nace con tope 0 y aun asi puede comprar pagando
@@ -164,6 +172,7 @@ public class CompraServiceImplTest {
 		assertEquals(0, usuario.getDeuda().getMonto());
 	}
 
+	// Con el tope por debajo de lo que debe, el usuario no puede hacer compras impagas
 	@Test
 	public void conElTopeBajadoPorDebajoDeLaDeudaNoPuedeComprarImpago() {
 		compraImpaga();
@@ -173,6 +182,7 @@ public class CompraServiceImplTest {
 				() -> service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 1)), false));
 	}
 
+	// Con el tope por debajo de lo que debe, el usuario todavia puede comprar pagando
 	@Test
 	public void conElTopeBajadoPorDebajoDeLaDeudaPuedeComprarPagando() {
 		compraImpaga();
@@ -185,16 +195,19 @@ public class CompraServiceImplTest {
 
 	// --- realizarCompra: entradas invalidas ---
 
+	// Una compra sin lineas se rechaza
 	@Test
 	public void laCompraVaciaEsInvalida() {
 		assertThrows(OperacionInvalidaException.class, () -> service.realizarCompra(ID_USUARIO, List.of(), true));
 	}
 
+	// Una lista de lineas nula se rechaza sin tirar NullPointerException
 	@Test
 	public void laListaNulaEsInvalida() {
 		assertThrows(OperacionInvalidaException.class, () -> service.realizarCompra(ID_USUARIO, null, true));
 	}
 
+	// Una linea con cantidad 0 se rechaza
 	@Test
 	public void laCantidadNoPuedeSerCero() {
 		existeUsuario();
@@ -203,6 +216,7 @@ public class CompraServiceImplTest {
 				() -> service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 0)), true));
 	}
 
+	// Una linea con cantidad negativa se rechaza
 	@Test
 	public void laCantidadNoPuedeSerNegativa() {
 		existeUsuario();
@@ -211,6 +225,7 @@ public class CompraServiceImplTest {
 				() -> service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, -2)), true));
 	}
 
+	// Comprar con un usuario que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void usuarioInexistenteRechazaLaCompra() {
 		when(usuarioRepository.findById(99)).thenReturn(Optional.empty());
@@ -219,6 +234,7 @@ public class CompraServiceImplTest {
 				() -> service.realizarCompra(99, List.of(new LineaCompra(ID_KUSH, 1)), true));
 	}
 
+	// Comprar un producto que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void productoInexistenteRechazaLaCompra() {
 		existeUsuario();
@@ -230,6 +246,7 @@ public class CompraServiceImplTest {
 
 	// --- precio congelado ---
 
+	// Subir el precio del producto despues de comprar no cambia el precio del item ya comprado
 	@Test
 	public void cambiarElPrecioDelProductoNoAlteraLosItemsYaComprados() {
 		existeUsuario();
@@ -249,6 +266,7 @@ public class CompraServiceImplTest {
 
 	// --- registrarPago ---
 
+	// Registrar el pago de una compra impaga deja la deuda del usuario en 0
 	@Test
 	public void registrarPagoSaldaLaDeuda() {
 		Compra compra = compraImpaga();
@@ -261,6 +279,7 @@ public class CompraServiceImplTest {
 		assertEquals(0, usuario.getDeuda().getMonto());
 	}
 
+	// Pagar una compra que ya esta pagada se rechaza
 	@Test
 	public void noSePuedePagarDosVecesLaMismaCompra() {
 		existeLaCompra(compraPagada());
@@ -268,6 +287,7 @@ public class CompraServiceImplTest {
 		assertThrows(OperacionInvalidaException.class, () -> service.registrarPago(ID_COMPRA));
 	}
 
+	// Pagar una compra que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void registrarPagoDeUnaCompraInexistenteFalla() {
 		when(compraRepository.findById(99)).thenReturn(Optional.empty());
@@ -277,6 +297,7 @@ public class CompraServiceImplTest {
 
 	// --- anularCompra ---
 
+	// Anular una compra impaga devuelve el stock, la saca del usuario y borra su deuda
 	@Test
 	public void anularCompraImpagaDevuelveElStockYBorraLaDeuda() {
 		Compra compra = compraImpaga();
@@ -290,6 +311,7 @@ public class CompraServiceImplTest {
 		assertTrue(usuario.getCompras().isEmpty());
 	}
 
+	// Una compra pagada no se puede anular y el stock no se devuelve
 	@Test
 	public void noSePuedeAnularUnaCompraPagada() {
 		existeLaCompra(compraPagada());
@@ -299,6 +321,7 @@ public class CompraServiceImplTest {
 		assertEquals(7, kush.getStock());
 	}
 
+	// Anular una compra que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void anularUnaCompraInexistenteFalla() {
 		when(compraRepository.findById(99)).thenReturn(Optional.empty());

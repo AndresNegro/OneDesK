@@ -31,6 +31,7 @@ public class IndoorTest {
 
 	// --- quitar plantas ---
 
+	// Quitar una planta borra sus eventos y deja intactos los de las otras plantas
 	@Test
 	public void quitarUnaPlantaDescartaSoloSusEventos() {
 		indoor.recibirEvento(new EventoLuz(kush));
@@ -45,6 +46,7 @@ public class IndoorTest {
 		assertNull(kush.getIndoor());
 	}
 
+	// Una planta cosechada no se puede quitar del indoor
 	@Test
 	public void noSePuedeQuitarUnaPlantaCosechada() {
 		kush.cosechar();
@@ -56,6 +58,7 @@ public class IndoorTest {
 
 	// --- eventos ---
 
+	// Un evento atendido sigue en el historial pero deja de figurar entre los pendientes
 	@Test
 	public void losEventosAtendidosNoFiguranComoPendientes() {
 		EventoLuz luz = new EventoLuz(kush);
@@ -68,6 +71,7 @@ public class IndoorTest {
 		assertEquals(2, indoor.getColaEventos().size());
 	}
 
+	// Cosechar descarta los pendientes de esa planta, conserva sus atendidos y no toca los eventos de otras plantas
 	@Test
 	public void cosecharUnaPlantaDescartaSusPendientesYConservaLosAtendidos() {
 		EventoRegado atendido = new EventoRegado(kush);
@@ -85,6 +89,7 @@ public class IndoorTest {
 		assertSame(deAmnesia, indoor.getEventosPendientes().get(0));
 	}
 
+	// Un indoor rechaza eventos de una planta que pertenece a otro indoor
 	@Test
 	public void noSeAceptanEventosDeUnaPlantaDeOtroIndoor() {
 		Indoor otroIndoor = new Indoor();
@@ -95,6 +100,7 @@ public class IndoorTest {
 		assertEquals(0, indoor.getColaEventos().size());
 	}
 
+	// Un indoor rechaza eventos nuevos para una planta que ya fue cosechada
 	@Test
 	public void noSeAceptanEventosDeUnaPlantaCosechada() {
 		kush.cosechar();

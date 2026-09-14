@@ -26,12 +26,14 @@ public class CompraTest {
 		compra = new Compra(LocalDate.now(), false, usuario);
 	}
 
+	// Una compra recien creada no tiene items y su total es 0
 	@Test
 	public void unaCompraNuevaNoValeNada() {
 		assertEquals(0, compra.getPrecio());
 		assertEquals(0, compra.getItems().size());
 	}
 
+	// El total de la compra es la suma de cantidad por precio de cada item
 	@Test
 	public void elTotalEsLaSumaDeLosItems() {
 		compra.addItem(new ItemCompra(kush, 2));
@@ -40,6 +42,7 @@ public class CompraTest {
 		assertEquals(3500, compra.getPrecio());
 	}
 
+	// El item guarda el precio del momento de la compra: si despues sube el producto, ni el item ni la compra cambian
 	@Test
 	public void elItemConservaElPrecioAunqueCambieElDelProducto() {
 		ItemCompra item = new ItemCompra(kush, 2);
@@ -52,12 +55,14 @@ public class CompraTest {
 		assertEquals(2000, compra.getPrecio());
 	}
 
+	// Un item con cantidad 0 o negativa se rechaza
 	@Test
 	public void laCantidadDeUnItemTieneQueSerMayorACero() {
 		assertThrows(IllegalArgumentException.class, () -> new ItemCompra(kush, 0));
 		assertThrows(IllegalArgumentException.class, () -> new ItemCompra(kush, -1));
 	}
 
+	// Marcar una compra como pagada la deja pagada
 	@Test
 	public void marcarComoPagadaLaDejaPagada() {
 		compra.marcarComoPagada();
@@ -65,6 +70,7 @@ public class CompraTest {
 		assertTrue(compra.isPagado());
 	}
 
+	// Marcar como pagada una compra que ya lo esta se rechaza, porque una compra pagada no vuelve atras
 	@Test
 	public void noSePuedeMarcarDosVecesComoPagada() {
 		compra.marcarComoPagada();

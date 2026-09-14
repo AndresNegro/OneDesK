@@ -15,6 +15,7 @@ public class UsuarioTest {
 
 	// --- datos personales ---
 
+	// Un usuario recien creado guarda sus datos y arranca con tope de credito 0 y sin deuda
 	@Test
 	public void crearUnUsuarioValido() {
 		Usuario usuario = nuevoUsuario("andres@test.com");
@@ -25,6 +26,7 @@ public class UsuarioTest {
 		assertEquals(0, usuario.getDeuda().getMonto());
 	}
 
+	// El email se normaliza al guardarse, para que las mayusculas no permitan registrarlo dos veces
 	@Test
 	public void elEmailSeGuardaEnMinusculasYSinEspacios() {
 		Usuario usuario = new Usuario("Andres", "Negro", "  Andres@Test.COM ", "12345");
@@ -32,26 +34,31 @@ public class UsuarioTest {
 		assertEquals("andres@test.com", usuario.getEmail());
 	}
 
+	// El constructor rechaza un email sin formato valido
 	@Test
 	public void rechazaUnEmailInvalido() {
 		assertThrows(IllegalArgumentException.class, () -> new Usuario("Andres", "Negro", "@", "12345"));
 	}
 
+	// El constructor rechaza una contrasenia de menos de 5 caracteres
 	@Test
 	public void rechazaUnaContraseniaCorta() {
 		assertThrows(IllegalArgumentException.class, () -> new Usuario("Andres", "Negro", "andres@test.com", "1234"));
 	}
 
+	// El constructor rechaza un nombre formado solo por espacios
 	@Test
 	public void rechazaUnNombreVacio() {
 		assertThrows(IllegalArgumentException.class, () -> new Usuario("  ", "Negro", "andres@test.com", "12345"));
 	}
 
+	// El constructor rechaza un apellido nulo
 	@Test
 	public void rechazaUnApellidoVacio() {
 		assertThrows(IllegalArgumentException.class, () -> new Usuario("Andres", null, "andres@test.com", "12345"));
 	}
 
+	// setEmail valida igual que el constructor y no pisa el email anterior si el nuevo es invalido
 	@Test
 	public void cambiarElEmailTambienSeValida() {
 		Usuario usuario = nuevoUsuario("andres@test.com");
@@ -63,6 +70,7 @@ public class UsuarioTest {
 
 	// --- tope de credito ---
 
+	// Un tope de credito negativo se rechaza y el tope anterior queda intacto
 	@Test
 	public void elTopeDeCreditoNoPuedeSerNegativo() {
 		Usuario usuario = nuevoUsuario("andres@test.com");
@@ -72,6 +80,7 @@ public class UsuarioTest {
 		assertEquals(0, usuario.getTopeCredito());
 	}
 
+	// El tope se puede bajar aunque quede por debajo de la deuda actual
 	@Test
 	public void sePuedeBajarElTopePorDebajoDeLoQueDebe() {
 		Usuario usuario = nuevoUsuario("andres@test.com");
@@ -85,6 +94,7 @@ public class UsuarioTest {
 
 	// --- compras y deuda ---
 
+	// Agregar una compra impaga suma su total a la deuda y la cuenta entre las impagas
 	@Test
 	public void unaCompraImpagaSumaALaDeuda() {
 		Usuario usuario = nuevoUsuario("andres@test.com");
@@ -95,6 +105,7 @@ public class UsuarioTest {
 		assertEquals(1, usuario.comprasImpagas().size());
 	}
 
+	// Una compra que nace pagada no genera deuda ni figura entre las impagas
 	@Test
 	public void unaCompraPagadaNoSumaALaDeuda() {
 		Usuario usuario = nuevoUsuario("andres@test.com");
@@ -105,6 +116,7 @@ public class UsuarioTest {
 		assertEquals(0, usuario.comprasImpagas().size());
 	}
 
+	// Registrar el pago marca la compra como pagada y la descuenta de la deuda
 	@Test
 	public void pagarUnaCompraLaSacaDeLaDeuda() {
 		Usuario usuario = nuevoUsuario("andres@test.com");
@@ -118,6 +130,7 @@ public class UsuarioTest {
 		assertEquals(0, usuario.comprasImpagas().size());
 	}
 
+	// Un usuario no acepta una compra hecha a nombre de otro usuario
 	@Test
 	public void noSePuedeAgregarLaCompraDeOtroUsuario() {
 		Usuario usuario = nuevoUsuario("andres@test.com");
@@ -128,6 +141,7 @@ public class UsuarioTest {
 		assertEquals(0, usuario.getDeuda().getMonto());
 	}
 
+	// Agregar dos veces la misma compra se rechaza, para no contar su deuda doble
 	@Test
 	public void noSePuedeAgregarDosVecesLaMismaCompra() {
 		Usuario usuario = nuevoUsuario("andres@test.com");
@@ -139,6 +153,7 @@ public class UsuarioTest {
 		assertEquals(3000, usuario.getDeuda().getMonto());
 	}
 
+	// Un usuario no puede registrar el pago de una compra que no es suya
 	@Test
 	public void noSePuedePagarUnaCompraAjena() {
 		Usuario usuario = nuevoUsuario("andres@test.com");
@@ -151,6 +166,7 @@ public class UsuarioTest {
 		assertFalse(compraDelOtro.isPagado());
 	}
 
+	// Sacar una compra impaga la quita de la lista y recalcula la deuda
 	@Test
 	public void borrarUnaCompraRecalculaLaDeuda() {
 		Usuario usuario = nuevoUsuario("andres@test.com");
@@ -163,6 +179,7 @@ public class UsuarioTest {
 		assertEquals(0, usuario.getDeuda().getMonto());
 	}
 
+	// La lista de compras es de solo lectura, asi nadie agrega compras salteando el recalculo de la deuda
 	@Test
 	public void lasComprasNoSeModificanDesdeAfuera() {
 		Usuario usuario = nuevoUsuario("andres@test.com");

@@ -32,12 +32,14 @@ public class EmpleadoIndoorTest {
 
 	// --- salario ---
 
+	// No se puede crear un empleado con salario 0
 	@Test
 	public void elSalarioTieneQueSerMayorACero() {
 		assertThrows(IllegalArgumentException.class,
 				() -> new EmpleadoIndoor("Andres", "Negro", "otro@test.com", "12345", 0));
 	}
 
+	// setSalarioMensual rechaza un salario negativo y conserva el anterior
 	@Test
 	public void cambiarElSalarioTambienSeValida() {
 		assertThrows(IllegalArgumentException.class, () -> empleado.setSalarioMensual(-1));
@@ -47,6 +49,7 @@ public class EmpleadoIndoorTest {
 
 	// --- asignaciones ---
 
+	// Asignar un indoor que el empleado ya tiene se rechaza
 	@Test
 	public void noSePuedeAsignarDosVecesElMismoIndoor() {
 		assertThrows(OperacionInvalidaException.class, () -> empleado.addIndoor(indoor));
@@ -54,6 +57,7 @@ public class EmpleadoIndoorTest {
 		assertEquals(1, empleado.getSectoresACargo().size());
 	}
 
+	// Desasignar un indoor lo saca de los indoors a cargo del empleado
 	@Test
 	public void desasignarLoSacaDeSusIndoors() {
 		empleado.deleteIndoor(indoor);
@@ -61,6 +65,7 @@ public class EmpleadoIndoorTest {
 		assertFalse(empleado.estaAsignadoA(indoor));
 	}
 
+	// Desasignar un indoor que el empleado no tiene se rechaza
 	@Test
 	public void noSePuedeDesasignarUnIndoorQueNoTiene() {
 		assertThrows(OperacionInvalidaException.class, () -> empleado.deleteIndoor(new Indoor()));
@@ -68,6 +73,7 @@ public class EmpleadoIndoorTest {
 
 	// --- eventos ---
 
+	// Atender un riego lo marca como realizado y lo deja en el historial del indoor
 	@Test
 	public void atenderUnRiegoLoDejaComoRealizadoSinBorrarlo() {
 		EventoRegado riego = new EventoRegado(planta);
@@ -80,6 +86,7 @@ public class EmpleadoIndoorTest {
 		assertEquals(1, indoor.getColaEventos().size());
 	}
 
+	// Cada evento de luz atendido invierte la luz: el primero la prende y el segundo la apaga
 	@Test
 	public void cadaEventoDeLuzCambiaElEstadoDeLaLuz() {
 		EventoLuz prender = new EventoLuz(planta);
@@ -94,6 +101,7 @@ public class EmpleadoIndoorTest {
 		assertFalse(planta.isLuz());
 	}
 
+	// Atender un evento de ventilador prende el ventilador de la planta
 	@Test
 	public void unEventoDeVentiladorCambiaElEstadoDelVentilador() {
 		EventoVentilador ventilador = new EventoVentilador(planta);
@@ -104,6 +112,7 @@ public class EmpleadoIndoorTest {
 		assertTrue(planta.isVentilador());
 	}
 
+	// Atender dos veces el mismo evento se rechaza y su efecto no se aplica de nuevo
 	@Test
 	public void noSePuedeAtenderDosVecesElMismoEvento() {
 		EventoLuz luz = new EventoLuz(planta);
@@ -115,6 +124,7 @@ public class EmpleadoIndoorTest {
 		assertTrue(planta.isLuz());
 	}
 
+	// Un empleado no puede atender eventos de un indoor que no tiene a cargo, y el evento no cambia
 	@Test
 	public void noSePuedeAtenderUnEventoDeUnIndoorNoAsignado() {
 		Indoor otroIndoor = new Indoor();
@@ -128,6 +138,7 @@ public class EmpleadoIndoorTest {
 		assertFalse(otraPlanta.isLuz());
 	}
 
+	// Los pendientes del empleado son solo los eventos sin atender de sus indoors
 	@Test
 	public void losPendientesSonLosNoAtendidosDeSusIndoors() {
 		EventoRegado riego = new EventoRegado(planta);

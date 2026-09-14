@@ -35,6 +35,7 @@ public class UsuarioServiceImplTest {
 
 	// --- registrar ---
 
+	// Registrar un usuario con un email libre lo guarda con el repositorio
 	@Test
 	public void registrarGuardaAlUsuario() {
 		when(personaRepository.existsByEmail("andres@test.com")).thenReturn(false);
@@ -46,6 +47,7 @@ public class UsuarioServiceImplTest {
 		verify(usuarioRepository).save(usuario);
 	}
 
+	// Si el email ya existe se rechaza el registro y no se guarda nada
 	@Test
 	public void noSePuedeRegistrarUnEmailRepetido() {
 		when(personaRepository.existsByEmail("andres@test.com")).thenReturn(true);
@@ -56,6 +58,7 @@ public class UsuarioServiceImplTest {
 		verify(usuarioRepository, never()).save(any());
 	}
 
+	// La consulta de email repetido usa el email normalizado, asi escribirlo en mayusculas no la esquiva
 	@Test
 	public void elEmailRepetidoSeDetectaAunqueCambienLasMayusculas() {
 		when(personaRepository.existsByEmail("andres@test.com")).thenReturn(true);
@@ -64,6 +67,7 @@ public class UsuarioServiceImplTest {
 				() -> service.registrar("Andres", "Negro", "ANDRES@Test.com", "12345"));
 	}
 
+	// Un email invalido falla al crear el usuario, antes de usar cualquier repositorio
 	@Test
 	public void unEmailInvalidoNiSiquieraConsultaLaBase() {
 		assertThrows(IllegalArgumentException.class, () -> service.registrar("Andres", "Negro", "@", "12345"));
@@ -73,6 +77,7 @@ public class UsuarioServiceImplTest {
 
 	// --- asignarTopeCredito ---
 
+	// Asignar un tope de credito lo actualiza en el usuario
 	@Test
 	public void asignarTopeCreditoLoActualiza() {
 		Usuario usuario = new Usuario("Andres", "Negro", "andres@test.com", "12345");
@@ -84,6 +89,7 @@ public class UsuarioServiceImplTest {
 		assertEquals(8000, usuario.getTopeCredito());
 	}
 
+	// Asignar tope a un usuario que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void asignarTopeAUnUsuarioInexistenteFalla() {
 		when(usuarioRepository.findById(99)).thenReturn(Optional.empty());
@@ -91,6 +97,7 @@ public class UsuarioServiceImplTest {
 		assertThrows(RecursoNoEncontradoException.class, () -> service.asignarTopeCredito(99, 8000));
 	}
 
+	// Un tope negativo se rechaza y el usuario no llega a guardarse
 	@Test
 	public void unTopeNegativoSeRechazaYNoSeGuarda() {
 		Usuario usuario = new Usuario("Andres", "Negro", "andres@test.com", "12345");

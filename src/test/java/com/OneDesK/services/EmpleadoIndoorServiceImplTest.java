@@ -51,6 +51,7 @@ public class EmpleadoIndoorServiceImplTest {
 
 	// --- registrar ---
 
+	// Registrar un empleado lo guarda en la base con su email y su salario
 	@Test
 	public void registrarGuardaAlEmpleado() {
 		em.flush();
@@ -62,6 +63,7 @@ public class EmpleadoIndoorServiceImplTest {
 		assertEquals(500000, recargado.getSalarioMensual());
 	}
 
+	// Un empleado no puede registrarse con el email de un usuario existente, aunque cambien las mayusculas
 	@Test
 	public void noSePuedeRegistrarUnEmailQueYaUsaUnUsuario() {
 		em.persistAndFlush(new Usuario("Otro", "Cliente", "cliente@test.com", "12345"));
@@ -72,6 +74,7 @@ public class EmpleadoIndoorServiceImplTest {
 
 	// --- asignaciones ---
 
+	// La asignacion de un indoor al empleado queda guardada en la tabla Trabaja
 	@Test
 	public void asignarUnIndoorQuedaGuardado() {
 		service.asignarIndoor(empleado.getId(), indoor.getId());
@@ -83,6 +86,7 @@ public class EmpleadoIndoorServiceImplTest {
 		assertEquals(1, recargado.getSectoresACargo().size());
 	}
 
+	// Asignar dos veces el mismo indoor al mismo empleado se rechaza
 	@Test
 	public void noSePuedeAsignarDosVecesElMismoIndoor() {
 		service.asignarIndoor(empleado.getId(), indoor.getId());
@@ -90,6 +94,7 @@ public class EmpleadoIndoorServiceImplTest {
 		assertThrows(OperacionInvalidaException.class, () -> service.asignarIndoor(empleado.getId(), indoor.getId()));
 	}
 
+	// Desasignar borra la fila de Trabaja en la base, pero el indoor sigue existiendo
 	@Test
 	public void desasignarQuedaGuardadoSinBorrarElIndoor() {
 		service.asignarIndoor(empleado.getId(), indoor.getId());
@@ -103,17 +108,20 @@ public class EmpleadoIndoorServiceImplTest {
 		assertNotNull(em.find(Indoor.class, indoor.getId()));
 	}
 
+	// Desasignar un indoor que el empleado no tenia se rechaza
 	@Test
 	public void noSePuedeDesasignarUnIndoorNoAsignado() {
 		assertThrows(OperacionInvalidaException.class,
 				() -> service.desasignarIndoor(empleado.getId(), indoor.getId()));
 	}
 
+	// Asignar un indoor que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void asignarUnIndoorInexistenteFalla() {
 		assertThrows(RecursoNoEncontradoException.class, () -> service.asignarIndoor(empleado.getId(), 9999));
 	}
 
+	// Asignar un indoor a un empleado que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void asignarAUnEmpleadoInexistenteFalla() {
 		assertThrows(RecursoNoEncontradoException.class, () -> service.asignarIndoor(9999, indoor.getId()));
@@ -121,6 +129,7 @@ public class EmpleadoIndoorServiceImplTest {
 
 	// --- eventos ---
 
+	// Atender un evento lo guarda como realizado sin borrarlo y el efecto sobre la planta queda guardado
 	@Test
 	public void atenderUnEventoLoGuardaComoRealizado() {
 		service.asignarIndoor(empleado.getId(), indoor.getId());
@@ -138,6 +147,7 @@ public class EmpleadoIndoorServiceImplTest {
 		assertTrue(recargado.getPlantas().get(0).isLuz());
 	}
 
+	// Los pendientes del empleado excluyen lo ya atendido y los eventos de indoors que no tiene a cargo
 	@Test
 	public void losPendientesSoloIncluyenLoNoAtendidoDeSusIndoors() {
 		service.asignarIndoor(empleado.getId(), indoor.getId());
@@ -158,6 +168,7 @@ public class EmpleadoIndoorServiceImplTest {
 		assertSame(luz, pendientes.get(0));
 	}
 
+	// Un empleado no puede atender eventos de un indoor al que no esta asignado
 	@Test
 	public void noSePuedeAtenderUnEventoDeUnIndoorNoAsignado() {
 		EventoLuz luz = new EventoLuz(planta);
@@ -170,6 +181,7 @@ public class EmpleadoIndoorServiceImplTest {
 		assertFalse(luz.getRealizado());
 	}
 
+	// Atender dos veces el mismo evento se rechaza
 	@Test
 	public void noSePuedeAtenderDosVecesElMismoEvento() {
 		service.asignarIndoor(empleado.getId(), indoor.getId());
@@ -182,6 +194,7 @@ public class EmpleadoIndoorServiceImplTest {
 				() -> service.atenderEvento(empleado.getId(), indoor.getId(), luz.getId()));
 	}
 
+	// Buscar un evento en un indoor que no lo tiene falla con RecursoNoEncontradoException
 	@Test
 	public void unEventoQueNoEsDeEseIndoorNoSeEncuentra() {
 		Indoor otroIndoor = new Indoor();

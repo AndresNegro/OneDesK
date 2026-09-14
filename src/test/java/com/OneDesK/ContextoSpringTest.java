@@ -30,6 +30,7 @@ public class ContextoSpringTest {
 	@Autowired
 	private EmpleadoIndoorService empleadoIndoorService;
 
+	// Levanta la aplicacion completa sobre H2 y verifica que Spring pueda crear e inyectar los seis services
 	@Test
 	public void laAplicacionLevantaConTodosSusServices() {
 		assertNotNull(compraService);

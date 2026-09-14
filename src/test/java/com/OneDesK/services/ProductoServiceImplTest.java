@@ -28,6 +28,7 @@ public class ProductoServiceImplTest {
 
 	// --- crearProducto ---
 
+	// Un producto dado de alta se guarda con su precio y con stock 0
 	@Test
 	public void unProductoNuevoArrancaSinStock() {
 		Producto producto = service.crearProducto("OG Kush", 1000);
@@ -37,6 +38,7 @@ public class ProductoServiceImplTest {
 		assertEquals(1000, producto.getPrecio());
 	}
 
+	// No se puede crear un producto con una genetica que ya existe, aunque cambien mayusculas o espacios
 	@Test
 	public void noSePuedeRepetirLaGeneticaAunqueCambienMayusculasOEspacios() {
 		service.crearProducto("OG Kush", 1000);
@@ -44,11 +46,13 @@ public class ProductoServiceImplTest {
 		assertThrows(OperacionInvalidaException.class, () -> service.crearProducto("  og kush ", 900));
 	}
 
+	// No se puede crear un producto con precio 0
 	@Test
 	public void elPrecioTieneQueSerMayorACero() {
 		assertThrows(IllegalArgumentException.class, () -> service.crearProducto("OG Kush", 0));
 	}
 
+	// No se puede crear un producto con la genetica vacia
 	@Test
 	public void laGeneticaNoPuedeEstarVacia() {
 		assertThrows(IllegalArgumentException.class, () -> service.crearProducto("   ", 1000));
@@ -56,6 +60,7 @@ public class ProductoServiceImplTest {
 
 	// --- cambiarPrecio ---
 
+	// Cambiar el precio de un producto existente lo actualiza
 	@Test
 	public void cambiarElPrecioLoActualiza() {
 		Producto producto = service.crearProducto("OG Kush", 1000);
@@ -65,6 +70,7 @@ public class ProductoServiceImplTest {
 		assertEquals(1500, producto.getPrecio());
 	}
 
+	// Un precio nuevo de 0 se rechaza y el producto conserva el precio que tenia
 	@Test
 	public void elPrecioNuevoTambienTieneQueSerMayorACero() {
 		Producto producto = service.crearProducto("OG Kush", 1000);
@@ -74,6 +80,7 @@ public class ProductoServiceImplTest {
 		assertEquals(1000, producto.getPrecio());
 	}
 
+	// Cambiar el precio de un producto que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void cambiarElPrecioDeUnProductoInexistenteFalla() {
 		assertThrows(RecursoNoEncontradoException.class, () -> service.cambiarPrecio(9999, 1500));
@@ -81,6 +88,7 @@ public class ProductoServiceImplTest {
 
 	// --- catalogo ---
 
+	// El catalogo deja afuera los productos sin stock y ordena el resto por genetica
 	@Test
 	public void elCatalogoSoloMuestraProductosConStock() {
 		guardar("OG Kush", 10, 1000);
@@ -90,6 +98,7 @@ public class ProductoServiceImplTest {
 		assertEquals(List.of("Haze", "OG Kush"), geneticas(service.listarProductos()));
 	}
 
+	// La busqueda encuentra una parte de la genetica sin importar mayusculas y deja afuera lo que no tiene stock
 	@Test
 	public void buscarPorGeneticaEncuentraPartesSinDistinguirMayusculas() {
 		guardar("OG Kush", 10, 1000);
@@ -100,6 +109,7 @@ public class ProductoServiceImplTest {
 		assertEquals(List.of("Kush Mints", "OG Kush"), geneticas(service.buscarPorGenetica("kUsH")));
 	}
 
+	// Buscar con texto vacio devuelve todo el catalogo con stock
 	@Test
 	public void buscarSinTextoDevuelveTodoElCatalogo() {
 		guardar("OG Kush", 10, 1000);
@@ -108,6 +118,7 @@ public class ProductoServiceImplTest {
 		assertEquals(List.of("OG Kush"), geneticas(service.buscarPorGenetica("   ")));
 	}
 
+	// El listado por precio va del mas barato al mas caro y deja afuera lo que no tiene stock
 	@Test
 	public void listarPorPrecioOrdenaDelMasBaratoAlMasCaro() {
 		guardar("OG Kush", 1, 3000);

@@ -32,6 +32,7 @@ public class IndoorServiceImplTest {
 
 	// --- crear y plantar ---
 
+	// Crear un indoor lo guarda en la base con su id
 	@Test
 	public void crearUnIndoorLoGuarda() {
 		Indoor indoor = service.crearIndoor();
@@ -40,6 +41,7 @@ public class IndoorServiceImplTest {
 		assertNotNull(em.find(Indoor.class, indoor.getId()));
 	}
 
+	// Plantar guarda la planta en la base y devuelve esa misma planta con su id asignado
 	@Test
 	public void plantarGuardaLaPlantaEnElIndoor() {
 		Indoor indoor = service.crearIndoor();
@@ -53,11 +55,13 @@ public class IndoorServiceImplTest {
 		assertEquals("OG Kush", recargado.getPlantas().get(0).getGenetica());
 	}
 
+	// Plantar en un indoor que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void plantarEnUnIndoorInexistenteFalla() {
 		assertThrows(RecursoNoEncontradoException.class, () -> service.plantar(9999, nuevaPlanta("OG Kush")));
 	}
 
+	// Una planta que ya esta en un indoor no se puede plantar en otro
 	@Test
 	public void unaPlantaYaPlantadaNoSePuedePlantarEnOtroIndoor() {
 		Indoor uno = service.crearIndoor();
@@ -71,6 +75,7 @@ public class IndoorServiceImplTest {
 
 	// --- quitar ---
 
+	// Quitar una planta la borra de la base junto con sus eventos, sin tocar las otras plantas
 	@Test
 	public void quitarUnaPlantaLaBorraConSusEventos() {
 		Indoor indoor = service.crearIndoor();
@@ -92,6 +97,7 @@ public class IndoorServiceImplTest {
 		assertEquals(1, recargado.getColaEventos().size());
 	}
 
+	// Una planta cosechada no se puede quitar y sigue en el indoor
 	@Test
 	public void noSePuedeQuitarUnaPlantaCosechada() {
 		Indoor indoor = service.crearIndoor();
@@ -103,6 +109,7 @@ public class IndoorServiceImplTest {
 		assertEquals(1, indoor.getPlantas().size());
 	}
 
+	// Quitar una planta pidiendosela a un indoor que no la tiene falla con RecursoNoEncontradoException
 	@Test
 	public void quitarUnaPlantaDeOtroIndoorFalla() {
 		Indoor uno = service.crearIndoor();

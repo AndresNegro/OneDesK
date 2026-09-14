@@ -41,6 +41,7 @@ public class CompraServicePersistenciaTest {
 		em.flush();
 	}
 
+	// Una compra impaga queda guardada en la base con sus items, la deuda del usuario y el stock descontado
 	@Test
 	public void unaCompraImpagaQuedaGuardadaConSuDeudaYElStockDescontado() {
 		int idCompra = comprarKush(3).getId();
@@ -56,6 +57,7 @@ public class CompraServicePersistenciaTest {
 		assertEquals(7, em.find(Producto.class, kush.getId()).getStock());
 	}
 
+	// El pago queda guardado en la base y la deuda del usuario vuelve a 0
 	@Test
 	public void registrarElPagoQuedaGuardado() {
 		int idCompra = comprarKush(3).getId();
@@ -69,6 +71,7 @@ public class CompraServicePersistenciaTest {
 		assertEquals(0, em.find(Usuario.class, usuario.getId()).getDeuda().getMonto());
 	}
 
+	// Anular borra de la base la compra y sus items, devuelve el stock y deja la deuda en 0
 	@Test
 	public void anularUnaCompraLaBorraConSusItemsYDevuelveElStock() {
 		int idCompra = comprarKush(3).getId();

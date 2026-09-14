@@ -27,6 +27,7 @@ public class MapeoRelacionesTest {
 
 	// --- Indoor / Planta ---
 
+	// Guardar un indoor guarda tambien sus plantas por cascada
 	@Test
 	public void guardarUnIndoorGuardaSusPlantas() {
 		Indoor indoor = new Indoor();
@@ -41,6 +42,7 @@ public class MapeoRelacionesTest {
 		assertEquals(2, recargado.getPlantas().size());
 	}
 
+	// Sacar una planta de la lista del indoor la borra de la base (orphanRemoval)
 	@Test
 	public void sacarUnaPlantaDeLaListaLaBorra() {
 		Indoor indoor = new Indoor();
@@ -59,6 +61,7 @@ public class MapeoRelacionesTest {
 		assertEquals(1, recargado.getPlantas().size());
 	}
 
+	// Borrar una planta no borra su indoor: la cascada va del indoor a la planta, no al reves
 	@Test
 	public void borrarUnaPlantaNoBorraSuIndoor() {
 		Indoor indoor = new Indoor();
@@ -76,6 +79,7 @@ public class MapeoRelacionesTest {
 		assertNotNull(em.find(Indoor.class, idIndoor));
 	}
 
+	// Borrar un indoor borra sus plantas por cascada
 	@Test
 	public void borrarUnIndoorBorraSusPlantas() {
 		Indoor indoor = new Indoor();
@@ -93,6 +97,7 @@ public class MapeoRelacionesTest {
 
 	// --- Compra / ItemCompra / Producto ---
 
+	// Borrar una compra borra sus items, pero no los productos del catalogo a los que apuntan
 	@Test
 	public void borrarUnaCompraNoBorraLosProductosDeSusItems() {
 		Usuario usuario = nuevoUsuario("comprador@test.com");
@@ -113,6 +118,7 @@ public class MapeoRelacionesTest {
 		assertNotNull(em.find(Producto.class, idProducto));
 	}
 
+	// Borrar una compra no borra al usuario que la hizo
 	@Test
 	public void borrarUnaCompraNoBorraAlUsuario() {
 		Usuario usuario = nuevoUsuario("comprador@test.com");
@@ -128,6 +134,7 @@ public class MapeoRelacionesTest {
 		assertNotNull(em.find(Usuario.class, idUsuario));
 	}
 
+	// La FK de Compra hacia Usuario se guarda y el usuario vuelve al releer la compra
 	@Test
 	public void laCompraGuardaSuUsuario() {
 		Usuario usuario = nuevoUsuario("comprador@test.com");
@@ -145,6 +152,7 @@ public class MapeoRelacionesTest {
 
 	// --- Trabaja (ManyToMany) ---
 
+	// La relacion muchos a muchos de la tabla Trabaja se guarda desde el lado del empleado
 	@Test
 	public void unEmpleadoQuedaAsignadoASusIndoors() {
 		Indoor indoor = new Indoor();
@@ -161,6 +169,7 @@ public class MapeoRelacionesTest {
 		assertEquals(1, recargado.getSectoresACargo().size());
 	}
 
+	// Desasignar solo borra la fila de Trabaja, no al empleado ni al indoor
 	@Test
 	public void desasignarUnIndoorNoBorraNiAlEmpleadoNiAlIndoor() {
 		Indoor indoor = new Indoor();
@@ -182,6 +191,7 @@ public class MapeoRelacionesTest {
 
 	// --- Eventos ---
 
+	// La columna tipo hace que cada evento vuelva de la base con su propia clase
 	@Test
 	public void cadaTipoDeEventoSeRecuperaConSuClase() {
 		Indoor indoor = new Indoor();
@@ -201,6 +211,7 @@ public class MapeoRelacionesTest {
 		assertInstanceOf(EventoVentilador.class, segundo);
 	}
 
+	// El campo realizado se guarda en la base y el evento deja de figurar como pendiente al releerlo
 	@Test
 	public void unEventoAtendidoQuedaGuardadoComoRealizado() {
 		Indoor indoor = new Indoor();
@@ -224,6 +235,7 @@ public class MapeoRelacionesTest {
 
 	// --- Persona ---
 
+	// El UNIQUE de email rechaza guardar un empleado con el mismo email que un usuario
 	@Test
 	public void laBaseNoPermiteDosPersonasConElMismoEmail() {
 		em.persistAndFlush(nuevoUsuario("repetido@test.com"));

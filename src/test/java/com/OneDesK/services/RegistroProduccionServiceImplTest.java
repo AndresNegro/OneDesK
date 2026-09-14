@@ -59,6 +59,7 @@ public class RegistroProduccionServiceImplTest {
 
 	// --- camino feliz ---
 
+	// Cosechar suma lo producido al stock, marca la planta con la fecha de hoy y toma el indoor de la planta
 	@Test
 	public void cosecharSumaElStockYMarcaLaPlanta() {
 		RegistroProduccion registro = cosecharKush(50);
@@ -70,6 +71,7 @@ public class RegistroProduccionServiceImplTest {
 		assertSame(indoor, registro.getIndoor());
 	}
 
+	// El registro de produccion queda guardado en la base con su planta, su empleado, su producto y la cantidad
 	@Test
 	public void elRegistroQuedaGuardadoEnLaBase() {
 		int idRegistro = cosecharKush(50).getId();
@@ -84,6 +86,7 @@ public class RegistroProduccionServiceImplTest {
 		assertEquals(50, recargado.getProducto().getStock());
 	}
 
+	// Una planta cargada como "og KUSH" encuentra el producto "OG Kush" al cosecharse
 	@Test
 	public void laGeneticaDeLaPlantaSeBuscaSinImportarMayusculas() {
 		Planta otra = plantarEnElIndoor("og KUSH");
@@ -95,6 +98,7 @@ public class RegistroProduccionServiceImplTest {
 
 	// --- genetica sin producto en el catalogo ---
 
+	// Cosechar una genetica sin producto falla indicando que genetica falta, y la planta no queda cosechada
 	@Test
 	public void cosecharUnaGeneticaSinProductoSeRechazaIndicandoCual() {
 		Planta amnesia = plantarEnElIndoor("Amnesia");
@@ -106,6 +110,7 @@ public class RegistroProduccionServiceImplTest {
 		assertFalse(amnesia.isCosechada());
 	}
 
+	// Recorre el camino completo: la cosecha falla, se da de alta el producto con la genetica del error y el reintento funciona
 	@Test
 	public void despuesDeDarDeAltaElProductoLaCosechaFunciona() {
 		Planta amnesia = plantarEnElIndoor("Amnesia");
@@ -120,6 +125,7 @@ public class RegistroProduccionServiceImplTest {
 
 	// --- reglas ---
 
+	// Cosechar dos veces la misma planta se rechaza y el stock no vuelve a sumar
 	@Test
 	public void unaPlantaNoSePuedeCosecharDosVeces() {
 		cosecharKush(50);
@@ -129,6 +135,7 @@ public class RegistroProduccionServiceImplTest {
 		assertEquals(50, kush.getStock());
 	}
 
+	// Un empleado no asignado al indoor no puede cosechar, y ni la planta ni el stock cambian
 	@Test
 	public void unEmpleadoNoAsignadoAlIndoorNoPuedeCosechar() {
 		EmpleadoIndoor otro = nuevoEmpleado("otro@test.com");
@@ -141,6 +148,7 @@ public class RegistroProduccionServiceImplTest {
 		assertFalse(plantaKush.isCosechada());
 	}
 
+	// Buscar la planta en un indoor que no la tiene falla con RecursoNoEncontradoException
 	@Test
 	public void laPlantaTieneQueSerDelIndoorIndicado() {
 		Indoor otroIndoor = new Indoor();
@@ -151,6 +159,7 @@ public class RegistroProduccionServiceImplTest {
 				() -> service.registrarCosecha(empleado.getId(), otroIndoor.getId(), plantaKush.getId(), 50));
 	}
 
+	// Una cosecha de cantidad 0 se rechaza sin marcar la planta ni sumar stock
 	@Test
 	public void laCantidadTieneQueSerMayorACero() {
 		assertThrows(IllegalArgumentException.class, () -> cosecharKush(0));
@@ -159,18 +168,21 @@ public class RegistroProduccionServiceImplTest {
 		assertFalse(plantaKush.isCosechada());
 	}
 
+	// Cosechar con un empleado que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void unEmpleadoInexistenteNoPuedeCosechar() {
 		assertThrows(RecursoNoEncontradoException.class,
 				() -> service.registrarCosecha(9999, indoor.getId(), plantaKush.getId(), 50));
 	}
 
+	// Cosechar en un indoor que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void noSePuedeCosecharEnUnIndoorInexistente() {
 		assertThrows(RecursoNoEncontradoException.class,
 				() -> service.registrarCosecha(empleado.getId(), 9999, plantaKush.getId(), 50));
 	}
 
+	// Despues de cosecharla, la planta ya no se puede quitar del indoor porque su registro la necesita
 	@Test
 	public void unaPlantaCosechadaNoSePuedeQuitar() {
 		cosecharKush(50);
