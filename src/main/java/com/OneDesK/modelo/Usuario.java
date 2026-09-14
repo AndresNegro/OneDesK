@@ -90,7 +90,12 @@ public class Usuario extends Persona {
     public List<Compra> getCompras() { return compras; }
     public Deuda getDeuda() { return deuda; }
     public int getTopeCredito() { return topeCredito; }
-    public void setTopeCredito(int topeCredito) { this.topeCredito = topeCredito; }
+    public void setTopeCredito(int topeCredito) {
+        if (topeCredito < 0) {
+            throw new IllegalArgumentException("El tope de credito no puede ser negativo");
+        }
+        this.topeCredito = topeCredito;
+    }
     public void deleteCompra(Compra c) {
         if (compras.remove(c)) recalcularDeuda();
     }

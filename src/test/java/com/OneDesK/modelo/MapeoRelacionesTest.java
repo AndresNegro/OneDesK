@@ -4,8 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDate;
+
+import jakarta.persistence.PersistenceException;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -212,6 +215,17 @@ public class MapeoRelacionesTest {
 		em.clear();
 
 		assertNotNull(em.find(Planta.class, idPlanta));
+	}
+
+	// --- Persona ---
+
+	@Test
+	public void laBaseNoPermiteDosPersonasConElMismoEmail() {
+		em.persistAndFlush(nuevoUsuario("repetido@test.com"));
+		EmpleadoIndoor empleado = new EmpleadoIndoor("Otro", "Empleado", "repetido@test.com", "12345", 500000);
+
+		// un usuario y un empleado: la unicidad es sobre toda la tabla Persona
+		assertThrows(PersistenceException.class, () -> em.persistAndFlush(empleado));
 	}
 
 	// --- helpers ---

@@ -164,6 +164,25 @@ public class CompraServiceImplTest {
 		assertEquals(0, usuario.getDeuda().getMonto());
 	}
 
+	@Test
+	public void conElTopeBajadoPorDebajoDeLaDeudaNoPuedeComprarImpago() {
+		compraImpaga();
+		usuario.setTopeCredito(1000);
+
+		assertThrows(TopeCreditoExcedidoException.class,
+				() -> service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 1)), false));
+	}
+
+	@Test
+	public void conElTopeBajadoPorDebajoDeLaDeudaPuedeComprarPagando() {
+		compraImpaga();
+		usuario.setTopeCredito(1000);
+
+		Compra compra = service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 1)), true);
+
+		assertTrue(compra.isPagado());
+	}
+
 	// --- realizarCompra: entradas invalidas ---
 
 	@Test

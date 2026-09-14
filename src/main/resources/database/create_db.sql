@@ -3,7 +3,7 @@ CREATE TABLE Persona (
     ID INT NOT NULL AUTO_INCREMENT,
     nombre VARCHAR(255) NOT NULL,
     apellido VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
     contraseña VARCHAR(255) NOT NULL,
     PRIMARY KEY (ID)
 );

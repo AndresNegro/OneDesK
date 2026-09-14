@@ -8,4 +8,5 @@ import com.OneDesK.modelo.Persona;
 @Repository
 public interface PersonaRepository extends JpaRepository<Persona,Integer> {
 
+	boolean existsByEmail(String email);
 }
