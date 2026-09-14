@@ -1,5 +1,7 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.helpers.ValidationUtils;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Inheritance;
@@ -14,29 +16,53 @@ public abstract class Persona extends Persistible {
 	private String nombre;
     @Column(name="apellido")
     private String apellido;
-    @Column(name="email")
+    @Column(name="email", unique=true)
     private String email;
     @Column(name="contraseña")
     private String contrasenia;
 
+    Persona(){
+
+    }
+
     protected Persona(String nombre, String apellido, String email, String contrasenia) {
-        this.nombre = nombre;
-        this.apellido = apellido;
-        this.email = email;
-        this.contrasenia = contrasenia;
+        setNombre(nombre);
+        setApellido(apellido);
+        setEmail(email);
+        setContrasenia(contrasenia);
     }
 
     public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
+    public void setNombre(String nombre) {
+        if (!ValidationUtils.tieneTexto(nombre)) {
+            throw new IllegalArgumentException("El nombre no puede estar vacio");
+        }
+        this.nombre = nombre.trim();
+    }
 
     public String getApellido() { return apellido; }
-    public void setApellido(String apellido) { this.apellido = apellido; }
+    public void setApellido(String apellido) {
+        if (!ValidationUtils.tieneTexto(apellido)) {
+            throw new IllegalArgumentException("El apellido no puede estar vacio");
+        }
+        this.apellido = apellido.trim();
+    }
 
     public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setEmail(String email) {
+        if (!ValidationUtils.isValidEmail(email)) {
+            throw new IllegalArgumentException("El email no es valido: " + email);
+        }
+        this.email = email.trim().toLowerCase();
+    }
 
     public String getContrasenia() { return contrasenia; }
-    public void setContrasenia(String contrasenia) { this.contrasenia = contrasenia; }
+    public void setContrasenia(String contrasenia) {
+        if (!ValidationUtils.tieneMasDe(contrasenia, 5)) {
+            throw new IllegalArgumentException("La contraseña debe tener al menos 5 caracteres");
+        }
+        this.contrasenia = contrasenia;
+    }
 
     @Override
     public String toString() {

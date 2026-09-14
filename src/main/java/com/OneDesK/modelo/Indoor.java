@@ -3,10 +3,9 @@ package com.OneDesK.modelo;
 import com.OneDesK.evento.Evento;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -17,16 +16,14 @@ import java.util.List;
 @Entity
 @Table(name="Indoor")
 public class Indoor extends Persistible{
-	@CollectionTable(name= "Trabaja", joinColumns =	@JoinColumn(name ="ID_INDOOR",referencedColumnName ="ID"))
-	@Column(name ="ID_EMPLEADO_INDOOR")
-	private final List<EmpleadoIndoor> empleadosAsignados;
+	@ManyToMany(mappedBy = "sectoresACargo")
+	private List<EmpleadoIndoor> empleadosAsignados;
+	@OneToMany(mappedBy = "indoor", cascade= CascadeType.ALL, orphanRemoval = true )
+    private List<Planta> plantas;
 	@OneToMany(cascade= CascadeType.ALL, orphanRemoval = true )
-	@JoinColumn(name = "ID_INDOOR", referencedColumnName= "ID")
-    private final List<Planta> plantas;
-	@OneToMany(cascade= CascadeType.ALL, orphanRemoval = true )
-	@JoinColumn(name = "ID_INDOOR", referencedColumnName="ID")
-    private final List<Evento> colaEventos;
-
+	@JoinColumn(name = "ID_INDOOR", referencedColumnName="ID", nullable = false)
+    private List<Evento> colaEventos;
+	
     public Indoor() {
     	this.empleadosAsignados = new ArrayList<>();
         this.plantas = new ArrayList<>();

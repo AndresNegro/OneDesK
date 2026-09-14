@@ -8,8 +8,8 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 
@@ -17,20 +17,23 @@ import jakarta.persistence.Table;
 @Table(name="Compra")
 public class Compra extends Persistible{
 	@Column(name="fechaCompra")
-    private final LocalDate fechaCompra;
+    private LocalDate fechaCompra;
 	@Column(name="pagado")
     private boolean pagado;
 	@Column(name="precio")
     private int precio;
 
-	@OneToOne(cascade= CascadeType.ALL, orphanRemoval = true )
+	@ManyToOne
 	@JoinColumn(name="ID_USUARIO")
-    private final Usuario usuario;
+    private Usuario usuario;
 	
 	@OneToMany(cascade= CascadeType.ALL, orphanRemoval = true )
-	@JoinColumn(name = "ID_COMPRA", referencedColumnName= "ID")
-    private final List<ItemCompra> items;
+	@JoinColumn(name = "ID_COMPRA", referencedColumnName= "ID", nullable = false)
+    private List<ItemCompra> items;
 
+	Compra(){
+	}
+	
     public Compra(LocalDate fechaCompra, boolean pagado, Usuario usuario) {
         this.fechaCompra = fechaCompra;
         this.pagado = pagado;

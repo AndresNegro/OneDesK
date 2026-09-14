@@ -1,7 +1,20 @@
 package com.OneDesK.evento;
 import com.OneDesK.modelo.Planta;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
+
+@Entity
+@DiscriminatorValue("REGADO")
 public class EventoRegado extends Evento {
+
+	@Column(name="realizado")
     private boolean regado;
+
+    EventoRegado() {
+    }
 
     public EventoRegado(Planta planta) {
         super(planta);

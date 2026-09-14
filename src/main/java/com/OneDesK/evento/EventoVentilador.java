@@ -2,8 +2,18 @@ package com.OneDesK.evento;
 
 import com.OneDesK.modelo.Planta;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
+@Entity
+@DiscriminatorValue("VENTILADOR")
 public class EventoVentilador extends Evento {
+	@Column(name="realizado")
     private boolean realizado;
+
+    EventoVentilador() {
+    }
 
     public EventoVentilador(Planta planta) {
         super(planta);

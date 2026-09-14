@@ -24,6 +24,13 @@ tmp/
 .recommenders
 .project
 
+# IntelliJ IDEA #
+###########################
+.idea/
+*.iml
+*.iws
+*.ipr
+
 
 # OS generated files #
 ######################

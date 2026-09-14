@@ -1,10 +1,27 @@
 package com.OneDesK.evento;
 
 
+import com.OneDesK.modelo.Persistible;
 import com.OneDesK.modelo.Planta;
 
-public abstract class Evento {
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+@Entity
+@Table(name="Evento")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "tipo")
+public abstract class Evento extends Persistible {
+	@ManyToOne
+	@JoinColumn(name="ID_PLANTA")
     private Planta planta;
+
+    protected Evento() {
+    }
 
     protected Evento(Planta planta) {
         this.planta = planta;
