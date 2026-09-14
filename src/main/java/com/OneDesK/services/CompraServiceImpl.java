@@ -1,9 +1,8 @@
 package com.OneDesK.services;
 
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,28 +40,8 @@ public class CompraServiceImpl implements CompraService {
 		Usuario usuario = usuarioRepository.findById(usuarioId)
 				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el usuario " + usuarioId));
 
-		Map<Integer, Integer> cantidadPorProducto = new LinkedHashMap<>();
-		for (LineaCompra linea : lineas) {
-			if (linea.cantidad() <= 0) {
-				throw new OperacionInvalidaException(
-						"La cantidad del producto " + linea.productoId() + " debe ser mayor a cero");
-			}
-			cantidadPorProducto.merge(linea.productoId(), linea.cantidad(), Integer::sum);
-		}
-
-		Map<Producto, Integer> pedido = new LinkedHashMap<>();
-		int total = 0;
-		for (Map.Entry<Integer, Integer> entrada : cantidadPorProducto.entrySet()) {
-			Producto producto = productoRepository.findById(entrada.getKey())
-					.orElseThrow(() -> new RecursoNoEncontradoException("No existe el producto " + entrada.getKey()));
-			int cantidad = entrada.getValue();
-			if (producto.getStock() < cantidad) {
-				throw new StockInsuficienteException("Stock insuficiente de " + producto.getGenetica() + ": hay "
-						+ producto.getStock() + " y se piden " + cantidad);
-			}
-			pedido.put(producto, cantidad);
-			total += producto.getPrecio() * cantidad;
-		}
+		List<ItemPedido> pedido = armarPedido(lineas);
+		int total = validarStockYCalcularTotal(pedido);
 
 		if (!pagado) {
 			usuario.recalcularDeuda();
@@ -74,15 +53,57 @@ public class CompraServiceImpl implements CompraService {
 		}
 
 		Compra compra = new Compra(LocalDate.now(), pagado, usuario);
-		for (Map.Entry<Producto, Integer> entrada : pedido.entrySet()) {
-			Producto producto = entrada.getKey();
-			int cantidad = entrada.getValue();
-			producto.descontarStock(cantidad);
-			compra.addItem(new ItemCompra(producto, cantidad));
+		for (ItemPedido item : pedido) {
+			item.getProducto().descontarStock(item.getCantidad());
+			compra.addItem(new ItemCompra(item.getProducto(), item.getCantidad()));
 		}
 		usuario.agregarCompra(compra);
 
 		return repositorio.save(compra);
+	}
+
+	/** Resuelve cada linea contra el catalogo, juntando las que repiten producto. */
+	private List<ItemPedido> armarPedido(List<LineaCompra> lineas) {
+		List<ItemPedido> pedido = new ArrayList<>();
+		for (LineaCompra linea : lineas) {
+			if (linea.cantidad() <= 0) {
+				throw new OperacionInvalidaException(
+						"La cantidad del producto " + linea.productoId() + " debe ser mayor a cero");
+			}
+			ItemPedido repetido = buscarPorProducto(pedido, linea.productoId());
+			if (repetido != null) {
+				repetido.sumarCantidad(linea.cantidad());
+			} else {
+				Producto producto = productoRepository.findById(linea.productoId())
+						.orElseThrow(() -> new RecursoNoEncontradoException(
+								"No existe el producto " + linea.productoId()));
+				pedido.add(new ItemPedido(linea.productoId(), producto, linea.cantidad()));
+			}
+		}
+		return pedido;
+	}
+
+	private ItemPedido buscarPorProducto(List<ItemPedido> pedido, int productoId) {
+		for (ItemPedido item : pedido) {
+			if (item.getProductoId() == productoId) {
+				return item;
+			}
+		}
+		return null;
+	}
+
+	/** Recorre todo el pedido antes de tocar nada, para que un item sin stock no deje descuentos a medias. */
+	private int validarStockYCalcularTotal(List<ItemPedido> pedido) {
+		int total = 0;
+		for (ItemPedido item : pedido) {
+			Producto producto = item.getProducto();
+			if (producto.getStock() < item.getCantidad()) {
+				throw new StockInsuficienteException("Stock insuficiente de " + producto.getGenetica() + ": hay "
+						+ producto.getStock() + " y se piden " + item.getCantidad());
+			}
+			total += producto.getPrecio() * item.getCantidad();
+		}
+		return total;
 	}
 
 	@Override
@@ -114,5 +135,24 @@ public class CompraServiceImpl implements CompraService {
 	private Compra buscarCompra(int compraId) {
 		return repositorio.findById(compraId)
 				.orElseThrow(() -> new RecursoNoEncontradoException("No existe la compra " + compraId));
+	}
+
+	/** Producto ya resuelto del catalogo con la cantidad total pedida, antes de convertirse en ItemCompra. */
+	private static class ItemPedido {
+
+		private final int productoId;
+		private final Producto producto;
+		private int cantidad;
+
+		ItemPedido(int productoId, Producto producto, int cantidad) {
+			this.productoId = productoId;
+			this.producto = producto;
+			this.cantidad = cantidad;
+		}
+
+		int getProductoId() { return productoId; }
+		Producto getProducto() { return producto; }
+		int getCantidad() { return cantidad; }
+		void sumarCantidad(int extra) { this.cantidad += extra; }
 	}
 }
