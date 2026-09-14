@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.OneDesK.excepciones.OperacionInvalidaException;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,14 +28,14 @@ public class Compra extends Persistible{
 	@ManyToOne
 	@JoinColumn(name="ID_USUARIO")
     private Usuario usuario;
-	
+
 	@OneToMany(cascade= CascadeType.ALL, orphanRemoval = true )
 	@JoinColumn(name = "ID_COMPRA", referencedColumnName= "ID", nullable = false)
     private List<ItemCompra> items;
 
 	Compra(){
 	}
-	
+
     public Compra(LocalDate fechaCompra, boolean pagado, Usuario usuario) {
         this.fechaCompra = fechaCompra;
         this.pagado = pagado;
@@ -47,16 +49,16 @@ public class Compra extends Persistible{
         precio += i.getPrecio();
     }
 
-    public void deleteItem(ItemCompra ic) {
-        if (items.remove(ic)) {
-            precio -= ic.getPrecio();
-            if (precio < 0) precio = 0;
+    // sin setPagado: una compra pagada no vuelve a quedar impaga
+    public void marcarComoPagada() {
+        if (pagado) {
+            throw new OperacionInvalidaException("La compra ya esta pagada");
         }
+        this.pagado = true;
     }
 
     public LocalDate getFechaCompra() { return fechaCompra; }
     public boolean isPagado() { return pagado; }
-    public void setPagado(boolean aux) { this.pagado = aux; }
     public Usuario getUsuario() { return usuario; }
     public List<ItemCompra> getItems() { return Collections.unmodifiableList(items); }
     public int getPrecio() { return precio; }

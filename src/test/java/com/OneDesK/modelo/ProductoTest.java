@@ -46,4 +46,20 @@ public class ProductoTest {
 
 		assertEquals(10, kush.getStock());
 	}
+
+	@Test
+	public void noSeDescuentanCantidadesCeroONegativas() {
+		assertThrows(IllegalArgumentException.class, () -> kush.descontarStock(0));
+		assertThrows(IllegalArgumentException.class, () -> kush.descontarStock(-3));
+
+		assertEquals(10, kush.getStock());
+	}
+
+	@Test
+	public void noSeReponenCantidadesCeroONegativas() {
+		assertThrows(IllegalArgumentException.class, () -> kush.reponerStock(0));
+		assertThrows(IllegalArgumentException.class, () -> kush.reponerStock(-50));
+
+		assertEquals(10, kush.getStock());
+	}
 }

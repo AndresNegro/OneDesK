@@ -27,7 +27,6 @@ public abstract class Evento extends Persistible {
         this.planta = planta;
     }
 
-    public void setPlanta(Planta p) { this.planta = p; }
     public Planta getPlanta() { return planta; }
 
     public abstract void setRealizado(boolean r);

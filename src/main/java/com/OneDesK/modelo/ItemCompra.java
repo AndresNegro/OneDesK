@@ -6,6 +6,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+// Sin setters: la compra suma el precio del item al agregarlo, cambiarlo despues dejaria mal el total
 @Entity
 @Table(name="ItemCompra")
 public class ItemCompra extends Persistible {
@@ -23,15 +24,16 @@ public class ItemCompra extends Persistible {
 	}
 
     public ItemCompra(Producto producto, int cantidad) {
+        if (cantidad <= 0) {
+            throw new IllegalArgumentException("La cantidad de un item debe ser mayor a cero");
+        }
         this.producto = producto;
         this.cantidad = cantidad;
         this.precioUnitario = producto.getPrecio();
     }
 
     public Producto getProducto() { return producto; }
-    public void setProducto(Producto p) { this.producto = p; }
     public int getCantidad() { return cantidad; }
-    public void setCantidad(int cant) { this.cantidad = cant; }
 
     public int getPrecioUnitario() { return precioUnitario; }
 

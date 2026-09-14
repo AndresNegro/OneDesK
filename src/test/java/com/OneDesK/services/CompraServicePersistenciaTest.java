@@ -1,0 +1,92 @@
+package com.OneDesK.services;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
+
+import com.OneDesK.modelo.Compra;
+import com.OneDesK.modelo.Producto;
+import com.OneDesK.modelo.Usuario;
+
+// Complementa a CompraServiceImplTest, que usa repositorios mockeados: aca se verifica que todo quede guardado
+@DataJpaTest
+@Import(CompraServiceImpl.class)
+public class CompraServicePersistenciaTest {
+
+	@Autowired
+	private CompraService service;
+	@Autowired
+	private TestEntityManager em;
+
+	private Usuario usuario;
+	private Producto kush;
+
+	@BeforeEach
+	public void setUp() {
+		usuario = new Usuario("Andres", "Negro", "comprador@test.com", "12345");
+		usuario.setTopeCredito(10000);
+		em.persist(usuario);
+		kush = new Producto("OG Kush", 10, 1000);
+		em.persist(kush);
+		em.flush();
+	}
+
+	@Test
+	public void unaCompraImpagaQuedaGuardadaConSuDeudaYElStockDescontado() {
+		int idCompra = comprarKush(3).getId();
+		em.flush();
+		em.clear();
+
+		Compra compra = em.find(Compra.class, idCompra);
+		assertFalse(compra.isPagado());
+		assertEquals(3000, compra.getPrecio());
+		assertEquals(1, compra.getItems().size());
+		assertEquals(1000, compra.getItems().get(0).getPrecioUnitario());
+		assertEquals(3000, em.find(Usuario.class, usuario.getId()).getDeuda().getMonto());
+		assertEquals(7, em.find(Producto.class, kush.getId()).getStock());
+	}
+
+	@Test
+	public void registrarElPagoQuedaGuardado() {
+		int idCompra = comprarKush(3).getId();
+		em.flush();
+
+		service.registrarPago(idCompra);
+		em.flush();
+		em.clear();
+
+		assertTrue(em.find(Compra.class, idCompra).isPagado());
+		assertEquals(0, em.find(Usuario.class, usuario.getId()).getDeuda().getMonto());
+	}
+
+	@Test
+	public void anularUnaCompraLaBorraConSusItemsYDevuelveElStock() {
+		int idCompra = comprarKush(3).getId();
+		em.flush();
+
+		service.anularCompra(idCompra);
+		em.flush();
+		em.clear();
+
+		assertNull(em.find(Compra.class, idCompra));
+		long items = em.getEntityManager().createQuery("select count(i) from ItemCompra i", Long.class)
+				.getSingleResult();
+		assertEquals(0, items);
+		assertEquals(10, em.find(Producto.class, kush.getId()).getStock());
+		assertEquals(0, em.find(Usuario.class, usuario.getId()).getDeuda().getMonto());
+	}
+
+	private Compra comprarKush(int cantidad) {
+		return service.realizarCompra(usuario.getId(), List.of(new LineaCompra(kush.getId(), cantidad)), false);
+	}
+}

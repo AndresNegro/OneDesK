@@ -4,9 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
 import com.OneDesK.excepciones.OperacionInvalidaException;
@@ -19,6 +23,8 @@ public class ProductoServiceImplTest {
 
 	@Autowired
 	private ProductoService service;
+	@Autowired
+	private TestEntityManager em;
 
 	// --- crearProducto ---
 
@@ -71,5 +77,56 @@ public class ProductoServiceImplTest {
 	@Test
 	public void cambiarElPrecioDeUnProductoInexistenteFalla() {
 		assertThrows(RecursoNoEncontradoException.class, () -> service.cambiarPrecio(9999, 1500));
+	}
+
+	// --- catalogo ---
+
+	@Test
+	public void elCatalogoSoloMuestraProductosConStock() {
+		guardar("OG Kush", 10, 1000);
+		guardar("Amnesia", 0, 800);
+		guardar("Haze", 5, 1200);
+
+		assertEquals(List.of("Haze", "OG Kush"), geneticas(service.listarProductos()));
+	}
+
+	@Test
+	public void buscarPorGeneticaEncuentraPartesSinDistinguirMayusculas() {
+		guardar("OG Kush", 10, 1000);
+		guardar("Kush Mints", 3, 1500);
+		guardar("Purple Kush", 0, 900);
+		guardar("Amnesia", 8, 800);
+
+		assertEquals(List.of("Kush Mints", "OG Kush"), geneticas(service.buscarPorGenetica("kUsH")));
+	}
+
+	@Test
+	public void buscarSinTextoDevuelveTodoElCatalogo() {
+		guardar("OG Kush", 10, 1000);
+		guardar("Amnesia", 0, 800);
+
+		assertEquals(List.of("OG Kush"), geneticas(service.buscarPorGenetica("   ")));
+	}
+
+	@Test
+	public void listarPorPrecioOrdenaDelMasBaratoAlMasCaro() {
+		guardar("OG Kush", 1, 3000);
+		guardar("Amnesia", 2, 1000);
+		guardar("Haze", 0, 500);
+
+		assertEquals(List.of("Amnesia", "OG Kush"), geneticas(service.listarPorPrecio()));
+	}
+
+	private void guardar(String genetica, int stock, int precio) {
+		em.persist(new Producto(genetica, stock, precio));
+		em.flush();
+	}
+
+	private List<String> geneticas(List<Producto> productos) {
+		List<String> nombres = new ArrayList<>();
+		for (Producto producto : productos) {
+			nombres.add(producto.getGenetica());
+		}
+		return nombres;
 	}
 }

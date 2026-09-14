@@ -71,7 +71,8 @@ public class Planta extends Persistible{
         this.tiempoVentilacion = tiempoVentilacion;
     }
 
-    public void setIndoor(Indoor indoor) { this.indoor = indoor; }
+    // sin public: solo Indoor la cambia, desde addPlanta y deletePlanta
+    void setIndoor(Indoor indoor) { this.indoor = indoor; }
     public Indoor getIndoor() { return indoor; }
 
     public LocalDate getFechaCosecha() { return fechaCosecha; }
@@ -83,6 +84,9 @@ public class Planta extends Persistible{
             throw new OperacionInvalidaException("La planta " + genetica + " ya fue cosechada el " + fechaCosecha);
         }
         this.fechaCosecha = LocalDate.now();
+        if (indoor != null) {
+            indoor.descartarEventosPendientesDe(this);
+        }
     }
 
    

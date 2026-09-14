@@ -14,7 +14,8 @@ public class Deuda extends Persistible{
         this.monto = 0;
     }
 
-    public void setMonto(int montoActualizado) { this.monto = montoActualizado; }
+    // sin public: el monto se deriva de las compras impagas y solo lo actualiza Usuario
+    void setMonto(int montoActualizado) { this.monto = montoActualizado; }
     public int getMonto() { return monto; }
 
     @Override

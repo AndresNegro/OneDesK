@@ -27,9 +27,6 @@ public class EventoRegado extends Evento {
     @Override
     public synchronized boolean getRealizado() { return regado; }
 
-    public boolean isRegado() { return regado; }
-    public void setRegado(boolean regado) { this.regado = regado; }
-
     @Override
     public String toString() {
         return "EventoRegado{planta=" + getPlanta().getGenetica() + ", regado=" + regado + '}';

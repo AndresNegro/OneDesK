@@ -1,11 +1,15 @@
 package com.OneDesK.modelo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.OneDesK.excepciones.OperacionInvalidaException;
 
 public class CompraTest {
 
@@ -37,39 +41,34 @@ public class CompraTest {
 	}
 
 	@Test
-	public void borrarUnItemRestaLoQueEseItemAporto() {
-		compra.addItem(new ItemCompra(kush, 2));
-		ItemCompra itemHaze = new ItemCompra(haze, 3);
-		compra.addItem(itemHaze);
+	public void elItemConservaElPrecioAunqueCambieElDelProducto() {
+		ItemCompra item = new ItemCompra(kush, 2);
+		compra.addItem(item);
 
-		compra.deleteItem(itemHaze);
-
-		assertEquals(2000, compra.getPrecio());
-		assertEquals(1, compra.getItems().size());
-	}
-
-	@Test
-	public void cambiarElPrecioEntreAgregarYBorrarNoRompeElTotal() {
-		ItemCompra itemKush = new ItemCompra(kush, 2);
-		compra.addItem(itemKush);
-		compra.addItem(new ItemCompra(haze, 1));
-		assertEquals(2500, compra.getPrecio());
-
-		// el catalogo sube de precio despues de hecha la compra
 		kush.setPrecio(5000);
-		compra.deleteItem(itemKush);
 
-		// se resta lo que se habia sumado (2000), no lo que valdria hoy (10000)
-		assertEquals(500, compra.getPrecio());
+		assertEquals(1000, item.getPrecioUnitario());
+		assertEquals(2000, item.getPrecio());
+		assertEquals(2000, compra.getPrecio());
 	}
 
 	@Test
-	public void borrarUnItemQueNoEstaNoCambiaElTotal() {
-		compra.addItem(new ItemCompra(kush, 2));
+	public void laCantidadDeUnItemTieneQueSerMayorACero() {
+		assertThrows(IllegalArgumentException.class, () -> new ItemCompra(kush, 0));
+		assertThrows(IllegalArgumentException.class, () -> new ItemCompra(kush, -1));
+	}
 
-		compra.deleteItem(new ItemCompra(haze, 3));
+	@Test
+	public void marcarComoPagadaLaDejaPagada() {
+		compra.marcarComoPagada();
 
-		assertEquals(2000, compra.getPrecio());
-		assertEquals(1, compra.getItems().size());
+		assertTrue(compra.isPagado());
+	}
+
+	@Test
+	public void noSePuedeMarcarDosVecesComoPagada() {
+		compra.marcarComoPagada();
+
+		assertThrows(OperacionInvalidaException.class, compra::marcarComoPagada);
 	}
 }

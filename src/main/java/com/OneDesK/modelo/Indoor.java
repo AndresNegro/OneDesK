@@ -63,7 +63,20 @@ public class Indoor extends Persistible{
 
 
     public void recibirEvento(Evento e) {
+        Planta planta = e.getPlanta();
+        if (!plantas.contains(planta)) {
+            throw new OperacionInvalidaException("La planta de ese evento no pertenece a este indoor");
+        }
+        if (planta.isCosechada()) {
+            throw new OperacionInvalidaException(
+                    "La planta " + planta.getGenetica() + " ya fue cosechada y no recibe eventos");
+        }
         colaEventos.add(e);
+    }
+
+    // lo llama Planta al cosecharse: los pendientes ya no se van a atender, los atendidos quedan como historial
+    void descartarEventosPendientesDe(Planta p) {
+        colaEventos.removeIf(evento -> evento.getPlanta() == p && !evento.getRealizado());
     }
 
     /** Todos los eventos del indoor, atendidos o no: los atendidos quedan como historial. */

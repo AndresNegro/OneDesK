@@ -94,19 +94,19 @@ public class MapeoRelacionesTest {
 	// --- Compra / ItemCompra / Producto ---
 
 	@Test
-	public void borrarUnItemNoBorraElProductoDelCatalogo() {
+	public void borrarUnaCompraNoBorraLosProductosDeSusItems() {
 		Usuario usuario = nuevoUsuario("comprador@test.com");
 		Producto producto = new Producto("OG Kush", 10, 1000);
 		em.persist(usuario);
 		em.persist(producto);
 
 		Compra compra = new Compra(LocalDate.now(), false, usuario);
-		ItemCompra item = new ItemCompra(producto, 2);
-		compra.addItem(item);
+		compra.addItem(new ItemCompra(producto, 2));
 		em.persistAndFlush(compra);
 		int idProducto = producto.getId();
 
-		compra.deleteItem(item);
+		// los items se borran con la compra, pero el producto del catalogo tiene que seguir existiendo
+		em.remove(compra);
 		em.flush();
 		em.clear();
 

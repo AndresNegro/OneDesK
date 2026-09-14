@@ -1,5 +1,7 @@
 package com.OneDesK.services;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +13,8 @@ import com.OneDesK.repositories.ProductoRepository;
 
 @Service
 public class ProductoServiceImpl implements ProductoService {
+
+	private static final int SIN_STOCK = 0;
 
 	@Autowired
 	private ProductoRepository repositorio;
@@ -33,5 +37,27 @@ public class ProductoServiceImpl implements ProductoService {
 				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el producto " + productoId));
 		producto.setPrecio(nuevoPrecio);
 		return producto;
+	}
+
+	@Override
+	@Transactional
+	public List<Producto> listarProductos() {
+		return repositorio.findByStockGreaterThanOrderByGeneticaAsc(SIN_STOCK);
+	}
+
+	@Override
+	@Transactional
+	public List<Producto> buscarPorGenetica(String texto) {
+		if (texto == null || texto.isBlank()) {
+			return listarProductos();
+		}
+		return repositorio.findByGeneticaContainingIgnoreCaseAndStockGreaterThanOrderByGeneticaAsc(texto.trim(),
+				SIN_STOCK);
+	}
+
+	@Override
+	@Transactional
+	public List<Producto> listarPorPrecio() {
+		return repositorio.findByStockGreaterThanOrderByPrecioAsc(SIN_STOCK);
 	}
 }

@@ -2,8 +2,10 @@ package com.OneDesK.modelo;
 
 
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
+
+import com.OneDesK.excepciones.OperacionInvalidaException;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -25,7 +27,7 @@ public class Usuario extends Persona {
 
 	Usuario(){
 	}
-	
+
     public Usuario(String nombre, String apellido, String email, String contrasenia) {
         super(nombre, apellido, email, contrasenia);
         this.compras = new ArrayList<>();
@@ -33,41 +35,20 @@ public class Usuario extends Persona {
         this.topeCredito = 0;
     }
 
-    public void verProductos(List<Producto> productos) {
-        if (productos.isEmpty()) {
-            System.out.println("  No hay productos cargados.");
-            return;
-        }
-        for (Producto p : productos) {
-            System.out.println("  - " + p.getGenetica() + " | stock=" + p.getStock() + " | $" + p.getPrecio());
-        }
-    }
-
-    public List<Producto> buscarPorGenetica(String query, List<Producto> productos) {
-        List<Producto> resultado = new ArrayList<>();
-        if (query == null) return resultado;
-        String q = query.toLowerCase();
-        for (Producto p : productos) {
-            if (p.getGenetica().toLowerCase().contains(q)) resultado.add(p);
-        }
-        return resultado;
-    }
-
-    public List<Producto> ordenarPorPrecio(List<Producto> productos) {
-        List<Producto> copia = new ArrayList<>(productos);
-        copia.sort(Comparator.comparingInt(Producto::getPrecio));
-        return copia;
-    }
-
     public void agregarCompra(Compra c) {
-        if (c == null) return;
+        if (c.getUsuario() != this) {
+            throw new OperacionInvalidaException("La compra pertenece a otro usuario");
+        }
+        if (compras.contains(c)) {
+            throw new OperacionInvalidaException("La compra ya fue agregada");
+        }
         compras.add(c);
         recalcularDeuda();
     }
 
     public void registrarPago(Compra c) {
-        if (c == null || c.isPagado()) return;
-        c.setPagado(true);
+        verificarQueEsSuya(c);
+        c.marcarComoPagada();
         recalcularDeuda();
     }
 
@@ -87,7 +68,8 @@ public class Usuario extends Persona {
         return impagas;
     }
 
-    public List<Compra> getCompras() { return compras; }
+    // no modificable: agregar o sacar compras tiene que pasar por los metodos que recalculan la deuda
+    public List<Compra> getCompras() { return Collections.unmodifiableList(compras); }
     public Deuda getDeuda() { return deuda; }
     public int getTopeCredito() { return topeCredito; }
     public void setTopeCredito(int topeCredito) {
@@ -96,7 +78,16 @@ public class Usuario extends Persona {
         }
         this.topeCredito = topeCredito;
     }
+
     public void deleteCompra(Compra c) {
-        if (compras.remove(c)) recalcularDeuda();
+        verificarQueEsSuya(c);
+        compras.remove(c);
+        recalcularDeuda();
+    }
+
+    private void verificarQueEsSuya(Compra c) {
+        if (!compras.contains(c)) {
+            throw new OperacionInvalidaException("La compra no pertenece a este usuario");
+        }
     }
 }

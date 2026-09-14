@@ -29,6 +29,8 @@ public class IndoorTest {
 		amnesia = indoor.addPlanta(nuevaPlanta("Amnesia"));
 	}
 
+	// --- quitar plantas ---
+
 	@Test
 	public void quitarUnaPlantaDescartaSoloSusEventos() {
 		indoor.recibirEvento(new EventoLuz(kush));
@@ -45,14 +47,14 @@ public class IndoorTest {
 
 	@Test
 	public void noSePuedeQuitarUnaPlantaCosechada() {
-		indoor.recibirEvento(new EventoLuz(kush));
 		kush.cosechar();
 
 		assertThrows(OperacionInvalidaException.class, () -> indoor.deletePlanta(kush));
 
 		assertTrue(indoor.getPlantas().contains(kush));
-		assertEquals(1, indoor.getColaEventos().size());
 	}
+
+	// --- eventos ---
 
 	@Test
 	public void losEventosAtendidosNoFiguranComoPendientes() {
@@ -64,6 +66,42 @@ public class IndoorTest {
 
 		assertEquals(1, indoor.getEventosPendientes().size());
 		assertEquals(2, indoor.getColaEventos().size());
+	}
+
+	@Test
+	public void cosecharUnaPlantaDescartaSusPendientesYConservaLosAtendidos() {
+		EventoRegado atendido = new EventoRegado(kush);
+		indoor.recibirEvento(atendido);
+		atendido.setRealizado(true);
+		indoor.recibirEvento(new EventoLuz(kush));
+		EventoLuz deAmnesia = new EventoLuz(amnesia);
+		indoor.recibirEvento(deAmnesia);
+
+		kush.cosechar();
+
+		assertEquals(2, indoor.getColaEventos().size());
+		assertTrue(indoor.getColaEventos().contains(atendido));
+		assertEquals(1, indoor.getEventosPendientes().size());
+		assertSame(deAmnesia, indoor.getEventosPendientes().get(0));
+	}
+
+	@Test
+	public void noSeAceptanEventosDeUnaPlantaDeOtroIndoor() {
+		Indoor otroIndoor = new Indoor();
+		Planta ajena = otroIndoor.addPlanta(nuevaPlanta("Haze"));
+
+		assertThrows(OperacionInvalidaException.class, () -> indoor.recibirEvento(new EventoLuz(ajena)));
+
+		assertEquals(0, indoor.getColaEventos().size());
+	}
+
+	@Test
+	public void noSeAceptanEventosDeUnaPlantaCosechada() {
+		kush.cosechar();
+
+		assertThrows(OperacionInvalidaException.class, () -> indoor.recibirEvento(new EventoVentilador(kush)));
+
+		assertEquals(0, indoor.getColaEventos().size());
 	}
 
 	private Planta nuevaPlanta(String genetica) {

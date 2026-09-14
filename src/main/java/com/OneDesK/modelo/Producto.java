@@ -17,10 +17,10 @@ public class Producto extends Persistible{
     private int precio;
 
 	Producto(){
-		
+
 	}
-	
-	
+
+
     public Producto(String genetica, int stock, int precio) {
         if (genetica == null || genetica.isBlank()) {
             throw new IllegalArgumentException("La genetica no puede estar vacia");
@@ -36,8 +36,8 @@ public class Producto extends Persistible{
         this.precio = precio;
     }
 
+    // sin setGenetica: la genetica es unica y es lo que usa la cosecha para encontrar el producto
     public String getGenetica() { return genetica; }
-    public void setGenetica(String g) { this.genetica = g; }
     // sin setStock: el stock solo cambia por cosechas (reponerStock) y por compras (descontarStock)
     public int getStock() { return stock; }
     public int getPrecio() { return precio; }
@@ -49,6 +49,7 @@ public class Producto extends Persistible{
     }
 
     public void descontarStock(int cantidad) {
+        validarCantidad(cantidad);
         if (cantidad > stock) {
             throw new StockInsuficienteException(
                 "Stock insuficiente de " + genetica + ": hay " + stock + " y se piden " + cantidad);
@@ -57,7 +58,15 @@ public class Producto extends Persistible{
     }
 
     public void reponerStock(int cantidad) {
+        validarCantidad(cantidad);
         this.stock += cantidad;
+    }
+
+    // una cantidad negativa daria vuelta la operacion: reponer -50 descontaria y podria dejar stock negativo
+    private void validarCantidad(int cantidad) {
+        if (cantidad <= 0) {
+            throw new IllegalArgumentException("La cantidad debe ser mayor a cero");
+        }
     }
 
     @Override
