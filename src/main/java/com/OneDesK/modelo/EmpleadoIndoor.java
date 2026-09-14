@@ -35,10 +35,8 @@ public class EmpleadoIndoor extends Empleado {
         this.salarioMensual = salarioMensual;
     }
 
-    public void cargarRegistroProduccion(Indoor indoor, Producto p, int cantidad) {
-        RegistroProduccion r = new RegistroProduccion(indoor, this, p, cantidad);
-        System.out.println("  Registro de produccion cargado: " + r);
-        modificarProducto(p,p.getStock()+cantidad,null);
+    public boolean estaAsignadoA(Indoor indoor) {
+        return sectoresACargo.contains(indoor);
     }
 
     // Alta de producto: agrega un nuevo Producto a la lista recibida.

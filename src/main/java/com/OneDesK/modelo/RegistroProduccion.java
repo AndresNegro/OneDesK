@@ -1,14 +1,20 @@
 package com.OneDesK.modelo;
 
+import java.time.LocalDate;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+// Sin setters: un registro de produccion es historico y no se modifica una vez cargado
 @Entity
 @Table(name="RegistroProduccion")
 public class RegistroProduccion extends Persistible {
+	@ManyToOne
+	@JoinColumn(name="ID_PLANTA")
+    private Planta planta;
 	@ManyToOne
 	@JoinColumn(name="ID_INDOOR")
     private Indoor indoor;
@@ -20,30 +26,36 @@ public class RegistroProduccion extends Persistible {
     private Producto producto;
 	@Column(name="cantidad")
     private int cantidad;
+	@Column(name="fechaRegistro")
+    private LocalDate fechaRegistro;
 
 	RegistroProduccion(){
-		
+
 	}
-	
-    public RegistroProduccion(Indoor indoor, EmpleadoIndoor empleado, Producto producto, int cantidad) {
-        this.indoor = indoor;
+
+    /** El indoor se toma de la planta, asi el registro no puede apuntar a un indoor distinto del de la planta. */
+    public RegistroProduccion(Planta planta, EmpleadoIndoor empleado, Producto producto, int cantidad) {
+        if (cantidad <= 0) {
+            throw new IllegalArgumentException("La cantidad cosechada debe ser mayor a cero");
+        }
+        this.planta = planta;
+        this.indoor = planta.getIndoor();
         this.empleado = empleado;
         this.producto = producto;
         this.cantidad = cantidad;
+        this.fechaRegistro = LocalDate.now();
     }
 
-    public void setIndoor(Indoor i) { this.indoor = i; }
+    public Planta getPlanta() { return planta; }
     public Indoor getIndoor() { return indoor; }
-    public void setEmpleado(EmpleadoIndoor ei) { this.empleado = ei; }
     public EmpleadoIndoor getEmpleadoIndoor() { return empleado; }
-    public void setProducto(Producto p) { this.producto = p; }
     public Producto getProducto() { return producto; }
-    public void setCantidad(int cant) { this.cantidad = cant; }
     public int getCantidad() { return cantidad; }
+    public LocalDate getFechaRegistro() { return fechaRegistro; }
 
     @Override
     public String toString() {
-        return "RegistroProduccion{" + producto + " x" + cantidad +
-                ", indoor=" + indoor + ", empleado=" + (empleado == null ? "null" : empleado.getNombre()) + '}';
+        return "RegistroProduccion{" + producto + " x" + cantidad + ", fecha=" + fechaRegistro +
+                ", empleado=" + (empleado == null ? "null" : empleado.getNombre()) + '}';
     }
 }

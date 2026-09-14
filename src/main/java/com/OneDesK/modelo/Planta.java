@@ -1,5 +1,6 @@
 package com.OneDesK.modelo;
 import com.OneDesK.evento.*;
+import com.OneDesK.excepciones.OperacionInvalidaException;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -56,6 +57,17 @@ public class Planta extends Persistible{
 
     public void setIndoor(Indoor indoor) { this.indoor = indoor; }
     public Indoor getIndoor() { return indoor; }
+
+    public LocalDate getFechaCosecha() { return fechaCosecha; }
+
+    public boolean isCosechada() { return fechaCosecha != null; }
+
+    public void cosechar() {
+        if (isCosechada()) {
+            throw new OperacionInvalidaException("La planta " + genetica + " ya fue cosechada el " + fechaCosecha);
+        }
+        this.fechaCosecha = LocalDate.now();
+    }
 
    
     public String getGenetica() {

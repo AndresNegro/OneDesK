@@ -22,7 +22,16 @@ public class Producto extends Persistible{
 	
 	
     public Producto(String genetica, int stock, int precio) {
-        this.genetica = genetica;
+        if (genetica == null || genetica.isBlank()) {
+            throw new IllegalArgumentException("La genetica no puede estar vacia");
+        }
+        if (stock < 0) {
+            throw new IllegalArgumentException("El stock no puede ser negativo");
+        }
+        if (precio <= 0) {
+            throw new IllegalArgumentException("El precio debe ser mayor a cero");
+        }
+        this.genetica = genetica.trim();
         this.stock = stock;
         this.precio = precio;
     }

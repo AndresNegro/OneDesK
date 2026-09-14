@@ -100,7 +100,9 @@ CREATE TABLE RegistroProduccion (
     ID INT NOT NULL AUTO_INCREMENT,
     ID_EMPLEADO_INDOOR INT NOT NULL,
     ID_INDOOR INT NOT NULL,
+    ID_PLANTA INT NOT NULL,
     cantidad INT NOT NULL,
+    fechaRegistro DATE NOT NULL,
     ID_PRODUCTO INT NOT NULL,
     PRIMARY KEY (ID)
 );
@@ -187,4 +189,9 @@ ALTER TABLE RegistroProduccion
 ALTER TABLE RegistroProduccion
     ADD CONSTRAINT fk_Producto_ID_RegistroProduccion
         FOREIGN KEY (ID_PRODUCTO) REFERENCES Producto(ID)
+        ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE RegistroProduccion
+    ADD CONSTRAINT fk_Planta_ID_RegistroProduccion
+        FOREIGN KEY (ID_PLANTA) REFERENCES Planta(ID)
         ON DELETE NO ACTION ON UPDATE NO ACTION;

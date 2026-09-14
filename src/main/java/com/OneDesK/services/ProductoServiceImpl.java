@@ -2,7 +2,9 @@ package com.OneDesK.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.OneDesK.excepciones.OperacionInvalidaException;
 import com.OneDesK.modelo.Producto;
 import com.OneDesK.repositories.ProductoRepository;
 
@@ -11,10 +13,15 @@ public class ProductoServiceImpl implements ProductoService {
 
 	@Autowired
 	private ProductoRepository repositorio;
-	
-	@Override
-	public void guardar(Producto producto) {
-		this.repositorio.save(producto);
-	}
 
+	@Override
+	@Transactional
+	public Producto crearProducto(String genetica, int precio) {
+		Producto producto = new Producto(genetica, 0, precio);
+
+		if (repositorio.existsByGeneticaIgnoreCase(producto.getGenetica())) {
+			throw new OperacionInvalidaException("Ya existe un producto con la genetica " + producto.getGenetica());
+		}
+		return repositorio.save(producto);
+	}
 }

@@ -3,5 +3,7 @@ package com.OneDesK.services;
 import com.OneDesK.modelo.Producto;
 
 public interface ProductoService {
-	public void guardar(Producto producto);
+
+	/** Da de alta un producto sin stock: el stock entra despues, con las cosechas. */
+	public Producto crearProducto(String genetica, int precio);
 }

@@ -1,4 +1,7 @@
 ALTER TABLE RegistroProduccion
+    DROP CONSTRAINT fk_Planta_ID_RegistroProduccion;
+
+ALTER TABLE RegistroProduccion
     DROP CONSTRAINT fk_Producto_ID_RegistroProduccion;
 
 ALTER TABLE RegistroProduccion
