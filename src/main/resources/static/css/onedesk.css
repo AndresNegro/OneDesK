@@ -1,0 +1,93 @@
+/* Identidad de OneDesK sobre Bootstrap: verde de cultivo con acento magenta de luz de crecimiento.
+   Se pisan las variables de Bootstrap en vez de sus reglas, asi el HTML usa las clases de siempre. */
+
+:root {
+    --od-verde: #2C6742;
+    --od-verde-oscuro: #1E4A2F;
+    --od-verde-claro: #E6ECE2;
+    --od-magenta: #A3246B;
+    --od-crema: #F1F4EE;
+    --od-tinta: #17211A;
+    --od-borde: #D3DCCF;
+}
+
+body {
+    background-color: var(--od-crema);
+    color: var(--od-tinta);
+}
+
+/* --- navegacion --- */
+
+.navbar-od {
+    background-color: var(--od-verde-oscuro);
+}
+
+.navbar-od .navbar-brand {
+    letter-spacing: .02em;
+}
+
+/* --- botones --- */
+
+.btn-primary {
+    --bs-btn-bg: var(--od-verde);
+    --bs-btn-border-color: var(--od-verde);
+    --bs-btn-hover-bg: var(--od-verde-oscuro);
+    --bs-btn-hover-border-color: var(--od-verde-oscuro);
+    --bs-btn-active-bg: var(--od-verde-oscuro);
+    --bs-btn-active-border-color: var(--od-verde-oscuro);
+    --bs-btn-disabled-bg: var(--od-verde);
+    --bs-btn-disabled-border-color: var(--od-verde);
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--od-verde);
+    --bs-btn-border-color: var(--od-verde);
+    --bs-btn-hover-bg: var(--od-verde);
+    --bs-btn-hover-border-color: var(--od-verde);
+    --bs-btn-active-bg: var(--od-verde-oscuro);
+    --bs-btn-active-border-color: var(--od-verde-oscuro);
+}
+
+/* --- piezas propias --- */
+
+.card {
+    border-color: var(--od-borde);
+}
+
+.encabezado-seccion {
+    border-bottom: 2px solid var(--od-verde);
+    padding-bottom: .5rem;
+}
+
+.badge-genetica {
+    background-color: var(--od-magenta);
+    color: #fff;
+}
+
+.tabla-datos {
+    font-variant-numeric: tabular-nums;
+}
+
+.panel-acceso {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 2rem 1rem;
+}
+
+.marca-acceso {
+    color: var(--od-verde-oscuro);
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+
+.dato-destacado {
+    font-size: 1.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.nota-maqueta {
+    color: #5A675D;
+    font-size: .875rem;
+}
