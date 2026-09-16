@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 public class ItemCompra extends Persistible {
 
 	@ManyToOne
-	@JoinColumn(name="ID_PRODUCTO")
+	@JoinColumn(name="ID_PRODUCTO", nullable = false)
     private Producto producto;
 	@Column(name="cantidad")
     private int cantidad;

@@ -17,7 +17,7 @@ import jakarta.persistence.Table;
 @DiscriminatorColumn(name = "tipo")
 public abstract class Evento extends Persistible {
 	@ManyToOne
-	@JoinColumn(name="ID_PLANTA")
+	@JoinColumn(name="ID_PLANTA", nullable = false)
     private Planta planta;
 
     protected Evento() {

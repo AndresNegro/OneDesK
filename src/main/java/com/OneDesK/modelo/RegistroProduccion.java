@@ -13,16 +13,16 @@ import jakarta.persistence.Table;
 @Table(name="RegistroProduccion")
 public class RegistroProduccion extends Persistible {
 	@ManyToOne
-	@JoinColumn(name="ID_PLANTA")
+	@JoinColumn(name="ID_PLANTA", nullable = false)
     private Planta planta;
 	@ManyToOne
-	@JoinColumn(name="ID_INDOOR")
+	@JoinColumn(name="ID_INDOOR", nullable = false)
     private Indoor indoor;
 	@ManyToOne
-	@JoinColumn(name="ID_EMPLEADO_INDOOR")
+	@JoinColumn(name="ID_EMPLEADO_INDOOR", nullable = false)
     private EmpleadoIndoor empleado;
 	@ManyToOne
-	@JoinColumn(name="ID_PRODUCTO")
+	@JoinColumn(name="ID_PRODUCTO", nullable = false)
     private Producto producto;
 	@Column(name="cantidad")
     private int cantidad;

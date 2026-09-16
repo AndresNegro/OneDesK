@@ -26,7 +26,7 @@ public class Compra extends Persistible{
     private int precio;
 
 	@ManyToOne
-	@JoinColumn(name="ID_USUARIO")
+	@JoinColumn(name="ID_USUARIO", nullable = false)
     private Usuario usuario;
 
 	@OneToMany(cascade= CascadeType.ALL, orphanRemoval = true )

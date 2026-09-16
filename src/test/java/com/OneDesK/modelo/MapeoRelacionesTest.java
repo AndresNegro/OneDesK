@@ -12,6 +12,7 @@ import jakarta.persistence.PersistenceException;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
@@ -20,6 +21,7 @@ import com.OneDesK.evento.EventoLuz;
 import com.OneDesK.evento.EventoVentilador;
 
 @DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public class MapeoRelacionesTest {
 
 	@Autowired
