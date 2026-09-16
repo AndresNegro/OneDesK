@@ -35,7 +35,10 @@ public class UsuarioServiceImpl implements UsuarioService {
 	public Usuario asignarTopeCredito(int usuarioId, int tope) {
 		Usuario usuario = repositorio.findById(usuarioId)
 				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el usuario " + usuarioId));
+
+		// sin save: el usuario ya esta gestionado y el cambio se guarda solo al terminar la transaccion.
+		// save() sobre algo ya guardado hace merge, y el merge rompe el borrado de compras que venga despues.
 		usuario.setTopeCredito(tope);
-		return repositorio.save(usuario);
+		return usuario;
 	}
 }

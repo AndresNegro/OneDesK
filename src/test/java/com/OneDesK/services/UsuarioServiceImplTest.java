@@ -82,7 +82,6 @@ public class UsuarioServiceImplTest {
 	public void asignarTopeCreditoLoActualiza() {
 		Usuario usuario = new Usuario("Andres", "Negro", "andres@test.com", "12345");
 		when(usuarioRepository.findById(1)).thenReturn(Optional.of(usuario));
-		guardaElUsuario();
 
 		service.asignarTopeCredito(1, 8000);
 

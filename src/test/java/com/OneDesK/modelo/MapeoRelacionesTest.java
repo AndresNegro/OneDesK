@@ -199,18 +199,21 @@ public class MapeoRelacionesTest {
 		Indoor indoor = new Indoor();
 		Planta planta = nuevaPlanta("OG Kush");
 		indoor.addPlanta(planta);
-		indoor.recibirEvento(new EventoLuz(planta));
-		indoor.recibirEvento(new EventoVentilador(planta));
+		EventoLuz luz = new EventoLuz(planta);
+		EventoVentilador ventilador = new EventoVentilador(planta);
+		indoor.recibirEvento(luz);
+		indoor.recibirEvento(ventilador);
 		em.persistAndFlush(indoor);
 		int idIndoor = indoor.getId();
+		// se buscan por id: Hibernate inserta agrupando por clase, no en el orden de la cola
+		int idLuz = luz.getId();
+		int idVentilador = ventilador.getId();
 		em.clear();
 
 		Indoor recargado = em.find(Indoor.class, idIndoor);
-		Evento primero = recargado.getColaEventos().get(0);
-		Evento segundo = recargado.getColaEventos().get(1);
 
-		assertInstanceOf(EventoLuz.class, primero);
-		assertInstanceOf(EventoVentilador.class, segundo);
+		assertInstanceOf(EventoLuz.class, recargado.buscarEvento(idLuz));
+		assertInstanceOf(EventoVentilador.class, recargado.buscarEvento(idVentilador));
 	}
 
 	// El campo realizado se guarda en la base y el evento deja de figurar como pendiente al releerlo

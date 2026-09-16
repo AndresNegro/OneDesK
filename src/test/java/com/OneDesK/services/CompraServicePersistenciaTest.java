@@ -2,6 +2,7 @@ package com.OneDesK.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -89,6 +90,56 @@ public class CompraServicePersistenciaTest {
 		assertEquals(0, items);
 		assertEquals(10, em.find(Producto.class, kush.getId()).getStock());
 		assertEquals(0, em.find(Usuario.class, usuario.getId()).getDeuda().getMonto());
+	}
+
+	// Anular una compra creada en la misma transaccion, sin flush en el medio: igual tiene que borrarse.
+	// El orphanRemoval solo no alcanza, porque la coleccion termina como empezo y no ve ningun huerfano.
+	@Test
+	public void anularUnaCompraRecienCreadaTambienLaBorra() {
+		Usuario cliente = new Usuario("Ana", "Perez", "otra@test.com", "12345");
+		cliente.setTopeCredito(20000);
+		em.persist(cliente);
+		Producto otro = new Producto("Amnesia Haze", 50, 1000);
+		em.persistAndFlush(otro);
+
+		Compra anulada = service.realizarCompra(cliente.getId(), List.of(new LineaCompra(otro.getId(), 2)), false);
+		int idAnulada = anulada.getId();
+		service.anularCompra(idAnulada);
+		em.flush();
+		em.clear();
+
+		assertNull(em.find(Compra.class, idAnulada));
+	}
+
+	// Pagar una compra y anular otra: el pago no tiene que impedir el borrado de la anulada
+	@Test
+	public void pagarUnaCompraNoImpideAnularOtra() {
+		int idPagada = comprarKush(3).getId();
+		int idAnulada = comprarKush(2).getId();
+		em.flush();
+
+		service.registrarPago(idPagada);
+		service.anularCompra(idAnulada);
+		em.flush();
+		em.clear();
+
+		assertNull(em.find(Compra.class, idAnulada));
+		assertTrue(em.find(Compra.class, idPagada).isPagado());
+	}
+
+	// Anular una compra cuando el usuario tiene varias: solo se borra esa
+	@Test
+	public void anularUnaDeDosComprasBorraSoloEsa() {
+		int idPrimera = comprarKush(3).getId();
+		int idSegunda = comprarKush(2).getId();
+		em.flush();
+
+		service.anularCompra(idSegunda);
+		em.flush();
+		em.clear();
+
+		assertNull(em.find(Compra.class, idSegunda));
+		assertNotNull(em.find(Compra.class, idPrimera));
 	}
 
 	private Compra comprarKush(int cantidad) {

@@ -114,7 +114,7 @@ public class CompraServiceImpl implements CompraService {
 			throw new OperacionInvalidaException("La compra " + compraId + " ya esta pagada");
 		}
 		compra.getUsuario().registrarPago(compra);
-		return repositorio.save(compra);
+		return compra;
 	}
 
 	@Override
@@ -129,7 +129,11 @@ public class CompraServiceImpl implements CompraService {
 		}
 		Usuario usuario = compra.getUsuario();
 		usuario.deleteCompra(compra);
-		usuarioRepository.save(usuario);
+
+		// el borrado se pide explicito y no se deja en manos del orphanRemoval de Usuario.compras:
+		// si la compra se creo y se anulo dentro de la misma transaccion, la coleccion queda como estaba
+		// y Hibernate no la ve como huerfana, pero la fila ya se inserto igual por el id autoincremental
+		repositorio.delete(compra);
 	}
 
 	private Compra buscarCompra(int compraId) {
