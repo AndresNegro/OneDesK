@@ -68,6 +68,20 @@ public class UsuarioTest {
 		assertEquals("andres@test.com", usuario.getEmail());
 	}
 
+	// Cambiar nombre, apellido o contrasenia se valida igual que al crear, y no pisa el valor anterior
+	@Test
+	public void cambiarLosDatosPersonalesTambienSeValida() {
+		Usuario usuario = nuevoUsuario("andres@test.com");
+
+		assertThrows(IllegalArgumentException.class, () -> usuario.setNombre("   "));
+		assertThrows(IllegalArgumentException.class, () -> usuario.setApellido(null));
+		assertThrows(IllegalArgumentException.class, () -> usuario.setContrasenia("1234"));
+
+		assertEquals("Andres", usuario.getNombre());
+		assertEquals("Negro", usuario.getApellido());
+		assertEquals("12345", usuario.getContrasenia());
+	}
+
 	// --- tope de credito ---
 
 	// Un tope de credito negativo se rechaza y el tope anterior queda intacto

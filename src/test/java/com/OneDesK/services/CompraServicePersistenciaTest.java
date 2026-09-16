@@ -92,6 +92,25 @@ public class CompraServicePersistenciaTest {
 		assertEquals(0, em.find(Usuario.class, usuario.getId()).getDeuda().getMonto());
 	}
 
+	// Una compra de dos productos distintos: se guardan los dos items y se descuentan los dos stocks
+	@Test
+	public void unaCompraConDosProductosDistintosDescuentaLosDosStocks() {
+		Producto haze = new Producto("Amnesia Haze", 8, 2000);
+		em.persistAndFlush(haze);
+
+		Compra compra = service.realizarCompra(usuario.getId(),
+				List.of(new LineaCompra(kush.getId(), 2), new LineaCompra(haze.getId(), 3)), false);
+		int idCompra = compra.getId();
+		em.flush();
+		em.clear();
+
+		Compra recargada = em.find(Compra.class, idCompra);
+		assertEquals(2, recargada.getItems().size());
+		assertEquals(8000, recargada.getPrecio());
+		assertEquals(8, em.find(Producto.class, kush.getId()).getStock());
+		assertEquals(5, em.find(Producto.class, haze.getId()).getStock());
+	}
+
 	// Anular una compra creada en la misma transaccion, sin flush en el medio: igual tiene que borrarse.
 	// El orphanRemoval solo no alcanza, porque la coleccion termina como empezo y no ve ningun huerfano.
 	@Test
