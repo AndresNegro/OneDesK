@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
 
@@ -85,5 +86,13 @@ public class PlantaTest {
 		planta.cosechar();
 
 		assertThrows(OperacionInvalidaException.class, planta::cosechar);
+	}
+
+	// Una planta que no esta en ningun indoor no tiene donde dejar eventos: la revision no genera ninguno
+	@Test
+	public void unaPlantaSinIndoorNoGeneraEventos() {
+		Planta planta = new Planta("OG Kush", HOY.minusDays(10), HOY.minusDays(20), 60, 120, 30);
+
+		assertEquals(0, planta.generarEventosVencidos(LocalDateTime.now()));
 	}
 }

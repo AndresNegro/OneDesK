@@ -2,112 +2,123 @@ package com.OneDesK.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
 
 import com.OneDesK.excepciones.EmailDuplicadoException;
 import com.OneDesK.excepciones.RecursoNoEncontradoException;
 import com.OneDesK.modelo.Usuario;
-import com.OneDesK.repositories.PersonaRepository;
-import com.OneDesK.repositories.UsuarioRepository;
 
-@ExtendWith(MockitoExtension.class)
+// Contra MySQL con el service real: cada resultado se comprueba leyendo la base, no el objeto en memoria
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(UsuarioServiceImpl.class)
 public class UsuarioServiceImplTest {
 
-	@Mock
-	private UsuarioRepository usuarioRepository;
-	@Mock
-	private PersonaRepository personaRepository;
-
-	@InjectMocks
-	private UsuarioServiceImpl service;
+	@Autowired
+	private UsuarioService service;
+	@Autowired
+	private TestEntityManager em;
 
 	// --- registrar ---
 
-	// Registrar un usuario con un email libre lo guarda con el repositorio
+	// Registrar un usuario con un email libre lo deja guardado en la base
 	@Test
 	public void registrarGuardaAlUsuario() {
-		when(personaRepository.existsByEmail("andres@test.com")).thenReturn(false);
-		guardaElUsuario();
+		int id = service.registrar("Andres", "Negro", "andres@test.com", "12345").getId();
+		em.flush();
+		em.clear();
 
-		Usuario usuario = service.registrar("Andres", "Negro", "andres@test.com", "12345");
-
-		assertEquals("andres@test.com", usuario.getEmail());
-		verify(usuarioRepository).save(usuario);
+		Usuario recargado = em.find(Usuario.class, id);
+		assertEquals("andres@test.com", recargado.getEmail());
+		assertEquals(0, recargado.getTopeCredito());
+		assertEquals(0, recargado.getDeuda().getMonto());
 	}
 
-	// Si el email ya existe se rechaza el registro y no se guarda nada
+	// Si el email ya esta registrado se rechaza y en la base sigue habiendo una sola persona con ese email
 	@Test
 	public void noSePuedeRegistrarUnEmailRepetido() {
-		when(personaRepository.existsByEmail("andres@test.com")).thenReturn(true);
+		service.registrar("Andres", "Negro", "andres@test.com", "12345");
+		em.flush();
 
 		assertThrows(EmailDuplicadoException.class,
-				() -> service.registrar("Andres", "Negro", "andres@test.com", "12345"));
+				() -> service.registrar("Otro", "Usuario", "andres@test.com", "12345"));
 
-		verify(usuarioRepository, never()).save(any());
+		assertEquals(1, personasConEmail("andres@test.com"));
 	}
 
-	// La consulta de email repetido usa el email normalizado, asi escribirlo en mayusculas no la esquiva
+	// El email se compara normalizado, asi escribirlo en mayusculas no esquiva el chequeo
 	@Test
 	public void elEmailRepetidoSeDetectaAunqueCambienLasMayusculas() {
-		when(personaRepository.existsByEmail("andres@test.com")).thenReturn(true);
+		service.registrar("Andres", "Negro", "andres@test.com", "12345");
+		em.flush();
 
 		assertThrows(EmailDuplicadoException.class,
 				() -> service.registrar("Andres", "Negro", "ANDRES@Test.com", "12345"));
+
+		assertEquals(1, personasConEmail("andres@test.com"));
 	}
 
-	// Un email invalido falla al crear el usuario, antes de usar cualquier repositorio
+	// Un email invalido falla al crear el usuario y no llega nada a la base
 	@Test
-	public void unEmailInvalidoNiSiquieraConsultaLaBase() {
-		assertThrows(IllegalArgumentException.class, () -> service.registrar("Andres", "Negro", "@", "12345"));
+	public void unEmailInvalidoNoGuardaNada() {
+		long antes = contarPersonas();
 
-		verifyNoInteractions(personaRepository, usuarioRepository);
+		assertThrows(IllegalArgumentException.class, () -> service.registrar("Andres", "Negro", "@", "12345"));
+		em.flush();
+
+		assertEquals(antes, contarPersonas());
 	}
 
 	// --- asignarTopeCredito ---
 
-	// Asignar un tope de credito lo actualiza en el usuario
+	// Asignar un tope de credito lo deja guardado en la base, sin necesidad de save
 	@Test
-	public void asignarTopeCreditoLoActualiza() {
-		Usuario usuario = new Usuario("Andres", "Negro", "andres@test.com", "12345");
-		when(usuarioRepository.findById(1)).thenReturn(Optional.of(usuario));
+	public void asignarTopeCreditoQuedaGuardado() {
+		int id = service.registrar("Andres", "Negro", "andres@test.com", "12345").getId();
+		em.flush();
+		em.clear();
 
-		service.asignarTopeCredito(1, 8000);
+		service.asignarTopeCredito(id, 8000);
+		em.flush();
+		em.clear();
 
-		assertEquals(8000, usuario.getTopeCredito());
+		assertEquals(8000, em.find(Usuario.class, id).getTopeCredito());
 	}
 
 	// Asignar tope a un usuario que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void asignarTopeAUnUsuarioInexistenteFalla() {
-		when(usuarioRepository.findById(99)).thenReturn(Optional.empty());
-
-		assertThrows(RecursoNoEncontradoException.class, () -> service.asignarTopeCredito(99, 8000));
+		assertThrows(RecursoNoEncontradoException.class, () -> service.asignarTopeCredito(999999, 8000));
 	}
 
-	// Un tope negativo se rechaza y el usuario no llega a guardarse
+	// Un tope negativo se rechaza y en la base queda el tope anterior
 	@Test
-	public void unTopeNegativoSeRechazaYNoSeGuarda() {
-		Usuario usuario = new Usuario("Andres", "Negro", "andres@test.com", "12345");
-		when(usuarioRepository.findById(1)).thenReturn(Optional.of(usuario));
+	public void unTopeNegativoSeRechazaYQuedaElAnterior() {
+		int id = service.registrar("Andres", "Negro", "andres@test.com", "12345").getId();
+		service.asignarTopeCredito(id, 5000);
+		em.flush();
+		em.clear();
 
-		assertThrows(IllegalArgumentException.class, () -> service.asignarTopeCredito(1, -500));
+		assertThrows(IllegalArgumentException.class, () -> service.asignarTopeCredito(id, -500));
+		em.flush();
+		em.clear();
 
-		verify(usuarioRepository, never()).save(any());
+		assertEquals(5000, em.find(Usuario.class, id).getTopeCredito());
 	}
 
-	private void guardaElUsuario() {
-		when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
+	private long personasConEmail(String email) {
+		return em.getEntityManager()
+				.createQuery("select count(p) from Persona p where p.email = :email", Long.class)
+				.setParameter("email", email).getSingleResult();
+	}
+
+	private long contarPersonas() {
+		return em.getEntityManager().createQuery("select count(p) from Persona p", Long.class).getSingleResult();
 	}
 }

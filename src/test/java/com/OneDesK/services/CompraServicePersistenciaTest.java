@@ -20,7 +20,7 @@ import com.OneDesK.modelo.Compra;
 import com.OneDesK.modelo.Producto;
 import com.OneDesK.modelo.Usuario;
 
-// Complementa a CompraServiceImplTest, que usa repositorios mockeados: aca se verifica que todo quede guardado
+// Complementa a CompraServiceImplTest con casos de persistencia: anulaciones combinadas y varios productos por compra
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(CompraServiceImpl.class)

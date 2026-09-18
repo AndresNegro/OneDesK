@@ -2,57 +2,56 @@ package com.OneDesK.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
 
 import com.OneDesK.excepciones.OperacionInvalidaException;
 import com.OneDesK.excepciones.RecursoNoEncontradoException;
 import com.OneDesK.excepciones.StockInsuficienteException;
 import com.OneDesK.excepciones.TopeCreditoExcedidoException;
 import com.OneDesK.modelo.Compra;
-import com.OneDesK.modelo.ItemCompra;
 import com.OneDesK.modelo.Producto;
 import com.OneDesK.modelo.Usuario;
-import com.OneDesK.repositories.CompraRepository;
-import com.OneDesK.repositories.ProductoRepository;
-import com.OneDesK.repositories.UsuarioRepository;
 
-@ExtendWith(MockitoExtension.class)
+// Reglas de negocio de las compras contra MySQL con el service real.
+// Despues de cada operacion se hace flush y clear y se vuelve a leer de la base: asi, si el service
+// hubiera tocado algo antes de rechazar la operacion, ese cambio aparece y el test falla.
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(CompraServiceImpl.class)
 public class CompraServiceImplTest {
 
-	private static final int ID_USUARIO = 1;
-	private static final int ID_KUSH = 10;
-	private static final int ID_COMPRA = 7;
+	private static final int INEXISTENTE = 999999;
 
-	@Mock
-	private CompraRepository compraRepository;
-	@Mock
-	private UsuarioRepository usuarioRepository;
-	@Mock
-	private ProductoRepository productoRepository;
+	@Autowired
+	private CompraService service;
+	@Autowired
+	private TestEntityManager em;
 
-	@InjectMocks
-	private CompraServiceImpl service;
-
-	private Usuario usuario;
-	private Producto kush;
+	private int idUsuario;
+	private int idKush;
 
 	@BeforeEach
 	public void setUp() {
-		usuario = new Usuario("Andres", "Negro", "andres@test.com", "12345");
-		kush = new Producto("OG Kush", 10, 1000);
+		Usuario usuario = new Usuario("Andres", "Negro", "andres@test.com", "12345");
+		Producto kush = new Producto("OG Kush", 10, 1000);
+		em.persist(usuario);
+		em.persist(kush);
+		em.flush();
+		em.clear();
+		idUsuario = usuario.getId();
+		idKush = kush.getId();
 	}
 
 	// --- realizarCompra: camino feliz ---
@@ -60,31 +59,27 @@ public class CompraServiceImplTest {
 	// Una compra pagada descuenta el stock, calcula el total y no genera deuda
 	@Test
 	public void compraPagadaDescuentaStockYNoGeneraDeuda() {
-		existeUsuario();
-		existeKush();
-		guardaLaCompra();
+		int idCompra = comprarKush(3, true).getId();
+		recargar();
 
-		Compra compra = service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 3)), true);
-
+		Compra compra = em.find(Compra.class, idCompra);
 		assertTrue(compra.isPagado());
 		assertEquals(3000, compra.getPrecio());
-		assertEquals(7, kush.getStock());
-		assertEquals(0, usuario.getDeuda().getMonto());
+		assertEquals(7, stockKush());
+		assertEquals(0, deuda());
 	}
 
 	// Una compra impaga dentro del tope descuenta el stock y suma su total a la deuda
 	@Test
 	public void compraImpagaDentroDelTopeGeneraDeuda() {
-		usuario.setTopeCredito(5000);
-		existeUsuario();
-		existeKush();
-		guardaLaCompra();
+		asignarTope(5000);
 
-		Compra compra = service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 3)), false);
+		int idCompra = comprarKush(3, false).getId();
+		recargar();
 
-		assertFalse(compra.isPagado());
-		assertEquals(3000, usuario.getDeuda().getMonto());
-		assertEquals(7, kush.getStock());
+		assertFalse(em.find(Compra.class, idCompra).isPagado());
+		assertEquals(3000, deuda());
+		assertEquals(7, stockKush());
 	}
 
 	// --- realizarCompra: stock ---
@@ -92,41 +87,34 @@ public class CompraServiceImplTest {
 	// Pedir mas de lo que hay rechaza toda la compra sin descontar nada del stock
 	@Test
 	public void stockInsuficienteRechazaLaCompraYNoTocaElStock() {
-		existeUsuario();
-		existeKush();
+		assertThrows(StockInsuficienteException.class, () -> comprarKush(11, true));
+		recargar();
 
-		assertThrows(StockInsuficienteException.class,
-				() -> service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 11)), true));
-
-		assertEquals(10, kush.getStock());
+		assertEquals(10, stockKush());
+		assertEquals(0, comprasGuardadas());
 	}
 
 	// Dos lineas del mismo producto se suman antes de validar el stock: 6 + 6 no entran en un stock de 10
 	@Test
 	public void elMismoProductoEnDosLineasSumaCantidadesParaValidarStock() {
-		existeUsuario();
-		existeKush();
+		assertThrows(StockInsuficienteException.class, () -> service.realizarCompra(idUsuario,
+				List.of(new LineaCompra(idKush, 6), new LineaCompra(idKush, 6)), true));
+		recargar();
 
-		// 6 y 6 pasan por separado contra un stock de 10, pero suman 12
-		assertThrows(StockInsuficienteException.class, () -> service.realizarCompra(ID_USUARIO,
-				List.of(new LineaCompra(ID_KUSH, 6), new LineaCompra(ID_KUSH, 6)), true));
-
-		assertEquals(10, kush.getStock());
+		assertEquals(10, stockKush());
 	}
 
-	// Dos lineas del mismo producto se juntan en un unico item con la cantidad total
+	// Dos lineas del mismo producto se guardan como un unico item con la cantidad total
 	@Test
 	public void elMismoProductoEnDosLineasGeneraUnSoloItem() {
-		existeUsuario();
-		existeKush();
-		guardaLaCompra();
+		int idCompra = service.realizarCompra(idUsuario,
+				List.of(new LineaCompra(idKush, 2), new LineaCompra(idKush, 3)), true).getId();
+		recargar();
 
-		Compra compra = service.realizarCompra(ID_USUARIO,
-				List.of(new LineaCompra(ID_KUSH, 2), new LineaCompra(ID_KUSH, 3)), true);
-
+		Compra compra = em.find(Compra.class, idCompra);
 		assertEquals(1, compra.getItems().size());
 		assertEquals(5, compra.getItems().get(0).getCantidad());
-		assertEquals(5, kush.getStock());
+		assertEquals(5, stockKush());
 	}
 
 	// --- realizarCompra: tope de credito ---
@@ -134,63 +122,63 @@ public class CompraServiceImplTest {
 	// Una compra impaga que deja la deuda por encima del tope se rechaza sin tocar el stock ni la deuda
 	@Test
 	public void topeExcedidoRechazaLaCompra() {
-		usuario.setTopeCredito(2000);
-		existeUsuario();
-		existeKush();
+		asignarTope(2000);
 
-		assertThrows(TopeCreditoExcedidoException.class,
-				() -> service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 3)), false));
+		assertThrows(TopeCreditoExcedidoException.class, () -> comprarKush(3, false));
+		recargar();
 
-		assertEquals(10, kush.getStock());
-		assertEquals(0, usuario.getDeuda().getMonto());
+		assertEquals(10, stockKush());
+		assertEquals(0, deuda());
+		assertEquals(0, comprasGuardadas());
 	}
 
 	// Una compra que deja la deuda justo en el tope se permite
 	@Test
 	public void topeExactoPermiteLaCompra() {
-		usuario.setTopeCredito(3000);
-		existeUsuario();
-		existeKush();
-		guardaLaCompra();
+		asignarTope(3000);
 
-		service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 3)), false);
+		comprarKush(3, false);
+		recargar();
 
-		assertEquals(3000, usuario.getDeuda().getMonto());
+		assertEquals(3000, deuda());
 	}
 
-	// Una compra pagada no se controla contra el tope, aunque el usuario tenga tope 0
+	// Una compra pagada no se controla contra el tope: el usuario nace con tope 0 y aun asi puede comprar pagando
 	@Test
 	public void laCompraPagadaNoValidaElTope() {
-		// el usuario nace con tope 0 y aun asi puede comprar pagando
-		existeUsuario();
-		existeKush();
-		guardaLaCompra();
+		int idCompra = comprarKush(3, true).getId();
+		recargar();
 
-		Compra compra = service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 3)), true);
-
-		assertEquals(3000, compra.getPrecio());
-		assertEquals(0, usuario.getDeuda().getMonto());
+		assertEquals(3000, em.find(Compra.class, idCompra).getPrecio());
+		assertEquals(0, deuda());
 	}
 
 	// Con el tope por debajo de lo que debe, el usuario no puede hacer compras impagas
 	@Test
 	public void conElTopeBajadoPorDebajoDeLaDeudaNoPuedeComprarImpago() {
-		compraImpaga();
-		usuario.setTopeCredito(1000);
+		asignarTope(5000);
+		comprarKush(3, false);
+		asignarTope(1000);
 
-		assertThrows(TopeCreditoExcedidoException.class,
-				() -> service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 1)), false));
+		assertThrows(TopeCreditoExcedidoException.class, () -> comprarKush(1, false));
+		recargar();
+
+		assertEquals(3000, deuda());
+		assertEquals(7, stockKush());
 	}
 
 	// Con el tope por debajo de lo que debe, el usuario todavia puede comprar pagando
 	@Test
 	public void conElTopeBajadoPorDebajoDeLaDeudaPuedeComprarPagando() {
-		compraImpaga();
-		usuario.setTopeCredito(1000);
+		asignarTope(5000);
+		comprarKush(3, false);
+		asignarTope(1000);
 
-		Compra compra = service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 1)), true);
+		int idCompra = comprarKush(1, true).getId();
+		recargar();
 
-		assertTrue(compra.isPagado());
+		assertTrue(em.find(Compra.class, idCompra).isPagado());
+		assertEquals(6, stockKush());
 	}
 
 	// --- realizarCompra: entradas invalidas ---
@@ -198,167 +186,164 @@ public class CompraServiceImplTest {
 	// Una compra sin lineas se rechaza
 	@Test
 	public void laCompraVaciaEsInvalida() {
-		assertThrows(OperacionInvalidaException.class, () -> service.realizarCompra(ID_USUARIO, List.of(), true));
+		assertThrows(OperacionInvalidaException.class, () -> service.realizarCompra(idUsuario, List.of(), true));
 	}
 
 	// Una lista de lineas nula se rechaza sin tirar NullPointerException
 	@Test
 	public void laListaNulaEsInvalida() {
-		assertThrows(OperacionInvalidaException.class, () -> service.realizarCompra(ID_USUARIO, null, true));
+		assertThrows(OperacionInvalidaException.class, () -> service.realizarCompra(idUsuario, null, true));
 	}
 
-	// Una linea con cantidad 0 se rechaza
+	// Una linea con cantidad 0 se rechaza y el stock no cambia
 	@Test
 	public void laCantidadNoPuedeSerCero() {
-		existeUsuario();
+		assertThrows(OperacionInvalidaException.class, () -> comprarKush(0, true));
+		recargar();
 
-		assertThrows(OperacionInvalidaException.class,
-				() -> service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 0)), true));
+		assertEquals(10, stockKush());
 	}
 
-	// Una linea con cantidad negativa se rechaza
+	// Una linea con cantidad negativa se rechaza y el stock no cambia
 	@Test
 	public void laCantidadNoPuedeSerNegativa() {
-		existeUsuario();
+		assertThrows(OperacionInvalidaException.class, () -> comprarKush(-2, true));
+		recargar();
 
-		assertThrows(OperacionInvalidaException.class,
-				() -> service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, -2)), true));
+		assertEquals(10, stockKush());
 	}
 
 	// Comprar con un usuario que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void usuarioInexistenteRechazaLaCompra() {
-		when(usuarioRepository.findById(99)).thenReturn(Optional.empty());
-
 		assertThrows(RecursoNoEncontradoException.class,
-				() -> service.realizarCompra(99, List.of(new LineaCompra(ID_KUSH, 1)), true));
+				() -> service.realizarCompra(INEXISTENTE, List.of(new LineaCompra(idKush, 1)), true));
 	}
 
 	// Comprar un producto que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void productoInexistenteRechazaLaCompra() {
-		existeUsuario();
-		when(productoRepository.findById(99)).thenReturn(Optional.empty());
-
 		assertThrows(RecursoNoEncontradoException.class,
-				() -> service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(99, 1)), true));
+				() -> service.realizarCompra(idUsuario, List.of(new LineaCompra(INEXISTENTE, 1)), true));
 	}
 
 	// --- precio congelado ---
 
-	// Subir el precio del producto despues de comprar no cambia el precio del item ya comprado
+	// Subir el precio del producto despues de comprar no cambia el precio guardado del item ya comprado
 	@Test
 	public void cambiarElPrecioDelProductoNoAlteraLosItemsYaComprados() {
-		existeUsuario();
-		existeKush();
-		guardaLaCompra();
+		int idCompra = comprarKush(2, true).getId();
+		recargar();
 
-		Compra compra = service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 2)), true);
-		ItemCompra item = compra.getItems().get(0);
-		assertEquals(2000, item.getPrecio());
+		em.find(Producto.class, idKush).setPrecio(5000);
+		recargar();
 
-		kush.setPrecio(5000);
-
-		// el item sigue valiendo lo que valia al comprarlo, y sigue cuadrando con el total
-		assertEquals(2000, item.getPrecio());
-		assertEquals(compra.getPrecio(), item.getPrecio());
+		Compra compra = em.find(Compra.class, idCompra);
+		assertEquals(5000, em.find(Producto.class, idKush).getPrecio());
+		assertEquals(1000, compra.getItems().get(0).getPrecioUnitario());
+		assertEquals(2000, compra.getItems().get(0).getPrecio());
+		assertEquals(2000, compra.getPrecio());
 	}
 
 	// --- registrarPago ---
 
-	// Registrar el pago de una compra impaga deja la deuda del usuario en 0
+	// Registrar el pago de una compra impaga la deja pagada y la deuda del usuario en 0
 	@Test
 	public void registrarPagoSaldaLaDeuda() {
-		Compra compra = compraImpaga();
-		assertEquals(3000, usuario.getDeuda().getMonto());
-		existeLaCompra(compra);
+		asignarTope(5000);
+		int idCompra = comprarKush(3, false).getId();
+		recargar();
+		assertEquals(3000, deuda());
 
-		service.registrarPago(ID_COMPRA);
+		service.registrarPago(idCompra);
+		recargar();
 
-		assertTrue(compra.isPagado());
-		assertEquals(0, usuario.getDeuda().getMonto());
+		assertTrue(em.find(Compra.class, idCompra).isPagado());
+		assertEquals(0, deuda());
 	}
 
 	// Pagar una compra que ya esta pagada se rechaza
 	@Test
 	public void noSePuedePagarDosVecesLaMismaCompra() {
-		existeLaCompra(compraPagada());
+		int idCompra = comprarKush(3, true).getId();
+		recargar();
 
-		assertThrows(OperacionInvalidaException.class, () -> service.registrarPago(ID_COMPRA));
+		assertThrows(OperacionInvalidaException.class, () -> service.registrarPago(idCompra));
 	}
 
 	// Pagar una compra que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void registrarPagoDeUnaCompraInexistenteFalla() {
-		when(compraRepository.findById(99)).thenReturn(Optional.empty());
-
-		assertThrows(RecursoNoEncontradoException.class, () -> service.registrarPago(99));
+		assertThrows(RecursoNoEncontradoException.class, () -> service.registrarPago(INEXISTENTE));
 	}
 
 	// --- anularCompra ---
 
-	// Anular una compra impaga devuelve el stock, la saca del usuario y borra su deuda
+	// Anular una compra impaga devuelve el stock, la borra de la base y deja la deuda en 0
 	@Test
 	public void anularCompraImpagaDevuelveElStockYBorraLaDeuda() {
-		Compra compra = compraImpaga();
-		assertEquals(7, kush.getStock());
-		existeLaCompra(compra);
+		asignarTope(5000);
+		int idCompra = comprarKush(3, false).getId();
+		recargar();
+		assertEquals(7, stockKush());
 
-		service.anularCompra(ID_COMPRA);
+		service.anularCompra(idCompra);
+		recargar();
 
-		assertEquals(10, kush.getStock());
-		assertEquals(0, usuario.getDeuda().getMonto());
-		assertTrue(usuario.getCompras().isEmpty());
+		assertEquals(10, stockKush());
+		assertEquals(0, deuda());
+		assertEquals(0, comprasGuardadas());
+		assertTrue(em.find(Usuario.class, idUsuario).getCompras().isEmpty());
 	}
 
-	// Una compra pagada no se puede anular y el stock no se devuelve
+	// Una compra pagada no se puede anular: sigue guardada y el stock no se devuelve
 	@Test
 	public void noSePuedeAnularUnaCompraPagada() {
-		existeLaCompra(compraPagada());
+		int idCompra = comprarKush(3, true).getId();
+		recargar();
 
-		assertThrows(OperacionInvalidaException.class, () -> service.anularCompra(ID_COMPRA));
+		assertThrows(OperacionInvalidaException.class, () -> service.anularCompra(idCompra));
+		recargar();
 
-		assertEquals(7, kush.getStock());
+		assertNotNull(em.find(Compra.class, idCompra));
+		assertEquals(7, stockKush());
 	}
 
 	// Anular una compra que no existe falla con RecursoNoEncontradoException
 	@Test
 	public void anularUnaCompraInexistenteFalla() {
-		when(compraRepository.findById(99)).thenReturn(Optional.empty());
-
-		assertThrows(RecursoNoEncontradoException.class, () -> service.anularCompra(99));
+		assertThrows(RecursoNoEncontradoException.class, () -> service.anularCompra(INEXISTENTE));
 	}
 
 	// --- helpers ---
 
-	private void existeUsuario() {
-		when(usuarioRepository.findById(ID_USUARIO)).thenReturn(Optional.of(usuario));
+	private Compra comprarKush(int cantidad, boolean pagado) {
+		return service.realizarCompra(idUsuario, List.of(new LineaCompra(idKush, cantidad)), pagado);
 	}
 
-	private void existeKush() {
-		when(productoRepository.findById(ID_KUSH)).thenReturn(Optional.of(kush));
+	private void asignarTope(int tope) {
+		em.find(Usuario.class, idUsuario).setTopeCredito(tope);
+		recargar();
 	}
 
-	private void guardaLaCompra() {
-		when(compraRepository.save(any(Compra.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
+	// manda a la base lo pendiente y vacia la memoria, para que la siguiente lectura venga de MySQL
+	private void recargar() {
+		em.flush();
+		em.clear();
 	}
 
-	private void existeLaCompra(Compra compra) {
-		when(compraRepository.findById(ID_COMPRA)).thenReturn(Optional.of(compra));
+	private int stockKush() {
+		return em.find(Producto.class, idKush).getStock();
 	}
 
-	private Compra compraImpaga() {
-		usuario.setTopeCredito(5000);
-		existeUsuario();
-		existeKush();
-		guardaLaCompra();
-		return service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 3)), false);
+	private int deuda() {
+		return em.find(Usuario.class, idUsuario).getDeuda().getMonto();
 	}
 
-	private Compra compraPagada() {
-		existeUsuario();
-		existeKush();
-		guardaLaCompra();
-		return service.realizarCompra(ID_USUARIO, List.of(new LineaCompra(ID_KUSH, 3)), true);
+	// solo las compras del usuario del test: la base puede tener otras cargadas
+	private long comprasGuardadas() {
+		return em.getEntityManager()
+				.createQuery("select count(c) from Compra c where c.usuario.id = :id", Long.class)
+				.setParameter("id", idUsuario).getSingleResult();
 	}
 }

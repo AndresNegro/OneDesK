@@ -9,6 +9,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name="Planta")
@@ -34,12 +35,13 @@ public class Planta extends Persistible{
 	@ManyToOne
 	@JoinColumn(name="ID_INDOOR")
     private Indoor indoor;
+    // momento de la ultima atencion de cada tipo: el tiempo hasta el proximo evento corre desde aca
     @Column(name="ultimoRegado")
-    private LocalDate ultimoRegado;
+    private LocalDateTime ultimoRegado;
     @Column(name="ultimoLuz")
-    private LocalDate ultimoLuz;
+    private LocalDateTime ultimoLuz;
     @Column(name="ultimoVentilacion")
-    private LocalDate ultimoVentilacion;
+    private LocalDateTime ultimoVentilacion;
     
     Planta(){
     	
@@ -94,44 +96,67 @@ public class Planta extends Persistible{
     	return this.genetica;
     }
 
-    private void generarRiego() {
-        if (indoor != null) {
+    // lo llama Indoor al agregarla: los tres tiempos empiezan a correr desde que la planta entra al indoor
+    void empezarACorrerTiempos(LocalDateTime momento) {
+        this.ultimoRegado = momento;
+        this.ultimoLuz = momento;
+        this.ultimoVentilacion = momento;
+    }
+
+    /**
+     * Crea en su indoor los eventos cuyo tiempo ya se cumplio y devuelve cuantos creo.
+     * Un tipo de evento no se repite mientras haya uno sin atender: su tiempo recien vuelve
+     * a correr cuando el empleado lo atiende.
+     */
+    public int generarEventosVencidos(LocalDateTime ahora) {
+        if (indoor == null || isCosechada()) {
+            return 0;
+        }
+        int creados = 0;
+        if (seCumplioElTiempo(ultimoRegado, tiempoRegado, ahora)
+                && !indoor.tieneEventoPendiente(this, EventoRegado.class)) {
             indoor.recibirEvento(new EventoRegado(this));
+            creados++;
         }
-    }
-
-    private void generarLuz() {
-        if (indoor != null) {
+        if (seCumplioElTiempo(ultimoLuz, tiempoLuz, ahora)
+                && !indoor.tieneEventoPendiente(this, EventoLuz.class)) {
             indoor.recibirEvento(new EventoLuz(this));
+            creados++;
         }
-    }
-
-    private void generarVentilacion() {
-        if (indoor != null) {
+        if (seCumplioElTiempo(ultimoVentilacion, tiempoVentilacion, ahora)
+                && !indoor.tieneEventoPendiente(this, EventoVentilador.class)) {
             indoor.recibirEvento(new EventoVentilador(this));
+            creados++;
         }
+        return creados;
     }
 
-    public void regar() { ultimoRegado= LocalDate.now();}
+    // se cumplio cuando ultimo + minutos ya no es posterior a ahora (o sea, es anterior o igual)
+    private boolean seCumplioElTiempo(LocalDateTime ultimo, int minutos, LocalDateTime ahora) {
+        return ultimo != null && !ultimo.plusMinutes(minutos).isAfter(ahora);
+    }
 
+    public void regar() { ultimoRegado = LocalDateTime.now(); }
 
-	public boolean isLuz() {
-		return this.luz;
-	}
+    public LocalDateTime getUltimoRegado() { return ultimoRegado; }
+    public LocalDateTime getUltimoLuz() { return ultimoLuz; }
+    public LocalDateTime getUltimoVentilacion() { return ultimoVentilacion; }
 
-	public void setLuz(boolean b) {
-		this.luz=b;
-		 ultimoLuz= LocalDate.now();
-		
-	}
+    public boolean isLuz() {
+        return this.luz;
+    }
 
-	public boolean isVentilador() {
-		return this.ventilador;
-	}
+    public void setLuz(boolean b) {
+        this.luz = b;
+        ultimoLuz = LocalDateTime.now();
+    }
 
-	public void setVentilador(boolean b) {
-		this.ventilador=b;
-		 ultimoVentilacion= LocalDate.now();
-	}
-		
-	}
+    public boolean isVentilador() {
+        return this.ventilador;
+    }
+
+    public void setVentilador(boolean b) {
+        this.ventilador = b;
+        ultimoVentilacion = LocalDateTime.now();
+    }
+}

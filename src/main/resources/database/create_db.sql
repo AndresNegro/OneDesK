@@ -44,9 +44,9 @@ CREATE TABLE Planta (
     tiempoLuz INT NOT NULL,
     tiempoRegado INT NOT NULL,
     tiempoVentilacion INT NOT NULL,
-    ultimoRegado DATE,
-    ultimoLuz DATE,
-    ultimoVentilacion DATE,
+    ultimoRegado DATETIME,
+    ultimoLuz DATETIME,
+    ultimoVentilacion DATETIME,
     luz BOOLEAN NOT NULL,
     ventilador BOOLEAN NOT NULL,
     PRIMARY KEY (ID)

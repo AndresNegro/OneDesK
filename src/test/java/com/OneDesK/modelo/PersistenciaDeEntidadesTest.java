@@ -5,7 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -100,9 +103,10 @@ public class PersistenciaDeEntidadesTest {
 		assertEquals(60, fila[2]);
 		assertEquals(120, fila[3]);
 		assertEquals(30, fila[4]);
-		assertEquals(HOY, ((Date) fila[5]).toLocalDate());
-		assertEquals(HOY, ((Date) fila[6]).toLocalDate());
-		assertEquals(HOY, ((Date) fila[7]).toLocalDate());
+		// los ultimo* son DATETIME: se guardan con la hora, no solo con el dia
+		assertMismoSegundo(planta.getUltimoRegado(), aFechaHora(fila[5]));
+		assertMismoSegundo(planta.getUltimoLuz(), aFechaHora(fila[6]));
+		assertMismoSegundo(planta.getUltimoVentilacion(), aFechaHora(fila[7]));
 	}
 
 	// Los tres tipos de evento van a la misma tabla y se distinguen por la columna tipo.
@@ -249,5 +253,19 @@ public class PersistenciaDeEntidadesTest {
 
 	private Planta nuevaPlanta(String genetica) {
 		return new Planta(genetica, HOY.minusDays(80), HOY.minusDays(90), 60, 120, 30);
+	}
+
+	// DATETIME no guarda fracciones de segundo y MySQL las redondea: se tolera un segundo de diferencia
+	private void assertMismoSegundo(LocalDateTime esperado, LocalDateTime guardado) {
+		assertTrue(Duration.between(esperado, guardado).abs().getSeconds() <= 1,
+				"Se esperaba " + esperado + " y se guardo " + guardado);
+	}
+
+	// segun la version del driver, una columna DATETIME llega como Timestamp o como LocalDateTime
+	private LocalDateTime aFechaHora(Object valor) {
+		if (valor instanceof Timestamp) {
+			return ((Timestamp) valor).toLocalDateTime();
+		}
+		return (LocalDateTime) valor;
 	}
 }

@@ -10,6 +10,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,6 +36,7 @@ public class Indoor extends Persistible{
     public Planta addPlanta(Planta p) {
         plantas.add(p);
         p.setIndoor(this);
+        p.empezarACorrerTiempos(LocalDateTime.now());
         return p;
     }
 
@@ -72,6 +74,16 @@ public class Indoor extends Persistible{
                     "La planta " + planta.getGenetica() + " ya fue cosechada y no recibe eventos");
         }
         colaEventos.add(e);
+    }
+
+    /** Si la planta ya tiene un evento sin atender de ese tipo: evita que la revision periodica lo duplique. */
+    public boolean tieneEventoPendiente(Planta p, Class<? extends Evento> tipo) {
+        for (Evento evento : colaEventos) {
+            if (evento.getPlanta() == p && !evento.getRealizado() && tipo.isInstance(evento)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // lo llama Planta al cosecharse: los pendientes ya no se van a atender, los atendidos quedan como historial
