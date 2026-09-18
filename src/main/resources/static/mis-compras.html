@@ -1,24 +1,27 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-bs-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mis compras · OneDesK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <link href="css/onedesk.css" rel="stylesheet">
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-od" data-bs-theme="dark">
+<nav class="navbar navbar-expand-lg navbar-od">
     <div class="container">
-        <a class="navbar-brand fw-semibold" href="catalogo.html">OneDesK</a>
+        <a class="navbar-brand" href="catalogo.html">OneDesK</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
                 aria-controls="menu" aria-expanded="false" aria-label="Abrir menú">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="menu">
-            <ul class="navbar-nav me-auto">
+            <ul class="navbar-nav me-auto ms-lg-4">
                 <li class="nav-item"><a class="nav-link" href="catalogo.html">Catálogo</a></li>
                 <li class="nav-item"><a class="nav-link active" aria-current="page" href="mis-compras.html">Mis compras</a></li>
                 <li class="nav-item"><a class="nav-link" href="empleado.html">Panel del empleado</a></li>
@@ -26,7 +29,7 @@
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link" href="carrito.html">
-                        <i class="bi bi-cart3"></i> Carrito <span class="badge text-bg-light">2</span>
+                        <i class="bi bi-bag"></i> Carrito <span class="contador">2</span>
                     </a>
                 </li>
                 <li class="nav-item"><a class="nav-link" href="index.html">Salir</a></li>
@@ -35,93 +38,97 @@
     </div>
 </nav>
 
-<main class="container py-4">
+<header class="portada portada--baja">
+    <img class="portada__foto" src="img/cogollo-negro.jpg" alt="" style="object-position: 50% 10%;">
+    <div class="container portada__contenido">
+        <p class="etiqueta mb-4">Andrés Negro · andres@onedesk.com</p>
+        <h1 class="titulo-serif mb-0">Mis <em>compras</em></h1>
+    </div>
+</header>
 
-    <div class="encabezado-seccion mb-4">
-        <h1 class="h3 mb-1">Mis compras</h1>
-        <p class="text-body-secondary mb-0">Andrés Negro · andres@onedesk.com</p>
+<main class="container pb-5">
+
+    <div class="row row-cols-1 row-cols-md-3 g-4 mb-5 mt-1">
+        <div class="col">
+            <div class="panel-destacado h-100 p-4">
+                <p class="etiqueta mb-3">Deuda</p>
+                <p class="dato-destacado mb-3" style="color: var(--violeta-suave);">$3.000</p>
+                <div class="medidor"><span style="width: 30%;"></span></div>
+                <p class="apagado small mb-0 mt-2">30% de tu tope</p>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 p-4">
+                <p class="etiqueta mb-3">Tope de crédito</p>
+                <p class="dato-destacado mb-0">$10.000</p>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 p-4">
+                <p class="etiqueta mb-3">Disponible en cuenta</p>
+                <p class="dato-destacado mb-0" style="color: var(--verde-suave);">$7.000</p>
+            </div>
+        </div>
     </div>
 
-    <div class="row row-cols-1 row-cols-md-3 g-3 mb-4">
-        <div class="col">
-            <div class="card h-100">
-                <div class="card-body">
-                    <p class="text-body-secondary mb-1">Deuda</p>
-                    <p class="dato-destacado mb-0">$3.000</p>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card h-100">
-                <div class="card-body">
-                    <p class="text-body-secondary mb-1">Tope de crédito</p>
-                    <p class="dato-destacado mb-0">$10.000</p>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card h-100">
-                <div class="card-body">
-                    <p class="text-body-secondary mb-1">Disponible para comprar en cuenta</p>
-                    <p class="dato-destacado mb-0">$7.000</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <h2 class="titulo-bloque">Historial</h2>
 
     <div class="card">
         <div class="table-responsive">
-            <table class="table table-hover align-middle tabla-datos mb-0">
+            <table class="table table-hover align-middle tabla-datos">
                 <thead>
                     <tr>
-                        <th scope="col">Compra</th>
+                        <th scope="col" class="ps-4">Compra</th>
                         <th scope="col">Fecha</th>
                         <th scope="col">Genéticas</th>
                         <th scope="col" class="text-end">Total</th>
                         <th scope="col">Estado</th>
-                        <th scope="col"><span class="visually-hidden">Acciones</span></th>
+                        <th scope="col" class="pe-4"><span class="visually-hidden">Acciones</span></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <th scope="row" class="fw-normal">#14</th>
-                        <td>14/09/2026</td>
+                        <th scope="row" class="ps-4 fw-normal apagado">#14</th>
+                        <td class="apagado">14/09/2026</td>
                         <td>OG Kush ×3</td>
-                        <td class="text-end">$3.000</td>
-                        <td><span class="badge text-bg-warning">Impaga</span></td>
-                        <td class="text-end">
+                        <td class="text-end fw-semibold">$3.000</td>
+                        <td>
+                            <span class="punto-vivo punto-vivo--violeta me-2"></span>
+                            <span style="color: var(--violeta-suave);">Impaga</span>
+                        </td>
+                        <td class="text-end pe-4 text-nowrap">
                             <form action="#" method="post" class="d-inline">
                                 <button type="submit" class="btn btn-sm btn-primary">Pagar</button>
                             </form>
-                            <button type="button" class="btn btn-sm btn-outline-secondary">Anular</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary">Anular</button>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row" class="fw-normal">#11</th>
-                        <td>07/09/2026</td>
+                        <th scope="row" class="ps-4 fw-normal apagado">#11</th>
+                        <td class="apagado">07/09/2026</td>
                         <td>Amnesia Haze ×2, Blue Dream ×1</td>
-                        <td class="text-end">$5.800</td>
-                        <td><span class="badge text-bg-success">Pagada</span></td>
-                        <td class="text-end text-body-secondary small">Sin acciones</td>
+                        <td class="text-end fw-semibold">$5.800</td>
+                        <td><span class="punto-muerto me-2"></span><span class="apagado">Pagada</span></td>
+                        <td class="text-end pe-4 apagado small">—</td>
                     </tr>
                     <tr>
-                        <th scope="row" class="fw-normal">#8</th>
-                        <td>30/08/2026</td>
+                        <th scope="row" class="ps-4 fw-normal apagado">#8</th>
+                        <td class="apagado">30/08/2026</td>
                         <td>Kush Mints ×4</td>
-                        <td class="text-end">$6.000</td>
-                        <td><span class="badge text-bg-success">Pagada</span></td>
-                        <td class="text-end text-body-secondary small">Sin acciones</td>
+                        <td class="text-end fw-semibold">$6.000</td>
+                        <td><span class="punto-muerto me-2"></span><span class="apagado">Pagada</span></td>
+                        <td class="text-end pe-4 apagado small">—</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <p class="text-body-secondary small mt-3 mb-0">
-        Una compra pagada no se puede anular: solo se anulan las impagas, y al hacerlo el stock vuelve al catálogo.
+    <p class="apagado small mt-3 mb-0">
+        Una compra pagada no se puede anular: solo las impagas, y al anularlas el stock vuelve al catálogo.
     </p>
 
-    <p class="nota-maqueta mt-4 mb-0">Maqueta de diseño: los datos son de ejemplo.</p>
+    <p class="nota-maqueta mt-5 mb-0">Maqueta de diseño · datos de ejemplo</p>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
