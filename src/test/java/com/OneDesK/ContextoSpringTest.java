@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.OneDesK.services.AdministradorService;
 import com.OneDesK.services.CompraService;
 import com.OneDesK.services.EmpleadoIndoorService;
 import com.OneDesK.services.GeneradorDeEventosService;
@@ -22,6 +23,8 @@ import com.OneDesK.services.UsuarioService;
 @SpringBootTest(properties = { "onedesk.eventos.activo=false", "onedesk.eventos.cron=* * * * * *" })
 public class ContextoSpringTest {
 
+	@Autowired
+	private AdministradorService administradorService;
 	@Autowired
 	private CompraService compraService;
 	@Autowired
@@ -45,6 +48,7 @@ public class ContextoSpringTest {
 	// incluido el TaskService, que necesita el TaskScheduler que crea @EnableScheduling
 	@Test
 	public void laAplicacionLevantaConTodosSusServices() {
+		assertNotNull(administradorService);
 		assertNotNull(compraService);
 		assertNotNull(usuarioService);
 		assertNotNull(productoService);

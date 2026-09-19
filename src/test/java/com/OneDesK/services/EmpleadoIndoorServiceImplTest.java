@@ -74,6 +74,37 @@ public class EmpleadoIndoorServiceImplTest {
 				() -> service.registrar("Andres", "Negro", "CLIENTE@test.com", "12345", 500000));
 	}
 
+	// --- salario ---
+
+	// Cambiar el salario queda guardado en la base
+	@Test
+	public void cambiarElSalarioQuedaGuardado() {
+		service.cambiarSalario(empleado.getId(), 650000);
+		em.flush();
+		em.clear();
+
+		assertEquals(650000, em.find(EmpleadoIndoor.class, empleado.getId()).getSalarioMensual());
+	}
+
+	// Un salario de 0 se rechaza y en la base queda el anterior
+	@Test
+	public void unSalarioDeCeroNoSeGuarda() {
+		em.flush();
+		em.clear();
+
+		assertThrows(IllegalArgumentException.class, () -> service.cambiarSalario(empleado.getId(), 0));
+		em.flush();
+		em.clear();
+
+		assertEquals(500000, em.find(EmpleadoIndoor.class, empleado.getId()).getSalarioMensual());
+	}
+
+	// Cambiar el salario de un empleado inexistente falla con RecursoNoEncontradoException
+	@Test
+	public void cambiarElSalarioDeUnEmpleadoInexistenteFalla() {
+		assertThrows(RecursoNoEncontradoException.class, () -> service.cambiarSalario(9999, 650000));
+	}
+
 	// --- asignaciones ---
 
 	// La asignacion de un indoor al empleado queda guardada en la tabla Trabaja

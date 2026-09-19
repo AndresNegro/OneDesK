@@ -24,6 +24,9 @@ public class Compra extends Persistible{
     private boolean pagado;
 	@Column(name="precio")
     private int precio;
+	// vacia mientras la compra esta impaga: las compras con fecha de pago son los registros de pago
+	@Column(name="fechaPago")
+    private LocalDate fechaPago;
 
 	@ManyToOne
 	@JoinColumn(name="ID_USUARIO", nullable = false)
@@ -42,6 +45,10 @@ public class Compra extends Persistible{
         this.usuario = usuario;
         this.items = new ArrayList<>();
         this.precio = 0;
+        // pagar al comprar es pagar ese mismo dia
+        if (pagado) {
+            this.fechaPago = fechaCompra;
+        }
     }
 
     public void addItem(ItemCompra i) {
@@ -55,9 +62,11 @@ public class Compra extends Persistible{
             throw new OperacionInvalidaException("La compra ya esta pagada");
         }
         this.pagado = true;
+        this.fechaPago = LocalDate.now();
     }
 
     public LocalDate getFechaCompra() { return fechaCompra; }
+    public LocalDate getFechaPago() { return fechaPago; }
     public boolean isPagado() { return pagado; }
     public Usuario getUsuario() { return usuario; }
     public List<ItemCompra> getItems() { return Collections.unmodifiableList(items); }

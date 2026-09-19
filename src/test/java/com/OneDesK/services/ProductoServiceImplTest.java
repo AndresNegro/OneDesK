@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Import;
 
 import com.OneDesK.excepciones.OperacionInvalidaException;
 import com.OneDesK.excepciones.RecursoNoEncontradoException;
+import com.OneDesK.excepciones.StockInsuficienteException;
 import com.OneDesK.modelo.Producto;
 
 @DataJpaTest
@@ -128,6 +129,55 @@ public class ProductoServiceImplTest {
 		guardar("Haze", 0, 500);
 
 		assertEquals(List.of("Amnesia", "OG Kush"), geneticas(service.listarPorPrecio()));
+	}
+
+	// --- ajustes de stock ---
+
+	// Fijar el stock queda guardado en la base
+	@Test
+	public void fijarStockQuedaGuardado() {
+		int id = service.crearProducto("OG Kush", 1000).getId();
+
+		service.fijarStock(id, 15);
+		em.flush();
+		em.clear();
+
+		assertEquals(15, em.find(Producto.class, id).getStock());
+	}
+
+	// Ajustar el stock suma o resta sobre lo guardado
+	@Test
+	public void ajustarStockQuedaGuardado() {
+		int id = service.crearProducto("OG Kush", 1000).getId();
+		service.fijarStock(id, 10);
+
+		service.ajustarStock(id, -4);
+		em.flush();
+		em.clear();
+
+		assertEquals(6, em.find(Producto.class, id).getStock());
+	}
+
+	// Un ajuste que dejaria el stock negativo se rechaza y en la base queda el anterior
+	@Test
+	public void unAjusteQueDejariaStockNegativoNoSeGuarda() {
+		int id = service.crearProducto("OG Kush", 1000).getId();
+		service.fijarStock(id, 3);
+		em.flush();
+		em.clear();
+
+		assertThrows(StockInsuficienteException.class, () -> service.ajustarStock(id, -4));
+		em.flush();
+		em.clear();
+
+		assertEquals(3, em.find(Producto.class, id).getStock());
+	}
+
+	// Fijar o ajustar el stock de un producto inexistente falla con RecursoNoEncontradoException
+	@Test
+	public void ajustarElStockDeUnProductoInexistenteFalla() {
+		assertThrows(RecursoNoEncontradoException.class, () -> service.fijarStock(999999, 5));
+		assertThrows(RecursoNoEncontradoException.class, () -> service.ajustarStock(999999, 5));
 	}
 
 	private void guardar(String genetica, int stock, int precio) {

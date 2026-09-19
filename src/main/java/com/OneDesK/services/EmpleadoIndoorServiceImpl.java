@@ -39,6 +39,14 @@ public class EmpleadoIndoorServiceImpl implements EmpleadoIndoorService {
 
 	@Override
 	@Transactional
+	public EmpleadoIndoor cambiarSalario(int empleadoId, int salarioMensual) {
+		EmpleadoIndoor empleado = buscarEmpleado(empleadoId);
+		empleado.setSalarioMensual(salarioMensual);
+		return empleado;
+	}
+
+	@Override
+	@Transactional
 	public void asignarIndoor(int empleadoId, int indoorId) {
 		buscarEmpleado(empleadoId).addIndoor(buscarIndoor(indoorId));
 	}

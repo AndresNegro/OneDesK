@@ -1,6 +1,7 @@
 package com.OneDesK.modelo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -76,5 +77,32 @@ public class CompraTest {
 		compra.marcarComoPagada();
 
 		assertThrows(OperacionInvalidaException.class, compra::marcarComoPagada);
+	}
+
+	// --- fecha de pago ---
+
+	// Una compra impaga no tiene fecha de pago
+	@Test
+	public void unaCompraImpagaNoTieneFechaDePago() {
+		assertNull(compra.getFechaPago());
+	}
+
+	// Una compra pagada al comprar tiene como fecha de pago la misma fecha de la compra
+	@Test
+	public void pagarAlComprarUsaLaFechaDeLaCompra() {
+		LocalDate ayer = LocalDate.now().minusDays(1);
+		Compra pagada = new Compra(ayer, true, usuario);
+
+		assertEquals(ayer, pagada.getFechaPago());
+	}
+
+	// Pagar despues una compra impaga le pone como fecha de pago el dia en que se paga
+	@Test
+	public void pagarDespuesUsaLaFechaDelPago() {
+		Compra deAyer = new Compra(LocalDate.now().minusDays(1), false, usuario);
+
+		deAyer.marcarComoPagada();
+
+		assertEquals(LocalDate.now(), deAyer.getFechaPago());
 	}
 }

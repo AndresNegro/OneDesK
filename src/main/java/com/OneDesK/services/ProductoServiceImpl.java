@@ -33,9 +33,24 @@ public class ProductoServiceImpl implements ProductoService {
 	@Override
 	@Transactional
 	public Producto cambiarPrecio(int productoId, int nuevoPrecio) {
-		Producto producto = repositorio.findById(productoId)
-				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el producto " + productoId));
+		Producto producto = buscarProducto(productoId);
 		producto.setPrecio(nuevoPrecio);
+		return producto;
+	}
+
+	@Override
+	@Transactional
+	public Producto fijarStock(int productoId, int stock) {
+		Producto producto = buscarProducto(productoId);
+		producto.fijarStock(stock);
+		return producto;
+	}
+
+	@Override
+	@Transactional
+	public Producto ajustarStock(int productoId, int cantidad) {
+		Producto producto = buscarProducto(productoId);
+		producto.ajustarStock(cantidad);
 		return producto;
 	}
 
@@ -59,5 +74,10 @@ public class ProductoServiceImpl implements ProductoService {
 	@Transactional
 	public List<Producto> listarPorPrecio() {
 		return repositorio.findByStockGreaterThanOrderByPrecioAsc(SIN_STOCK);
+	}
+
+	private Producto buscarProducto(int productoId) {
+		return repositorio.findById(productoId)
+				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el producto " + productoId));
 	}
 }

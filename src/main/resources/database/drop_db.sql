@@ -30,6 +30,10 @@ ALTER TABLE Empleado
     DROP CONSTRAINT fk_Empleado_ID_Persona;
 
 
+ALTER TABLE Administrador
+    DROP CONSTRAINT fk_Persona_ID_Administrador;
+
+
 ALTER TABLE ItemCompra
     DROP CONSTRAINT fk_Producto_ID_ItemCompra;
 
@@ -61,6 +65,8 @@ DROP TABLE Evento;
 DROP TABLE EmpleadoIndoor;
 
 DROP TABLE Empleado;
+
+DROP TABLE Administrador;
 
 DROP TABLE ItemCompra;
 

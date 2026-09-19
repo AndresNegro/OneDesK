@@ -2,6 +2,7 @@ package com.OneDesK.modelo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Date;
@@ -71,6 +72,24 @@ public class PersistenciaDeEntidadesTest {
 		assertEquals(1, contar("SELECT COUNT(*) FROM Persona WHERE ID = " + id));
 		assertEquals(1, contar("SELECT COUNT(*) FROM Empleado WHERE ID = " + id));
 		assertEquals(1, contar("SELECT COUNT(*) FROM EmpleadoIndoor WHERE ID = " + id));
+	}
+
+	// La herencia JOINED escribe una fila en Persona y otra en Administrador
+	@Test
+	public void unAdministradorSeGuardaEnPersonaYAdministrador() {
+		Administrador admin = new Administrador("Ana", "Admin", "admin@test.com", "12345");
+		em.persistAndFlush(admin);
+		int id = admin.getId();
+		em.clear();
+
+		Administrador recargado = em.find(Administrador.class, id);
+		assertEquals("admin@test.com", recargado.getEmail());
+		assertEquals("Ana", recargado.getNombre());
+
+		assertEquals(1, contar("SELECT COUNT(*) FROM Persona WHERE ID = " + id));
+		assertEquals(1, contar("SELECT COUNT(*) FROM Administrador WHERE ID = " + id));
+		assertEquals(0, contar("SELECT COUNT(*) FROM Usuario WHERE ID = " + id));
+		assertEquals(0, contar("SELECT COUNT(*) FROM Empleado WHERE ID = " + id));
 	}
 
 	// Indoor y Planta: se guardan las 14 columnas de la planta, incluidas las que no tienen getter
@@ -180,6 +199,34 @@ public class PersistenciaDeEntidadesTest {
 		assertEquals(3, item.getCantidad());
 		assertEquals(1000, item.getPrecioUnitario());
 		assertEquals(producto.getId(), item.getProducto().getId());
+		assertNull(recargada.getFechaPago());
+	}
+
+	// La fecha de pago se guarda en su columna: vacia si la compra esta impaga y con fecha al pagarla
+	@Test
+	public void laFechaDePagoSeGuardaEnLaCompra() {
+		Usuario usuario = new Usuario("Andres", "Negro", "comprador@test.com", "12345");
+		em.persist(usuario);
+		Compra pagadaAlComprar = new Compra(HOY.minusDays(3), true, usuario);
+		Compra pagadaDespues = new Compra(HOY.minusDays(3), false, usuario);
+		em.persist(pagadaAlComprar);
+		em.persist(pagadaDespues);
+		em.flush();
+		assertEquals(0, contar("SELECT COUNT(*) FROM Compra WHERE ID = " + pagadaDespues.getId()
+				+ " AND fechaPago IS NOT NULL"));
+
+		pagadaDespues.marcarComoPagada();
+		em.flush();
+		em.clear();
+
+		Object pagoAlComprar = em.getEntityManager()
+				.createNativeQuery("SELECT fechaPago FROM Compra WHERE ID = " + pagadaAlComprar.getId())
+				.getSingleResult();
+		Object pagoDespues = em.getEntityManager()
+				.createNativeQuery("SELECT fechaPago FROM Compra WHERE ID = " + pagadaDespues.getId())
+				.getSingleResult();
+		assertEquals(HOY.minusDays(3), ((Date) pagoAlComprar).toLocalDate());
+		assertEquals(HOY, ((Date) pagoDespues).toLocalDate());
 	}
 
 	// La deuda guardada es la suma de las compras impagas del usuario

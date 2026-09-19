@@ -3,9 +3,11 @@ package com.OneDesK.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -313,6 +315,43 @@ public class CompraServiceImplTest {
 	@Test
 	public void anularUnaCompraInexistenteFalla() {
 		assertThrows(RecursoNoEncontradoException.class, () -> service.anularCompra(INEXISTENTE));
+	}
+
+	// --- fecha de pago ---
+
+	// Una compra pagada al comprar queda guardada con la fecha de pago de hoy
+	@Test
+	public void unaCompraPagadaSeGuardaConSuFechaDePago() {
+		int idCompra = comprarKush(1, true).getId();
+		recargar();
+
+		assertEquals(LocalDate.now(), em.find(Compra.class, idCompra).getFechaPago());
+	}
+
+	// Una compra impaga queda guardada sin fecha de pago, y al registrar el pago se guarda la de hoy
+	@Test
+	public void registrarElPagoGuardaLaFechaDePago() {
+		asignarTope(5000);
+		int idCompra = comprarKush(1, false).getId();
+		recargar();
+		assertNull(em.find(Compra.class, idCompra).getFechaPago());
+
+		service.registrarPago(idCompra);
+		recargar();
+
+		assertEquals(LocalDate.now(), em.find(Compra.class, idCompra).getFechaPago());
+	}
+
+	// Pagar dos veces se rechaza y no cambia la fecha de pago guardada
+	@Test
+	public void pagarDosVecesNoCambiaLaFechaDePago() {
+		int idCompra = comprarKush(1, true).getId();
+		recargar();
+
+		assertThrows(OperacionInvalidaException.class, () -> service.registrarPago(idCompra));
+		recargar();
+
+		assertEquals(LocalDate.now(), em.find(Compra.class, idCompra).getFechaPago());
 	}
 
 	// --- helpers ---

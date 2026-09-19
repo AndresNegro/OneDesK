@@ -12,6 +12,12 @@ public interface ProductoService {
 	/** Las compras ya hechas conservan el precio al que se compraron. */
 	public Producto cambiarPrecio(int productoId, int nuevoPrecio);
 
+	/** Correccion de inventario: deja el stock en el valor contado, que no puede ser negativo. */
+	public Producto fijarStock(int productoId, int stock);
+
+	/** Suma (positivo) o resta (negativo) al stock actual, sin dejarlo negativo. */
+	public Producto ajustarStock(int productoId, int cantidad);
+
 	// Las consultas del catalogo devuelven solo productos con stock: lo que no tiene stock no se puede comprar
 
 	public List<Producto> listarProductos();

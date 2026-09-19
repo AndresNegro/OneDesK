@@ -58,6 +58,7 @@ CREATE TABLE Compra (
     fechaCompra DATE NOT NULL,
     precio INT NOT NULL,
     pagado BOOLEAN NOT NULL,
+    fechaPago DATE,
     PRIMARY KEY (ID)
 );
 
@@ -71,6 +72,11 @@ CREATE TABLE ItemCompra (
 );
 
 CREATE TABLE Empleado (
+    ID INT NOT NULL,
+    PRIMARY KEY (ID)
+);
+
+CREATE TABLE Administrador (
     ID INT NOT NULL,
     PRIMARY KEY (ID)
 );
@@ -147,6 +153,11 @@ ALTER TABLE Empleado
         FOREIGN KEY (ID) REFERENCES Persona(ID)
         ON DELETE CASCADE ON UPDATE CASCADE;
 
+
+ALTER TABLE Administrador
+    ADD CONSTRAINT fk_Persona_ID_Administrador
+        FOREIGN KEY (ID) REFERENCES Persona(ID)
+        ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE EmpleadoIndoor
     ADD CONSTRAINT fk_Empleado_ID_EmpleadoIndoor

@@ -10,6 +10,8 @@ public interface EmpleadoIndoorService {
 	public EmpleadoIndoor registrar(String nombre, String apellido, String email, String contrasenia,
 			int salarioMensual);
 
+	public EmpleadoIndoor cambiarSalario(int empleadoId, int salarioMensual);
+
 	public void asignarIndoor(int empleadoId, int indoorId);
 
 	public void desasignarIndoor(int empleadoId, int indoorId);

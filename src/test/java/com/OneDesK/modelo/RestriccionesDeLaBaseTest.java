@@ -114,6 +114,25 @@ public class RestriccionesDeLaBaseTest {
 		assertEquals(0, contar("SELECT COUNT(*) FROM Usuario WHERE ID = " + id));
 	}
 
+	// Borrar la persona borra tambien su fila de administrador
+	@Test
+	public void borrarUnaPersonaArrastraSuAdministrador() {
+		Administrador admin = new Administrador("Ana", "Admin", "admin@test.com", "12345");
+		em.persistAndFlush(admin);
+		int id = admin.getId();
+		em.clear();
+
+		ejecutar("DELETE FROM Persona WHERE ID = " + id);
+
+		assertEquals(0, contar("SELECT COUNT(*) FROM Administrador WHERE ID = " + id));
+	}
+
+	// La base no acepta un administrador sin su persona: la clave foranea lo frena
+	@Test
+	public void laBaseRechazaUnAdministradorSinPersona() {
+		assertThrows(PersistenceException.class, () -> ejecutar("INSERT INTO Administrador (ID) VALUES (999999)"));
+	}
+
 	// Borrar un indoor arrastra sus plantas
 	@Test
 	public void borrarUnIndoorArrastraSusPlantas() {

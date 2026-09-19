@@ -38,7 +38,8 @@ public class Producto extends Persistible{
 
     // sin setGenetica: la genetica es unica y es lo que usa la cosecha para encontrar el producto
     public String getGenetica() { return genetica; }
-    // sin setStock: el stock solo cambia por cosechas (reponerStock) y por compras (descontarStock)
+    // sin setStock: el stock cambia por cosechas (reponerStock), compras (descontarStock)
+    // o un ajuste del administrador (fijarStock, ajustarStock), siempre validado
     public int getStock() { return stock; }
     public int getPrecio() { return precio; }
     public void setPrecio(int precio) {
@@ -60,6 +61,26 @@ public class Producto extends Persistible{
     public void reponerStock(int cantidad) {
         validarCantidad(cantidad);
         this.stock += cantidad;
+    }
+
+    /** Correccion de inventario: deja el stock en el valor que se conto. */
+    public void fijarStock(int stockContado) {
+        if (stockContado < 0) {
+            throw new IllegalArgumentException("El stock no puede ser negativo");
+        }
+        this.stock = stockContado;
+    }
+
+    /** Suma (cantidad positiva) o resta (cantidad negativa) al stock actual, sin dejarlo negativo. */
+    public void ajustarStock(int cantidad) {
+        if (cantidad == 0) {
+            throw new IllegalArgumentException("El ajuste de stock no puede ser cero");
+        }
+        if (cantidad > 0) {
+            reponerStock(cantidad);
+        } else {
+            descontarStock(-cantidad);
+        }
     }
 
     // una cantidad negativa daria vuelta la operacion: reponer -50 descontaria y podria dejar stock negativo

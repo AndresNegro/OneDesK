@@ -9,6 +9,7 @@
    cogollo-negro.jpg    CRYSTALWEED cannabis
    cogollo-tricomas.jpg spencer gray
    chalas-violeta.jpg   Andres Gomez (@andresloquesea)
+   cogollos-violetas.jpg GreenForce Staffing
    =========================================================================== */
 
 :root {
@@ -549,6 +550,75 @@ h1 em, h2 em, .titulo-serif em {
 }
 
 .aviso i { color: var(--violeta-suave); }
+
+/* --- pestanas del panel de administracion ------------------------------ */
+
+.pestanas {
+    gap: .5rem;
+    border-bottom: 1px solid var(--borde);
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.pestanas .nav-link {
+    position: relative;
+    color: var(--humo);
+    font-weight: 500;
+    white-space: nowrap;
+    padding: .85rem 1.1rem;
+    border: 0;
+    background: none;
+    transition: color .3s ease;
+}
+
+.pestanas .nav-link:hover { color: var(--tinta); }
+.pestanas .nav-link.active { color: var(--tinta); }
+
+/* la pestana activa se subraya con la misma linea verde a violeta de la navegacion */
+.pestanas .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 1.1rem;
+    right: 1.1rem;
+    bottom: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--verde), var(--violeta));
+    transform: scaleX(0);
+    transition: transform .4s var(--suave);
+}
+
+.pestanas .nav-link.active::after { transform: scaleX(1); }
+
+.tab-pane.fade { transition: opacity .35s ease; }
+
+/* indoor asignado a un empleado, con su boton para desasignarlo */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .25rem .35rem .25rem .7rem;
+    border-radius: 999px;
+    background: rgba(143, 107, 255, .12);
+    border: 1px solid var(--borde-vivo);
+    color: var(--violeta-suave);
+    font: 500 .75rem/1.2 var(--mono);
+}
+
+.chip button {
+    display: grid;
+    place-items: center;
+    width: 1.3rem;
+    height: 1.3rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    transition: background-color .2s ease;
+}
+
+.chip button:hover { background: rgba(143, 107, 255, .3); }
 
 /* --- tablas ------------------------------------------------------------- */
 
