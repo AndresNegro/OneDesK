@@ -1,5 +1,7 @@
 package com.OneDesK.services;
 
+import com.OneDesK.DatosDePrueba;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -90,7 +92,7 @@ public class AdministradorServiceImplTest {
 		recargar();
 		long indoorsAntes = contar("SELECT COUNT(*) FROM Indoor");
 
-		assertThrows(RecursoNoEncontradoException.class, () -> service.crearIndoor(usuario));
+		assertThrows(RecursoNoEncontradoException.class, () -> service.crearIndoor(usuario, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD));
 		recargar();
 
 		assertEquals(indoorsAntes, contar("SELECT COUNT(*) FROM Indoor"));
@@ -119,7 +121,7 @@ public class AdministradorServiceImplTest {
 	// Crear un indoor lo deja guardado en la base
 	@Test
 	public void crearIndoorQuedaGuardado() {
-		int indoor = service.crearIndoor(admin).getId();
+		int indoor = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		recargar();
 
 		assertNotNull(em.find(Indoor.class, indoor));
@@ -140,7 +142,7 @@ public class AdministradorServiceImplTest {
 	@Test
 	public void asignarYDesasignarUnEmpleadoQuedaGuardado() {
 		int empleado = nuevoEmpleado();
-		int indoor = service.crearIndoor(admin).getId();
+		int indoor = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		recargar();
 
 		service.asignarEmpleado(admin, empleado, indoor);
@@ -357,7 +359,7 @@ public class AdministradorServiceImplTest {
 	@Test
 	public void registrosDeProduccionDeLaMasRecienteALaMasVieja() {
 		int empleado = nuevoEmpleado();
-		int indoor = service.crearIndoor(admin).getId();
+		int indoor = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		service.asignarEmpleado(admin, empleado, indoor);
 		service.crearProducto(admin, "OG Kush", 1000);
 		int primera = plantar(indoor);
@@ -419,7 +421,7 @@ public class AdministradorServiceImplTest {
 	// Los eventos pendientes son los de todos los indoors, aunque no tengan empleado asignado; los atendidos no
 	@Test
 	public void eventosPendientesDeTodosLosIndoors() {
-		int indoor = service.crearIndoor(admin).getId();
+		int indoor = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		int planta = plantar(indoor);
 		Indoor recargado = em.find(Indoor.class, indoor);
 		EventoRegado pendiente = new EventoRegado(recargado.buscarPlanta(planta));
@@ -551,7 +553,7 @@ public class AdministradorServiceImplTest {
 	@Test
 	public void noSePuedeAsignarDosVecesElMismoIndoor() {
 		int empleado = nuevoEmpleado();
-		int indoor = service.crearIndoor(admin).getId();
+		int indoor = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		service.asignarEmpleado(admin, empleado, indoor);
 		recargar();
 
@@ -565,7 +567,7 @@ public class AdministradorServiceImplTest {
 	@Test
 	public void noSePuedeDesasignarUnIndoorNoAsignado() {
 		int empleado = nuevoEmpleado();
-		int indoor = service.crearIndoor(admin).getId();
+		int indoor = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		recargar();
 
 		assertThrows(OperacionInvalidaException.class, () -> service.desasignarEmpleado(admin, empleado, indoor));
@@ -575,8 +577,8 @@ public class AdministradorServiceImplTest {
 	@Test
 	public void desasignarUnIndoorNoTocaLosOtros() {
 		int empleado = nuevoEmpleado();
-		int primero = service.crearIndoor(admin).getId();
-		int segundo = service.crearIndoor(admin).getId();
+		int primero = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
+		int segundo = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		service.asignarEmpleado(admin, empleado, primero);
 		service.asignarEmpleado(admin, empleado, segundo);
 		recargar();
@@ -593,7 +595,7 @@ public class AdministradorServiceImplTest {
 	@Test
 	public void asignarConIdsInexistentesFalla() {
 		int empleado = nuevoEmpleado();
-		int indoor = service.crearIndoor(admin).getId();
+		int indoor = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		recargar();
 
 		assertThrows(RecursoNoEncontradoException.class, () -> service.asignarEmpleado(admin, INEXISTENTE, indoor));
@@ -736,7 +738,7 @@ public class AdministradorServiceImplTest {
 	@Test
 	public void elRegistroDeProduccionTieneTodosSusDatos() {
 		int empleado = nuevoEmpleado();
-		int indoor = service.crearIndoor(admin).getId();
+		int indoor = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		service.asignarEmpleado(admin, empleado, indoor);
 		int producto = service.crearProducto(admin, "OG Kush", 1000).getId();
 		int planta = plantar(indoor);
@@ -801,8 +803,8 @@ public class AdministradorServiceImplTest {
 	// Los eventos pendientes juntan los de varios indoors distintos
 	@Test
 	public void losEventosPendientesJuntanVariosIndoors() {
-		int primero = service.crearIndoor(admin).getId();
-		int segundo = service.crearIndoor(admin).getId();
+		int primero = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
+		int segundo = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		int eventoPrimero = eventoPendiente(primero);
 		int eventoSegundo = eventoPendiente(segundo);
 
@@ -815,7 +817,7 @@ public class AdministradorServiceImplTest {
 	// Los eventos de una planta cosechada se descartan y ya no aparecen como pendientes
 	@Test
 	public void losEventosDeUnaPlantaCosechadaNoQuedanPendientes() {
-		int indoor = service.crearIndoor(admin).getId();
+		int indoor = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		int evento = eventoPendiente(indoor);
 		em.find(Indoor.class, indoor).getPlantas().get(0).cosechar();
 		recargar();
@@ -828,7 +830,7 @@ public class AdministradorServiceImplTest {
 	// El administrador planta en cualquier indoor, aunque no tenga empleados
 	@Test
 	public void elAdministradorPlantaEnCualquierIndoor() {
-		int indoor = service.crearIndoor(admin).getId();
+		int indoor = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		recargar();
 
 		int planta = service.plantar(admin, indoor, new Planta("OG Kush", LocalDate.now().minusDays(5),
@@ -872,7 +874,7 @@ public class AdministradorServiceImplTest {
 	// Los listados de indoors, empleados y usuarios incluyen lo que se dio de alta
 	@Test
 	public void losListadosIncluyenLoDadoDeAlta() {
-		int indoor = service.crearIndoor(admin).getId();
+		int indoor = service.crearIndoor(admin, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		int empleado = nuevoEmpleado();
 		int usuario = nuevoUsuario(0);
 
@@ -1010,7 +1012,7 @@ public class AdministradorServiceImplTest {
 	// todas las acciones del administrador, pedidas por alguien que no lo es
 	private List<Executable> todasLasAcciones(int quien, int producto) {
 		return List.of(
-				() -> service.crearIndoor(quien),
+				() -> service.crearIndoor(quien, DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD),
 				() -> service.registrarEmpleado(quien, "Pedro", "Gomez", "otro@test.com", "12345", 500000),
 				() -> service.asignarEmpleado(quien, INEXISTENTE, INEXISTENTE),
 				() -> service.desasignarEmpleado(quien, INEXISTENTE, INEXISTENTE),

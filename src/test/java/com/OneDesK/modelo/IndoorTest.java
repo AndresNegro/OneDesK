@@ -1,6 +1,9 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.DatosDePrueba;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -24,7 +27,7 @@ public class IndoorTest {
 
 	@BeforeEach
 	public void setUp() {
-		indoor = new Indoor();
+		indoor = DatosDePrueba.indoor();
 		kush = indoor.addPlanta(nuevaPlanta("OG Kush"));
 		amnesia = indoor.addPlanta(nuevaPlanta("Amnesia"));
 	}
@@ -92,7 +95,7 @@ public class IndoorTest {
 	// Un indoor rechaza eventos de una planta que pertenece a otro indoor
 	@Test
 	public void noSeAceptanEventosDeUnaPlantaDeOtroIndoor() {
-		Indoor otroIndoor = new Indoor();
+		Indoor otroIndoor = DatosDePrueba.indoor();
 		Planta ajena = otroIndoor.addPlanta(nuevaPlanta("Haze"));
 
 		assertThrows(OperacionInvalidaException.class, () -> indoor.recibirEvento(new EventoLuz(ajena)));
@@ -108,6 +111,51 @@ public class IndoorTest {
 		assertThrows(OperacionInvalidaException.class, () -> indoor.recibirEvento(new EventoVentilador(kush)));
 
 		assertEquals(0, indoor.getColaEventos().size());
+	}
+
+	// --- nombre y capacidad ---
+
+	// Un indoor nuevo guarda su nombre sin espacios de mas y su capacidad
+	@Test
+	public void unIndoorNuevoTieneNombreYCapacidad() {
+		Indoor indoor = new Indoor("  Carpa grande ", 12);
+
+		assertEquals("Carpa grande", indoor.getNombre());
+		assertEquals(12, indoor.getCapacidad());
+		assertEquals(0, indoor.plantasEnCultivo());
+	}
+
+	// Sin nombre o con capacidad 0 no se puede crear
+	@Test
+	public void elNombreYLaCapacidadSeValidan() {
+		assertThrows(IllegalArgumentException.class, () -> new Indoor("  ", 12));
+		assertThrows(IllegalArgumentException.class, () -> new Indoor(null, 12));
+		assertThrows(IllegalArgumentException.class, () -> new Indoor("Carpa", 0));
+	}
+
+	// Con la capacidad completa no entra otra planta, y la que se rechaza no queda en el indoor
+	@Test
+	public void unIndoorLlenoNoRecibeMasPlantas() {
+		Indoor chico = new Indoor("Carpa chica", 2);
+		chico.addPlanta(nuevaPlanta("OG Kush"));
+		chico.addPlanta(nuevaPlanta("Amnesia"));
+
+		assertTrue(chico.isLleno());
+		assertThrows(OperacionInvalidaException.class, () -> chico.addPlanta(nuevaPlanta("Haze")));
+		assertEquals(2, chico.getPlantas().size());
+	}
+
+	// Una planta cosechada ya no ocupa lugar: despues de cosechar entra otra
+	@Test
+	public void cosecharLiberaLugar() {
+		Indoor chico = new Indoor("Carpa chica", 1);
+		Planta primera = chico.addPlanta(nuevaPlanta("OG Kush"));
+
+		primera.cosechar();
+
+		assertFalse(chico.isLleno());
+		chico.addPlanta(nuevaPlanta("Amnesia"));
+		assertEquals(1, chico.plantasEnCultivo());
 	}
 
 	private Planta nuevaPlanta(String genetica) {

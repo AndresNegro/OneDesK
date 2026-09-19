@@ -21,7 +21,7 @@ class IndoorDePrueba {
 
 	IndoorDePrueba(IndoorService indoorService, JdbcTemplate jdbc) {
 		this.jdbc = jdbc;
-		this.idIndoor = indoorService.crearIndoor().getId();
+		this.idIndoor = indoorService.crearIndoor(DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		Planta planta = new Planta("PRUEBA SCHEDULER", LocalDate.now().minusDays(10),
 				LocalDate.now().minusDays(20), 60, 120, 30);
 		this.idPlanta = indoorService.plantar(idIndoor, planta).getId();

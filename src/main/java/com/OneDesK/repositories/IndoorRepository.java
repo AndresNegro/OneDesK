@@ -9,4 +9,5 @@ import com.OneDesK.modelo.Indoor;
 @Repository
 public interface IndoorRepository extends JpaRepository<Indoor,Integer>{
 
+	boolean existsByNombreIgnoreCase(String nombre);
 }

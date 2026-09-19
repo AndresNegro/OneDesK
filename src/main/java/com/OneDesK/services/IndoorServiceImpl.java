@@ -18,8 +18,12 @@ public class IndoorServiceImpl implements IndoorService {
 
 	@Override
 	@Transactional
-	public Indoor crearIndoor() {
-		return repositorio.save(new Indoor());
+	public Indoor crearIndoor(String nombre, int capacidad) {
+		Indoor indoor = new Indoor(nombre, capacidad);
+		if (repositorio.existsByNombreIgnoreCase(indoor.getNombre())) {
+			throw new OperacionInvalidaException("Ya existe un indoor llamado " + indoor.getNombre());
+		}
+		return repositorio.save(indoor);
 	}
 
 	@Override

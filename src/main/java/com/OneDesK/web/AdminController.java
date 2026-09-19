@@ -82,9 +82,10 @@ public class AdminController {
 	// --- indoors y empleados ---
 
 	@PostMapping("/admin/indoors")
-	public String crearIndoor(HttpSession sesion, RedirectAttributes flash) {
-		Indoor indoor = admin.crearIndoor(Sesion.personaId(sesion));
-		flash.addFlashAttribute("exito", "Creaste el Indoor " + indoor.getId());
+	public String crearIndoor(@RequestParam("nombre") String nombre, @RequestParam("capacidad") int capacidad,
+			HttpSession sesion, RedirectAttributes flash) {
+		Indoor indoor = admin.crearIndoor(Sesion.personaId(sesion), nombre, capacidad);
+		flash.addFlashAttribute("exito", "Creaste el indoor " + indoor.getNombre());
 		return "redirect:/admin#indoors";
 	}
 
@@ -97,7 +98,7 @@ public class AdminController {
 		Planta planta = new Planta(genetica, fechaPlantado, fechaGerminado, tiempoRegado, tiempoLuz,
 				tiempoVentilacion);
 		admin.plantar(Sesion.personaId(sesion), indoorId, planta);
-		flash.addFlashAttribute("exito", "Plantaste " + planta.getGenetica() + " en el Indoor " + indoorId);
+		flash.addFlashAttribute("exito", "Plantaste " + planta.getGenetica() + " en " + planta.getIndoor().getNombre());
 		return "redirect:/admin#indoors";
 	}
 
@@ -122,7 +123,7 @@ public class AdminController {
 	public String desasignar(@RequestParam("empleadoId") int empleadoId, @RequestParam("indoorId") int indoorId, HttpSession sesion,
 			RedirectAttributes flash) {
 		admin.desasignarEmpleado(Sesion.personaId(sesion), empleadoId, indoorId);
-		flash.addFlashAttribute("exito", "Desasignaste el Indoor " + indoorId);
+		flash.addFlashAttribute("exito", "Desasignaste el indoor");
 		return "redirect:/admin#indoors";
 	}
 

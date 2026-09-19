@@ -1,5 +1,7 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.DatosDePrueba;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,7 +34,7 @@ public class MapeoRelacionesTest {
 	// Guardar un indoor guarda tambien sus plantas por cascada
 	@Test
 	public void guardarUnIndoorGuardaSusPlantas() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		indoor.addPlanta(nuevaPlanta("OG Kush"));
 		indoor.addPlanta(nuevaPlanta("Amnesia"));
 		em.persistAndFlush(indoor);
@@ -47,7 +49,7 @@ public class MapeoRelacionesTest {
 	// Sacar una planta de la lista del indoor la borra de la base (orphanRemoval)
 	@Test
 	public void sacarUnaPlantaDeLaListaLaBorra() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		Planta planta = nuevaPlanta("OG Kush");
 		indoor.addPlanta(planta);
 		indoor.addPlanta(nuevaPlanta("Amnesia"));
@@ -66,7 +68,7 @@ public class MapeoRelacionesTest {
 	// Borrar una planta no borra su indoor: la cascada va del indoor a la planta, no al reves
 	@Test
 	public void borrarUnaPlantaNoBorraSuIndoor() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		Planta planta = nuevaPlanta("OG Kush");
 		indoor.addPlanta(planta);
 		em.persistAndFlush(indoor);
@@ -84,7 +86,7 @@ public class MapeoRelacionesTest {
 	// Borrar un indoor borra sus plantas por cascada
 	@Test
 	public void borrarUnIndoorBorraSusPlantas() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		Planta planta = nuevaPlanta("OG Kush");
 		indoor.addPlanta(planta);
 		em.persistAndFlush(indoor);
@@ -157,7 +159,7 @@ public class MapeoRelacionesTest {
 	// La relacion muchos a muchos de la tabla Trabaja se guarda desde el lado del empleado
 	@Test
 	public void unEmpleadoQuedaAsignadoASusIndoors() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		EmpleadoIndoor empleado = new EmpleadoIndoor("Andres", "Negro", "empleado@test.com", "12345", 500000);
 		em.persist(indoor);
 		em.persist(empleado);
@@ -174,7 +176,7 @@ public class MapeoRelacionesTest {
 	// Desasignar solo borra la fila de Trabaja, no al empleado ni al indoor
 	@Test
 	public void desasignarUnIndoorNoBorraNiAlEmpleadoNiAlIndoor() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		EmpleadoIndoor empleado = new EmpleadoIndoor("Andres", "Negro", "empleado@test.com", "12345", 500000);
 		em.persist(indoor);
 		em.persist(empleado);
@@ -196,7 +198,7 @@ public class MapeoRelacionesTest {
 	// La columna tipo hace que cada evento vuelva de la base con su propia clase
 	@Test
 	public void cadaTipoDeEventoSeRecuperaConSuClase() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		Planta planta = nuevaPlanta("OG Kush");
 		indoor.addPlanta(planta);
 		EventoLuz luz = new EventoLuz(planta);
@@ -219,7 +221,7 @@ public class MapeoRelacionesTest {
 	// El campo realizado se guarda en la base y el evento deja de figurar como pendiente al releerlo
 	@Test
 	public void unEventoAtendidoQuedaGuardadoComoRealizado() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		Planta planta = nuevaPlanta("OG Kush");
 		indoor.addPlanta(planta);
 		EventoVentilador evento = new EventoVentilador(planta);

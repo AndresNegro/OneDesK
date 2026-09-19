@@ -70,7 +70,7 @@ public class EmpleadoController {
 		Planta planta = new Planta(genetica, fechaPlantado, fechaGerminado, tiempoRegado, tiempoLuz,
 				tiempoVentilacion);
 		empleadoService.plantar(Sesion.personaId(sesion), indoorId, planta);
-		flash.addFlashAttribute("exito", "Plantaste " + planta.getGenetica() + " en el Indoor " + indoorId);
+		flash.addFlashAttribute("exito", "Plantaste " + planta.getGenetica() + " en " + planta.getIndoor().getNombre());
 		return "redirect:/empleado";
 	}
 

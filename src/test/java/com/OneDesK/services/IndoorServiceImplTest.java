@@ -1,5 +1,7 @@
 package com.OneDesK.services;
 
+import com.OneDesK.DatosDePrueba;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -37,7 +39,7 @@ public class IndoorServiceImplTest {
 	// Crear un indoor lo guarda en la base con su id
 	@Test
 	public void crearUnIndoorLoGuarda() {
-		Indoor indoor = service.crearIndoor();
+		Indoor indoor = service.crearIndoor(DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD);
 
 		assertTrue(indoor.getId() > 0);
 		assertNotNull(em.find(Indoor.class, indoor.getId()));
@@ -46,7 +48,7 @@ public class IndoorServiceImplTest {
 	// Plantar guarda la planta en la base y devuelve esa misma planta con su id asignado
 	@Test
 	public void plantarGuardaLaPlantaEnElIndoor() {
-		Indoor indoor = service.crearIndoor();
+		Indoor indoor = service.crearIndoor(DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD);
 
 		Planta planta = service.plantar(indoor.getId(), nuevaPlanta("OG Kush"));
 		em.clear();
@@ -66,8 +68,8 @@ public class IndoorServiceImplTest {
 	// Una planta que ya esta en un indoor no se puede plantar en otro
 	@Test
 	public void unaPlantaYaPlantadaNoSePuedePlantarEnOtroIndoor() {
-		Indoor uno = service.crearIndoor();
-		Indoor dos = service.crearIndoor();
+		Indoor uno = service.crearIndoor(DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD);
+		Indoor dos = service.crearIndoor(DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD);
 		Planta planta = service.plantar(uno.getId(), nuevaPlanta("OG Kush"));
 
 		assertThrows(OperacionInvalidaException.class, () -> service.plantar(dos.getId(), planta));
@@ -80,7 +82,7 @@ public class IndoorServiceImplTest {
 	// Quitar una planta la borra de la base junto con sus eventos, sin tocar las otras plantas
 	@Test
 	public void quitarUnaPlantaLaBorraConSusEventos() {
-		Indoor indoor = service.crearIndoor();
+		Indoor indoor = service.crearIndoor(DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD);
 		Planta muerta = service.plantar(indoor.getId(), nuevaPlanta("OG Kush"));
 		Planta sana = service.plantar(indoor.getId(), nuevaPlanta("Amnesia"));
 		indoor.recibirEvento(new EventoRegado(muerta));
@@ -102,7 +104,7 @@ public class IndoorServiceImplTest {
 	// Una planta cosechada no se puede quitar y sigue en el indoor
 	@Test
 	public void noSePuedeQuitarUnaPlantaCosechada() {
-		Indoor indoor = service.crearIndoor();
+		Indoor indoor = service.crearIndoor(DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD);
 		Planta planta = service.plantar(indoor.getId(), nuevaPlanta("OG Kush"));
 		planta.cosechar();
 
@@ -114,13 +116,51 @@ public class IndoorServiceImplTest {
 	// Quitar una planta pidiendosela a un indoor que no la tiene falla con RecursoNoEncontradoException
 	@Test
 	public void quitarUnaPlantaDeOtroIndoorFalla() {
-		Indoor uno = service.crearIndoor();
-		Indoor dos = service.crearIndoor();
+		Indoor uno = service.crearIndoor(DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD);
+		Indoor dos = service.crearIndoor(DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD);
 		Planta planta = service.plantar(uno.getId(), nuevaPlanta("OG Kush"));
 
 		assertThrows(RecursoNoEncontradoException.class, () -> service.quitarPlanta(dos.getId(), planta.getId()));
 
 		assertEquals(1, uno.getPlantas().size());
+	}
+
+	// --- nombre y capacidad ---
+
+	// Crear un indoor lo guarda con su nombre y su capacidad
+	@Test
+	public void crearUnIndoorGuardaNombreYCapacidad() {
+		int id = service.crearIndoor("Carpa del fondo", 8).getId();
+		em.flush();
+		em.clear();
+
+		Indoor recargado = em.find(Indoor.class, id);
+		assertEquals("Carpa del fondo", recargado.getNombre());
+		assertEquals(8, recargado.getCapacidad());
+	}
+
+	// No se puede repetir el nombre de otro indoor, aunque cambien las mayusculas o los espacios
+	@Test
+	public void noSePuedeRepetirElNombre() {
+		service.crearIndoor("Carpa del fondo", 8);
+		em.flush();
+
+		assertThrows(OperacionInvalidaException.class, () -> service.crearIndoor("  carpa DEL fondo ", 3));
+	}
+
+	// Plantar en un indoor lleno se rechaza y no se guarda la planta
+	@Test
+	public void plantarEnUnIndoorLlenoSeRechaza() {
+		int id = service.crearIndoor("Carpa chica", 1).getId();
+		service.plantar(id, nuevaPlanta("OG Kush"));
+		em.flush();
+		em.clear();
+
+		assertThrows(OperacionInvalidaException.class, () -> service.plantar(id, nuevaPlanta("Amnesia")));
+		em.flush();
+		em.clear();
+
+		assertEquals(1, em.find(Indoor.class, id).getPlantas().size());
 	}
 
 	private Planta nuevaPlanta(String genetica) {

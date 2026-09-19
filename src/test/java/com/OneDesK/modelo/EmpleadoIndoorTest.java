@@ -1,5 +1,7 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.DatosDePrueba;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -25,7 +27,7 @@ public class EmpleadoIndoorTest {
 	@BeforeEach
 	public void setUp() {
 		empleado = new EmpleadoIndoor("Andres", "Negro", "empleado@test.com", "12345", 500000);
-		indoor = new Indoor();
+		indoor = DatosDePrueba.indoor();
 		planta = indoor.addPlanta(nuevaPlanta("OG Kush"));
 		empleado.addIndoor(indoor);
 	}
@@ -68,7 +70,7 @@ public class EmpleadoIndoorTest {
 	// Desasignar un indoor que el empleado no tiene se rechaza
 	@Test
 	public void noSePuedeDesasignarUnIndoorQueNoTiene() {
-		assertThrows(OperacionInvalidaException.class, () -> empleado.deleteIndoor(new Indoor()));
+		assertThrows(OperacionInvalidaException.class, () -> empleado.deleteIndoor(DatosDePrueba.indoor()));
 	}
 
 	// --- eventos ---
@@ -127,7 +129,7 @@ public class EmpleadoIndoorTest {
 	// Un empleado no puede atender eventos de un indoor que no tiene a cargo, y el evento no cambia
 	@Test
 	public void noSePuedeAtenderUnEventoDeUnIndoorNoAsignado() {
-		Indoor otroIndoor = new Indoor();
+		Indoor otroIndoor = DatosDePrueba.indoor();
 		Planta otraPlanta = otroIndoor.addPlanta(nuevaPlanta("Amnesia"));
 		EventoLuz luz = new EventoLuz(otraPlanta);
 		otroIndoor.recibirEvento(luz);
@@ -146,7 +148,7 @@ public class EmpleadoIndoorTest {
 		indoor.recibirEvento(riego);
 		indoor.recibirEvento(luz);
 
-		Indoor otroIndoor = new Indoor();
+		Indoor otroIndoor = DatosDePrueba.indoor();
 		otroIndoor.recibirEvento(new EventoLuz(otroIndoor.addPlanta(nuevaPlanta("Amnesia"))));
 
 		empleado.atenderEvento(riego);

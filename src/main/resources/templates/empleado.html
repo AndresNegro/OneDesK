@@ -47,7 +47,7 @@
                             <span th:case="'LUZ'">Luz</span>
                             <span th:case="*">Ventilación</span>
                         </p>
-                        <p class="mb-0 apagado small" th:text="${e.planta.genetica} + ' · Indoor ' + ${e.planta.indoor.id}">OG Kush · Indoor 1</p>
+                        <p class="mb-0 apagado small" th:text="${e.planta.genetica} + ' · ' + ${e.planta.indoor.nombre}">OG Kush · Indoor 1</p>
                     </div>
                     <form th:action="@{/empleado/atender}" method="post">
                         <input type="hidden" name="indoorId" th:value="${e.planta.indoor.id}">
@@ -58,7 +58,10 @@
             </div>
 
             <th:block th:each="indoor : ${empleado.sectoresACargo}">
-                <h2 class="titulo-bloque" th:text="'Plantas del Indoor ' + ${indoor.id}">Plantas del Indoor 1</h2>
+                <h2 class="titulo-bloque">
+                    <span th:text="${indoor.nombre}">Carpa grande</span>
+                    <span class="apagado fs-6 ms-2" th:text="${indoor.plantasEnCultivo()} + ' de ' + ${indoor.capacidad} + ' plantas'">3 de 20 plantas</span>
+                </h2>
 
                 <div class="card mb-5">
                     <p class="apagado m-0 p-4" th:if="${indoor.plantas.isEmpty()}">Este indoor todavía no tiene plantas.</p>
@@ -106,12 +109,12 @@
                         <label for="planta" class="form-label">Planta</label>
                         <select class="form-select" id="planta" name="plantaId" required>
                             <option th:each="p : ${enCultivo}" th:value="${p.id}"
-                                    th:text="${p.genetica} + ' · Indoor ' + ${p.indoor.id} + ' · plantada el ' + ${#temporals.format(p.fechaPlantado, 'dd/MM/yyyy')}">OG Kush</option>
+                                    th:text="${p.genetica} + ' · ' + ${p.indoor.nombre} + ' · plantada el ' + ${#temporals.format(p.fechaPlantado, 'dd/MM/yyyy')}">OG Kush</option>
                         </select>
                     </div>
 
                     <div class="mb-4">
-                        <label for="cantidad" class="form-label">Cantidad cosechada</label>
+                        <label for="cantidad" class="form-label">Gramos cosechados</label>
                         <input type="number" class="form-control" id="cantidad" name="cantidad" min="1" required>
                         <div class="form-text">Se suma al stock del producto de esa genética.</div>
                     </div>
@@ -135,7 +138,8 @@
                         <div class="col-sm-6">
                             <label for="plantar-indoor" class="form-label">Indoor</label>
                             <select class="form-select" id="plantar-indoor" name="indoorId" required>
-                                <option th:each="i : ${empleado.sectoresACargo}" th:value="${i.id}" th:text="'Indoor ' + ${i.id}">Indoor 1</option>
+                                <option th:each="i : ${empleado.sectoresACargo}" th:value="${i.id}" th:disabled="${i.lleno}"
+                                        th:text="${i.nombre} + ' (' + ${i.plantasEnCultivo()} + '/' + ${i.capacidad} + ')'">Indoor 1</option>
                             </select>
                         </div>
                         <div class="col-sm-6">

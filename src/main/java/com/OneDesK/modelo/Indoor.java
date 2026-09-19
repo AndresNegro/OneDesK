@@ -4,6 +4,7 @@ import com.OneDesK.evento.Evento;
 import com.OneDesK.excepciones.OperacionInvalidaException;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
@@ -18,6 +19,11 @@ import java.util.List;
 @Entity
 @Table(name="Indoor")
 public class Indoor extends Persistible{
+	@Column(name="nombre", unique=true)
+	private String nombre;
+	// cuantas plantas en cultivo entran a la vez: las cosechadas ya no ocupan lugar
+	@Column(name="capacidad")
+	private int capacidad;
 	// lado inverso: las asignaciones se hacen desde EmpleadoIndoor, que es quien escribe en Trabaja
 	@ManyToMany(mappedBy = "sectoresACargo")
 	private List<EmpleadoIndoor> empleadosAsignados;
@@ -27,13 +33,47 @@ public class Indoor extends Persistible{
 	@JoinColumn(name = "ID_INDOOR", referencedColumnName="ID", nullable = false)
     private List<Evento> colaEventos;
 
-    public Indoor() {
+    Indoor() {
     	this.empleadosAsignados = new ArrayList<>();
         this.plantas = new ArrayList<>();
         this.colaEventos = new ArrayList<>();
     }
 
+    public Indoor(String nombre, int capacidad) {
+        this();
+        if (nombre == null || nombre.isBlank()) {
+            throw new IllegalArgumentException("El nombre del indoor no puede estar vacío");
+        }
+        if (capacidad <= 0) {
+            throw new IllegalArgumentException("La capacidad del indoor tiene que ser de al menos una planta");
+        }
+        this.nombre = nombre.trim();
+        this.capacidad = capacidad;
+    }
+
+    public String getNombre() { return nombre; }
+    public int getCapacidad() { return capacidad; }
+
+    /** Las plantas que todavia no se cosecharon: son las que ocupan lugar. */
+    public int plantasEnCultivo() {
+        int enCultivo = 0;
+        for (Planta planta : plantas) {
+            if (!planta.isCosechada()) {
+                enCultivo++;
+            }
+        }
+        return enCultivo;
+    }
+
+    public boolean isLleno() {
+        return plantasEnCultivo() >= capacidad;
+    }
+
     public Planta addPlanta(Planta p) {
+        if (isLleno()) {
+            throw new OperacionInvalidaException("El indoor " + nombre + " está lleno: tiene " + plantasEnCultivo()
+                    + " de " + capacidad + " plantas en cultivo");
+        }
         plantas.add(p);
         p.setIndoor(this);
         p.empezarACorrerTiempos(LocalDateTime.now());
@@ -120,6 +160,6 @@ public class Indoor extends Persistible{
 
     @Override
     public String toString() {
-        return "Indoor{plantas=" + plantas.size() + ", eventos=" + colaEventos.size() + '}';
+        return "Indoor{" + nombre + ", plantas=" + plantas.size() + ", eventos=" + colaEventos.size() + '}';
     }
 }

@@ -1,5 +1,7 @@
 package com.OneDesK.services;
 
+import com.OneDesK.DatosDePrueba;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,7 +49,7 @@ public class GeneradorDeEventosServiceImplTest {
 
 	@BeforeEach
 	public void setUp() {
-		idIndoor = indoorService.crearIndoor().getId();
+		idIndoor = indoorService.crearIndoor(DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD).getId();
 		idPlanta = indoorService.plantar(idIndoor, nuevaPlanta("OG Kush")).getId();
 		recargar();
 	}

@@ -32,6 +32,8 @@ CREATE TABLE Producto (
 
 CREATE TABLE Indoor (
     ID INT NOT NULL AUTO_INCREMENT,
+    nombre VARCHAR(255) NOT NULL UNIQUE,
+    capacidad INT NOT NULL,
     PRIMARY KEY (ID)
 );
 

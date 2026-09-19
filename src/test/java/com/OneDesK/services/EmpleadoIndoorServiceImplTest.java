@@ -1,5 +1,7 @@
 package com.OneDesK.services;
 
+import com.OneDesK.DatosDePrueba;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -46,7 +48,7 @@ public class EmpleadoIndoorServiceImplTest {
 	@BeforeEach
 	public void setUp() {
 		empleado = service.registrar("Andres", "Negro", "empleado@test.com", "12345", 500000);
-		indoor = new Indoor();
+		indoor = DatosDePrueba.indoor();
 		planta = indoor.addPlanta(nuevaPlanta("OG Kush"));
 		em.persistAndFlush(indoor);
 	}
@@ -189,7 +191,7 @@ public class EmpleadoIndoorServiceImplTest {
 		indoor.recibirEvento(riego);
 		indoor.recibirEvento(luz);
 
-		Indoor otroIndoor = new Indoor();
+		Indoor otroIndoor = DatosDePrueba.indoor();
 		otroIndoor.recibirEvento(new EventoLuz(otroIndoor.addPlanta(nuevaPlanta("Amnesia"))));
 		em.persist(otroIndoor);
 		em.flush();
@@ -230,7 +232,7 @@ public class EmpleadoIndoorServiceImplTest {
 	// Buscar un evento en un indoor que no lo tiene falla con RecursoNoEncontradoException
 	@Test
 	public void unEventoQueNoEsDeEseIndoorNoSeEncuentra() {
-		Indoor otroIndoor = new Indoor();
+		Indoor otroIndoor = DatosDePrueba.indoor();
 		em.persist(otroIndoor);
 		EventoLuz luz = new EventoLuz(planta);
 		indoor.recibirEvento(luz);

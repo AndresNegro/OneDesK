@@ -95,9 +95,9 @@
                 <div class="col-lg-7">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h2 class="titulo-bloque mb-0">Indoors</h2>
-                        <form th:action="@{/admin/indoors}" method="post">
-                            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg me-1"></i>Crear indoor</button>
-                        </form>
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modal-indoor">
+                            <i class="bi bi-plus-lg me-1"></i>Crear indoor
+                        </button>
                     </div>
 
                     <div class="card mb-5">
@@ -107,15 +107,18 @@
                                 <thead>
                                     <tr>
                                         <th scope="col" class="ps-4">Indoor</th>
-                                        <th scope="col">En cultivo</th>
+                                        <th scope="col">Plantas</th>
                                         <th scope="col">Empleados</th>
                                         <th scope="col" class="pe-4">Pendientes</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr th:each="i : ${indoors}">
-                                        <td class="ps-4"><span class="badge-genetica" th:text="'Indoor ' + ${i.id}">Indoor 1</span></td>
-                                        <td th:text="${i.plantas.?[!cosechada].size()}">8</td>
+                                        <td class="ps-4"><span class="badge-genetica" th:text="${i.nombre}">Indoor 1</span></td>
+                                        <td>
+                                            <span th:text="${i.plantasEnCultivo()} + ' de ' + ${i.capacidad}">8 de 20</span>
+                                            <span class="d-block small" style="color: var(--violeta-suave);" th:if="${i.lleno}">Lleno</span>
+                                        </td>
                                         <td class="apagado">
                                             <span th:if="${i.empleadosAsignados.isEmpty()}">Sin empleados</span>
                                             <span th:each="e, it : ${i.empleadosAsignados}" th:text="${e.nombre} + ' ' + ${e.apellido} + (${it.last} ? '' : ', ')">Andrés Negro</span>
@@ -155,8 +158,8 @@
                                                 <form th:each="i : ${e.sectoresACargo}" th:action="@{/admin/empleados/desasignar}" method="post" class="chip">
                                                     <input type="hidden" name="empleadoId" th:value="${e.id}">
                                                     <input type="hidden" name="indoorId" th:value="${i.id}">
-                                                    <span th:text="'Indoor ' + ${i.id}">Indoor 1</span>
-                                                    <button type="submit" th:aria-label="'Desasignar del Indoor ' + ${i.id}"><i class="bi bi-x"></i></button>
+                                                    <span th:text="${i.nombre}">Indoor 1</span>
+                                                    <button type="submit" th:aria-label="'Desasignar de ' + ${i.nombre}"><i class="bi bi-x"></i></button>
                                                 </form>
                                             </div>
                                         </td>
@@ -184,7 +187,8 @@
                                 <div class="col-sm-4">
                                     <label for="plantar-indoor" class="form-label">Indoor</label>
                                     <select class="form-select" id="plantar-indoor" name="indoorId" required>
-                                        <option th:each="i : ${indoors}" th:value="${i.id}" th:text="'Indoor ' + ${i.id}">Indoor 1</option>
+                                        <option th:each="i : ${indoors}" th:value="${i.id}" th:disabled="${i.lleno}"
+                                                th:text="${i.nombre} + ' (' + ${i.plantasEnCultivo()} + '/' + ${i.capacidad} + ')'">Indoor 1</option>
                                     </select>
                                 </div>
                                 <div class="col-sm-8">
@@ -231,7 +235,7 @@
                             <div class="mb-4">
                                 <label for="asignar-indoor" class="form-label">Indoor</label>
                                 <select class="form-select" id="asignar-indoor" name="indoorId" required>
-                                    <option th:each="i : ${indoors}" th:value="${i.id}" th:text="'Indoor ' + ${i.id}">Indoor 1</option>
+                                    <option th:each="i : ${indoors}" th:value="${i.id}" th:text="${i.nombre}">Indoor 1</option>
                                 </select>
                                 <div class="form-text">Un empleado no puede tener dos veces el mismo indoor.</div>
                             </div>
@@ -574,7 +578,7 @@
                                     <tr th:each="r : ${registrosDeProduccion}">
                                         <td class="ps-4 apagado" th:text="${#temporals.format(r.fechaRegistro, 'dd/MM/yyyy')}">10/09/2026</td>
                                         <td><span class="badge-genetica" th:text="${r.producto.genetica}">Blue Dream</span></td>
-                                        <td th:text="'Indoor ' + ${r.indoor.id}">Indoor 1</td>
+                                        <td th:text="${r.indoor.nombre}">Indoor 1</td>
                                         <td class="apagado" th:text="${r.empleadoIndoor.nombre} + ' ' + ${r.empleadoIndoor.apellido}">Andrés Negro</td>
                                         <td class="text-end pe-4 fw-semibold" th:text="${r.cantidad} + ' g'">40 g</td>
                                     </tr>
@@ -643,7 +647,7 @@
                                     <span th:case="'LUZ'">Luz</span>
                                     <span th:case="*">Ventilación</span>
                                 </p>
-                                <p class="mb-0 apagado small" th:text="${e.planta.genetica} + ' · Indoor ' + ${e.planta.indoor.id}">OG Kush · Indoor 1</p>
+                                <p class="mb-0 apagado small" th:text="${e.planta.genetica} + ' · ' + ${e.planta.indoor.nombre}">OG Kush · Indoor 1</p>
                             </div>
                             <span class="punto-vivo punto-vivo--violeta"></span>
                         </div>
@@ -656,8 +660,47 @@
     </div>
 </main>
 
+<!-- ventana para crear un indoor -->
+<div class="modal fade" id="modal-indoor" tabindex="-1" aria-labelledby="modal-indoor-titulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content ventana" th:action="@{/admin/indoors}" method="post">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <p class="etiqueta mb-2">Nuevo indoor</p>
+                    <h2 class="modal-title titulo-bloque mb-0" id="modal-indoor-titulo">Crear indoor</h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4">
+                    <label for="indoor-nombre" class="form-label">Nombre</label>
+                    <input type="text" class="form-control" id="indoor-nombre" name="nombre" placeholder="Carpa grande" required>
+                    <div class="form-text">No puede repetirse el nombre de otro indoor.</div>
+                </div>
+                <div>
+                    <label for="indoor-capacidad" class="form-label">Capacidad</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="indoor-capacidad" name="capacidad" min="1" value="20" required>
+                        <span class="input-group-text">plantas</span>
+                    </div>
+                    <div class="form-text">Cuántas plantas en cultivo entran a la vez. Las cosechadas no ocupan lugar.</div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Crear indoor</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <th:block th:replace="~{fragmentos :: scripts}"></th:block>
 <script>
+    // al abrir la ventana, el cursor va directo al nombre
+    document.getElementById('modal-indoor').addEventListener('shown.bs.modal', function () {
+        document.getElementById('indoor-nombre').focus();
+    });
+
     // despues de cada accion se vuelve con #seccion en la direccion: se abre esa pestana
     (function () {
         var boton = document.querySelector('[data-bs-target="' + location.hash + '"]');

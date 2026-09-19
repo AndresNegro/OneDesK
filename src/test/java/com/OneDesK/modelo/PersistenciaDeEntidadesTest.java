@@ -1,5 +1,7 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.DatosDePrueba;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -95,7 +97,7 @@ public class PersistenciaDeEntidadesTest {
 	// Indoor y Planta: se guardan las 14 columnas de la planta, incluidas las que no tienen getter
 	@Test
 	public void unaPlantaSeGuardaConTodasSusColumnas() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		Planta planta = indoor.addPlanta(new Planta("OG Kush", HOY.minusDays(80), HOY.minusDays(90), 60, 120, 30));
 		planta.regar();
 		planta.setLuz(true);
@@ -132,7 +134,7 @@ public class PersistenciaDeEntidadesTest {
 	// Se consulta cada uno por su id porque Hibernate inserta agrupando por clase, no en el orden de la cola.
 	@Test
 	public void losTresTiposDeEventoSeGuardanConSuDiscriminador() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		Planta planta = indoor.addPlanta(nuevaPlanta("OG Kush"));
 		EventoLuz luz = new EventoLuz(planta);
 		EventoRegado riego = new EventoRegado(planta);
@@ -250,7 +252,7 @@ public class PersistenciaDeEntidadesTest {
 	// RegistroProduccion: la cosecha queda guardada con su planta, su empleado, su producto y su fecha
 	@Test
 	public void unRegistroDeProduccionSeGuardaCompleto() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		Planta planta = indoor.addPlanta(nuevaPlanta("OG Kush"));
 		EmpleadoIndoor empleado = new EmpleadoIndoor("Andres", "Negro", "cosechador@test.com", "12345", 500000);
 		Producto producto = new Producto("OG Kush", 0, 1000);
@@ -276,7 +278,7 @@ public class PersistenciaDeEntidadesTest {
 	// Trabaja: la asignacion de un empleado a un indoor deja su fila en la tabla intermedia
 	@Test
 	public void laAsignacionDeUnEmpleadoAUnIndoorSeGuardaEnTrabaja() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		EmpleadoIndoor empleado = new EmpleadoIndoor("Andres", "Negro", "asignado@test.com", "12345", 500000);
 		em.persist(indoor);
 		em.persist(empleado);

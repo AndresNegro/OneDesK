@@ -8,8 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.OneDesK.DatosDePrueba;
 import com.OneDesK.services.AdministradorService;
 import com.OneDesK.services.GeneradorDeEventosService;
 
@@ -666,6 +665,46 @@ public class CircuitosWebTest {
 		assertTrue(admin.html().contains("Ya existe una persona registrada con el email cliente@web.test"));
 	}
 
+	// --- indoors con nombre y capacidad ---
+
+	// El admin crea un indoor desde la ventana: queda con su nombre y su capacidad, y se ve en el panel
+	@Test
+	public void elAdminCreaUnIndoorConNombreYCapacidad() {
+		int indoor = crearIndoor("WEB Carpa grande", 12);
+
+		assertEquals(1, contar("SELECT COUNT(*) FROM Indoor WHERE ID = " + indoor
+				+ " AND nombre = 'WEB Carpa grande' AND capacidad = 12"));
+		assertTrue(admin.abrir("/admin").contains("WEB Carpa grande"));
+		assertTrue(admin.html().contains("0 de 12"));
+	}
+
+	// Un nombre repetido, aunque cambien las mayusculas, muestra el error y no crea otro indoor
+	@Test
+	public void unNombreDeIndoorRepetidoMuestraElError() {
+		crearIndoor("WEB Carpa grande", 12);
+
+		admin.enviar("/admin/indoors", "nombre", "web carpa GRANDE", "capacidad", "5");
+
+		assertTrue(admin.html().contains("Ya existe un indoor llamado web carpa GRANDE"));
+		assertEquals(1, contar("SELECT COUNT(*) FROM Indoor WHERE nombre LIKE 'WEB Carpa%'"));
+	}
+
+	// Plantar en un indoor lleno muestra el error y no agrega la planta
+	@Test
+	public void plantarEnUnIndoorLlenoMuestraElError() {
+		int indoor = crearIndoor("WEB Chiquito", 1);
+		admin.enviar("/admin/plantar", "indoorId", "" + indoor, "genetica", "WEB Kush",
+				"fechaGerminado", hoyMenos(20), "fechaPlantado", hoyMenos(10),
+				"tiempoRegado", "600", "tiempoLuz", "600", "tiempoVentilacion", "300");
+
+		admin.enviar("/admin/plantar", "indoorId", "" + indoor, "genetica", "WEB Haze",
+				"fechaGerminado", hoyMenos(20), "fechaPlantado", hoyMenos(10),
+				"tiempoRegado", "600", "tiempoLuz", "600", "tiempoVentilacion", "300");
+
+		assertTrue(admin.html().contains("El indoor WEB Chiquito está lleno"));
+		assertEquals(1, contar("SELECT COUNT(*) FROM Planta WHERE ID_INDOOR = " + indoor));
+	}
+
 	// --- helpers ---
 
 	private Navegador ingresar(String email) {
@@ -694,12 +733,16 @@ public class CircuitosWebTest {
 		return idDePersona(email);
 	}
 
+	// como en el panel: el admin completa la ventana de crear indoor con un nombre y la capacidad
 	private int crearIndoor() {
+		return crearIndoor(DatosDePrueba.nombreDeIndoor(), 20);
+	}
+
+	private int crearIndoor(String nombre, int capacidad) {
 		admin.abrir("/admin");
-		admin.enviar("/admin/indoors");
-		Matcher creado = Pattern.compile("Creaste el Indoor (\\d+)").matcher(admin.html());
-		assertTrue(creado.find(), "No aparecio el aviso del indoor creado");
-		int id = Integer.parseInt(creado.group(1));
+		admin.enviar("/admin/indoors", "nombre", nombre, "capacidad", "" + capacidad);
+		assertTrue(admin.html().contains("Creaste el indoor " + nombre), "No aparecio el aviso del indoor creado");
+		int id = jdbc.queryForObject("SELECT ID FROM Indoor WHERE nombre = ?", Integer.class, nombre);
 		indoorsCreados.add(id);
 		return id;
 	}

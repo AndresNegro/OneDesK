@@ -1,5 +1,7 @@
 package com.OneDesK.services;
 
+import com.OneDesK.DatosDePrueba;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -45,7 +47,7 @@ public class RegistroProduccionServiceImplTest {
 
 	@BeforeEach
 	public void setUp() {
-		indoor = new Indoor();
+		indoor = DatosDePrueba.indoor();
 		plantaKush = nuevaPlanta("OG Kush");
 		indoor.addPlanta(plantaKush);
 		em.persist(indoor);
@@ -153,7 +155,7 @@ public class RegistroProduccionServiceImplTest {
 	// Buscar la planta en un indoor que no la tiene falla con RecursoNoEncontradoException
 	@Test
 	public void laPlantaTieneQueSerDelIndoorIndicado() {
-		Indoor otroIndoor = new Indoor();
+		Indoor otroIndoor = DatosDePrueba.indoor();
 		em.persistAndFlush(otroIndoor);
 		empleado.addIndoor(otroIndoor);
 

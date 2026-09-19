@@ -659,6 +659,16 @@ h1 em, h2 em, .titulo-serif em {
     border-bottom: 1px solid var(--borde);
 }
 
+/* ventanas (modales de Bootstrap) con el mismo panel oscuro y borde verde a violeta */
+.ventana {
+    background: var(--panel);
+    border: 1px solid var(--borde-vivo);
+    border-radius: 16px;
+    box-shadow: 0 30px 80px -30px rgba(143, 107, 255, .6);
+}
+
+.modal-backdrop.show { opacity: .7; }
+
 /* --- tablas ------------------------------------------------------------- */
 
 .table {

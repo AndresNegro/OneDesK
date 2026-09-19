@@ -1,5 +1,7 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.DatosDePrueba;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -37,6 +39,16 @@ public class RestriccionesDeLaBaseTest {
 				() -> ejecutar("INSERT INTO Producto (genetica, precio, stock) VALUES ('og kush', 900, 5)"));
 	}
 
+	// La base rechaza dos indoors con el mismo nombre, sin distinguir mayusculas
+	@Test
+	public void laBaseRechazaDosIndoorsConElMismoNombre() {
+		em.persistAndFlush(new Indoor("Carpa unica de prueba", 10));
+		em.clear();
+
+		assertThrows(PersistenceException.class,
+				() -> ejecutar("INSERT INTO Indoor (nombre, capacidad) VALUES ('carpa UNICA de prueba', 5)"));
+	}
+
 	// --- borrados que la base tiene que frenar ---
 
 	// Un producto que alguien compro no se puede borrar: su ItemCompra lo referencia
@@ -70,7 +82,7 @@ public class RestriccionesDeLaBaseTest {
 	// Un empleado con cosechas cargadas no se puede borrar: su registro de produccion lo referencia
 	@Test
 	public void noSePuedeBorrarUnEmpleadoConRegistrosDeProduccion() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		Planta planta = indoor.addPlanta(nuevaPlanta("OG Kush"));
 		EmpleadoIndoor empleado = nuevoEmpleado("cosechador@test.com");
 		Producto producto = new Producto("OG Kush", 0, 1000);
@@ -89,7 +101,7 @@ public class RestriccionesDeLaBaseTest {
 	// Una planta con eventos no se puede borrar: sus eventos quedarian sin planta
 	@Test
 	public void noSePuedeBorrarUnaPlantaConEventos() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		Planta planta = indoor.addPlanta(nuevaPlanta("OG Kush"));
 		indoor.recibirEvento(new com.OneDesK.evento.EventoLuz(planta));
 		em.persistAndFlush(indoor);
@@ -136,7 +148,7 @@ public class RestriccionesDeLaBaseTest {
 	// Borrar un indoor arrastra sus plantas
 	@Test
 	public void borrarUnIndoorArrastraSusPlantas() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		Planta planta = indoor.addPlanta(nuevaPlanta("OG Kush"));
 		em.persistAndFlush(indoor);
 		int idIndoor = indoor.getId();
@@ -169,7 +181,7 @@ public class RestriccionesDeLaBaseTest {
 	// Borrar un empleado arrastra sus asignaciones a indoors
 	@Test
 	public void borrarUnEmpleadoArrastraSusAsignaciones() {
-		Indoor indoor = new Indoor();
+		Indoor indoor = DatosDePrueba.indoor();
 		EmpleadoIndoor empleado = nuevoEmpleado("asignado@test.com");
 		em.persist(indoor);
 		em.persist(empleado);

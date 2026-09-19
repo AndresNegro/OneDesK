@@ -1,5 +1,7 @@
 package com.OneDesK.services;
 
+import com.OneDesK.DatosDePrueba;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -57,7 +59,7 @@ public class FlujoCompletoTest {
 		cliente.aprobar(20000);
 		EmpleadoIndoor empleado = empleadoService.registrar("Andres", "Negro", "cultivador@test.com", "12345", 500000);
 
-		Indoor indoor = indoorService.crearIndoor();
+		Indoor indoor = indoorService.crearIndoor(DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD);
 		empleadoService.asignarIndoor(empleado.getId(), indoor.getId());
 		Planta planta = indoorService.plantar(indoor.getId(), nuevaPlanta("OG Kush"));
 		Producto kush = productoService.crearProducto("OG Kush", 1000);
@@ -113,7 +115,7 @@ public class FlujoCompletoTest {
 	@Test
 	public void elEmpleadoAtiendeUnEventoDeSuIndoor() {
 		EmpleadoIndoor empleado = empleadoService.registrar("Andres", "Negro", "cultivador@test.com", "12345", 500000);
-		Indoor indoor = indoorService.crearIndoor();
+		Indoor indoor = indoorService.crearIndoor(DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD);
 		empleadoService.asignarIndoor(empleado.getId(), indoor.getId());
 		Planta planta = indoorService.plantar(indoor.getId(), nuevaPlanta("Amnesia Haze"));
 
@@ -153,7 +155,7 @@ public class FlujoCompletoTest {
 	// El stock solo entra por cosecha, asi que para probar ventas hay que cosechar primero
 	private void cargarStock(Producto producto, int cantidad) {
 		EmpleadoIndoor empleado = empleadoService.registrar("Bruno", "Diaz", "cosechador@test.com", "12345", 400000);
-		Indoor indoor = indoorService.crearIndoor();
+		Indoor indoor = indoorService.crearIndoor(DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD);
 		empleadoService.asignarIndoor(empleado.getId(), indoor.getId());
 		Planta planta = indoorService.plantar(indoor.getId(), nuevaPlanta(producto.getGenetica()));
 		registroService.registrarCosecha(empleado.getId(), indoor.getId(), planta.getId(), cantidad);

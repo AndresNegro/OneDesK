@@ -80,9 +80,9 @@ public class AdministradorServiceImpl implements AdministradorService {
 
 	@Override
 	@Transactional
-	public Indoor crearIndoor(int adminId) {
+	public Indoor crearIndoor(int adminId, String nombre, int capacidad) {
 		verificarAdministrador(adminId);
-		return indoorService.crearIndoor();
+		return indoorService.crearIndoor(nombre, capacidad);
 	}
 
 	@Override
