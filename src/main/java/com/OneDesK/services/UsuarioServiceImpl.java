@@ -33,12 +33,18 @@ public class UsuarioServiceImpl implements UsuarioService {
 	@Override
 	@Transactional
 	public Usuario asignarTopeCredito(int usuarioId, int tope) {
-		Usuario usuario = repositorio.findById(usuarioId)
-				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el usuario " + usuarioId));
+		Usuario usuario = buscar(usuarioId);
 
 		// sin save: el usuario ya esta gestionado y el cambio se guarda solo al terminar la transaccion.
 		// save() sobre algo ya guardado hace merge, y el merge rompe el borrado de compras que venga despues.
 		usuario.setTopeCredito(tope);
 		return usuario;
+	}
+
+	@Override
+	@Transactional
+	public Usuario buscar(int usuarioId) {
+		return repositorio.findById(usuarioId)
+				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el usuario " + usuarioId));
 	}
 }

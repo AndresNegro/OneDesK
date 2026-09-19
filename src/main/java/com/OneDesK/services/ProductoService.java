@@ -18,6 +18,11 @@ public interface ProductoService {
 	/** Suma (positivo) o resta (negativo) al stock actual, sin dejarlo negativo. */
 	public Producto ajustarStock(int productoId, int cantidad);
 
+	/** Todos los productos, tambien los que no tienen stock: lo usa la administracion. */
+	public List<Producto> listarTodos();
+
+	public Producto buscar(int productoId);
+
 	// Las consultas del catalogo devuelven solo productos con stock: lo que no tiene stock no se puede comprar
 
 	public List<Producto> listarProductos();

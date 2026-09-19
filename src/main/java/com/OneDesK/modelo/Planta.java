@@ -77,7 +77,12 @@ public class Planta extends Persistible{
     void setIndoor(Indoor indoor) { this.indoor = indoor; }
     public Indoor getIndoor() { return indoor; }
 
+    public LocalDate getFechaPlantado() { return fechaPlantado; }
+    public LocalDate getFechaGerminado() { return fechaGerminado; }
     public LocalDate getFechaCosecha() { return fechaCosecha; }
+    public int getTiempoRegado() { return tiempoRegado; }
+    public int getTiempoLuz() { return tiempoLuz; }
+    public int getTiempoVentilacion() { return tiempoVentilacion; }
 
     public boolean isCosechada() { return fechaCosecha != null; }
 

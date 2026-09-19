@@ -7,6 +7,8 @@ import com.OneDesK.modelo.Administrador;
 import com.OneDesK.modelo.Compra;
 import com.OneDesK.modelo.EmpleadoIndoor;
 import com.OneDesK.modelo.Indoor;
+import com.OneDesK.modelo.LimitesDeCompra;
+import com.OneDesK.modelo.Planta;
 import com.OneDesK.modelo.Producto;
 import com.OneDesK.modelo.RegistroProduccion;
 import com.OneDesK.modelo.Usuario;
@@ -33,6 +35,38 @@ public interface AdministradorService {
 
 	public EmpleadoIndoor cambiarSalario(int adminId, int empleadoId, int salarioMensual);
 
+	/** El administrador puede plantar en cualquier indoor. */
+	public Planta plantar(int adminId, int indoorId, Planta planta);
+
+	// --- listados para el panel ---
+
+	public List<Indoor> indoors(int adminId);
+
+	public List<EmpleadoIndoor> empleados(int adminId);
+
+	/** Todos los productos, tambien los que no tienen stock. */
+	public List<Producto> productos(int adminId);
+
+	/** Los usuarios con la cuenta aprobada: las solicitudes pendientes van aparte. */
+	public List<Usuario> usuarios(int adminId);
+
+	/** Las compras aprobadas que todavia no se pagaron, de todos los usuarios. */
+	public List<Compra> comprasImpagas(int adminId);
+
+	// --- compras por aprobar y limites ---
+
+	/** Las compras que esperan respuesta, de la mas vieja a la mas nueva. */
+	public List<Compra> comprasPendientes(int adminId);
+
+	public Compra aprobarCompra(int adminId, int compraId);
+
+	public Compra rechazarCompra(int adminId, int compraId);
+
+	public LimitesDeCompra limitesDeCompra(int adminId);
+
+	/** Cambia el minimo y el maximo de gramos por compra: rige para las compras que se pidan desde ahora. */
+	public LimitesDeCompra cambiarLimites(int adminId, int minimoGramos, int maximoGramos);
+
 	// --- productos ---
 
 	public Producto crearProducto(int adminId, String genetica, int precio);
@@ -47,9 +81,14 @@ public interface AdministradorService {
 
 	// --- usuarios y compras ---
 
-	/** Registra un usuario con su tope de credito ya asignado. */
-	public Usuario registrarUsuario(int adminId, String nombre, String apellido, String email, String contrasenia,
-			int topeCredito);
+	/** Las solicitudes de registro que esperan respuesta, de la mas vieja a la mas nueva. */
+	public List<Usuario> solicitudesPendientes(int adminId);
+
+	/** Acepta la solicitud y le asigna el tope de credito: desde ahi el usuario puede ingresar y comprar. */
+	public Usuario aprobarUsuario(int adminId, int usuarioId, int topeCredito);
+
+	/** Rechaza la solicitud y la borra: esa persona puede volver a registrarse con el mismo email. */
+	public void rechazarUsuario(int adminId, int usuarioId);
 
 	public Usuario asignarTope(int adminId, int usuarioId, int topeCredito);
 

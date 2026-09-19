@@ -41,7 +41,7 @@ import com.OneDesK.modelo.Usuario;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import({ AdministradorServiceImpl.class, IndoorServiceImpl.class, EmpleadoIndoorServiceImpl.class,
 		ProductoServiceImpl.class, UsuarioServiceImpl.class, CompraServiceImpl.class,
-		RegistroProduccionServiceImpl.class })
+		RegistroProduccionServiceImpl.class, LimitesDeCompraServiceImpl.class })
 public class AdministradorServiceImplTest {
 
 	private static final int INEXISTENTE = 999999;
@@ -50,6 +50,8 @@ public class AdministradorServiceImplTest {
 	private AdministradorService service;
 	@Autowired
 	private CompraService compraService;
+	@Autowired
+	private UsuarioService usuarioService;
 	@Autowired
 	private RegistroProduccionService registroProduccionService;
 	@Autowired
@@ -60,6 +62,7 @@ public class AdministradorServiceImplTest {
 	@BeforeEach
 	public void setUp() {
 		admin = service.registrar("Ana", "Admin", "admin@test.com", "12345").getId();
+		service.cambiarLimites(admin, 1, 1000);
 		recargar();
 	}
 
@@ -83,7 +86,7 @@ public class AdministradorServiceImplTest {
 	// Un usuario no puede usar las acciones del administrador y no se crea nada
 	@Test
 	public void unUsuarioNoPuedeActuarComoAdministrador() {
-		int usuario = service.registrarUsuario(admin, "Juan", "Perez", "juan@test.com", "12345", 0).getId();
+		int usuario = nuevoUsuario(0);
 		recargar();
 		long indoorsAntes = contar("SELECT COUNT(*) FROM Indoor");
 
@@ -235,25 +238,75 @@ public class AdministradorServiceImplTest {
 
 	// --- usuarios ---
 
-	// Registrar un usuario lo guarda con el tope que le asigna el administrador
+	// --- solicitudes de registro ---
+
+	// Quien se registra queda pendiente: aparece en las solicitudes y no entre los usuarios aprobados
 	@Test
-	public void registrarUsuarioQuedaGuardadoConSuTope() {
-		int usuario = service.registrarUsuario(admin, "Juan", "Perez", "juan@test.com", "12345", 8000).getId();
+	public void unRegistroQuedaComoSolicitudPendiente() {
+		int pendiente = solicitud("juan@test.com");
+
+		assertTrue(idsDe(service.solicitudesPendientes(admin)).contains(pendiente));
+		assertFalse(idsDe(service.usuarios(admin)).contains(pendiente));
+		assertEquals(1, contar("SELECT COUNT(*) FROM Usuario WHERE ID = " + pendiente + " AND aprobado = 0"));
+	}
+
+	// Aprobar la solicitud la habilita con el tope que pone el administrador, y pasa a los usuarios
+	@Test
+	public void aprobarLaSolicitudLaHabilitaConSuTope() {
+		int usuario = solicitud("juan@test.com");
+
+		service.aprobarUsuario(admin, usuario, 8000);
 		recargar();
 
 		Usuario recargado = em.find(Usuario.class, usuario);
-		assertEquals("juan@test.com", recargado.getEmail());
+		assertTrue(recargado.isAprobado());
 		assertEquals(8000, recargado.getTopeCredito());
+		assertFalse(idsDe(service.solicitudesPendientes(admin)).contains(usuario));
+		assertTrue(idsDe(service.usuarios(admin)).contains(usuario));
 	}
 
-	// Con un tope negativo no se registra el usuario: no queda guardado a medias
+	// Aprobar con un tope negativo se rechaza y la solicitud sigue pendiente
 	@Test
-	public void conTopeNegativoNoSeRegistraElUsuario() {
-		assertThrows(IllegalArgumentException.class,
-				() -> service.registrarUsuario(admin, "Juan", "Perez", "juan@test.com", "12345", -1));
+	public void aprobarConTopeNegativoLaDejaPendiente() {
+		int usuario = solicitud("juan@test.com");
+
+		assertThrows(IllegalArgumentException.class, () -> service.aprobarUsuario(admin, usuario, -1));
 		recargar();
 
-		assertEquals(0, contar("SELECT COUNT(*) FROM Persona WHERE email = 'juan@test.com'"));
+		assertFalse(em.find(Usuario.class, usuario).isAprobado());
+	}
+
+	// Un usuario ya aprobado no se puede aprobar de nuevo ni rechazar
+	@Test
+	public void unUsuarioAprobadoNoSeApruebaNiRechazaDeNuevo() {
+		int usuario = nuevoUsuario(5000);
+
+		assertThrows(OperacionInvalidaException.class, () -> service.aprobarUsuario(admin, usuario, 100));
+		assertThrows(OperacionInvalidaException.class, () -> service.rechazarUsuario(admin, usuario));
+		recargar();
+
+		assertEquals(5000, em.find(Usuario.class, usuario).getTopeCredito());
+	}
+
+	// Rechazar borra la solicitud con su deuda, y ese email puede volver a pedir cuenta
+	@Test
+	public void rechazarBorraLaSolicitudYLiberaElEmail() {
+		int usuario = solicitud("juan@test.com");
+		int deuda = em.find(Usuario.class, usuario).getDeuda().getId();
+
+		service.rechazarUsuario(admin, usuario);
+		recargar();
+
+		assertEquals(0, contar("SELECT COUNT(*) FROM Persona WHERE ID = " + usuario));
+		assertEquals(0, contar("SELECT COUNT(*) FROM Deuda WHERE ID = " + deuda));
+		solicitud("juan@test.com");
+	}
+
+	// Aprobar o rechazar una solicitud que no existe falla con RecursoNoEncontradoException
+	@Test
+	public void aprobarORechazarUnaSolicitudInexistenteFalla() {
+		assertThrows(RecursoNoEncontradoException.class, () -> service.aprobarUsuario(admin, INEXISTENTE, 0));
+		assertThrows(RecursoNoEncontradoException.class, () -> service.rechazarUsuario(admin, INEXISTENTE));
 	}
 
 	// Asignar el tope a un usuario existente queda guardado
@@ -457,7 +510,7 @@ public class AdministradorServiceImplTest {
 	@Test
 	public void noSePuedeRegistrarUnUsuarioConElEmailDeUnAdministrador() {
 		assertThrows(EmailDuplicadoException.class,
-				() -> service.registrarUsuario(admin, "Juan", "Perez", "admin@test.com", "12345", 0));
+				() -> usuarioService.registrar("Juan", "Perez", "admin@test.com", "12345"));
 	}
 
 	// Un empleado con salario 0 no se registra
@@ -476,7 +529,7 @@ public class AdministradorServiceImplTest {
 		long antes = contar("SELECT COUNT(*) FROM Persona");
 
 		assertThrows(IllegalArgumentException.class,
-				() -> service.registrarUsuario(admin, "Juan", "Perez", "@", "12345", 0));
+				() -> usuarioService.registrar("Juan", "Perez", "@", "12345"));
 		assertThrows(IllegalArgumentException.class,
 				() -> service.registrarEmpleado(admin, "Pedro", "Gomez", "pedro@", "12345", 500000));
 		recargar();
@@ -770,6 +823,131 @@ public class AdministradorServiceImplTest {
 		assertFalse(idsDeEventosPendientes().contains(evento));
 	}
 
+	// --- plantar y listados del panel ---
+
+	// El administrador planta en cualquier indoor, aunque no tenga empleados
+	@Test
+	public void elAdministradorPlantaEnCualquierIndoor() {
+		int indoor = service.crearIndoor(admin).getId();
+		recargar();
+
+		int planta = service.plantar(admin, indoor, new Planta("OG Kush", LocalDate.now().minusDays(5),
+				LocalDate.now().minusDays(10), 60, 120, 30)).getId();
+		recargar();
+
+		assertEquals(indoor, em.find(Planta.class, planta).getIndoor().getId());
+	}
+
+	// El catalogo del admin incluye los productos sin stock, que el de los clientes esconde
+	@Test
+	public void losProductosDelAdminIncluyenLosSinStock() {
+		int sinStock = service.crearProducto(admin, "Northern Lights", 1200).getId();
+		recargar();
+
+		List<Integer> ids = new ArrayList<>();
+		for (Producto producto : service.productos(admin)) {
+			ids.add(producto.getId());
+		}
+
+		assertTrue(ids.contains(sinStock));
+	}
+
+	// Las compras impagas del panel son solo las que falta pagar
+	@Test
+	public void lasComprasImpagasNoIncluyenLasPagadas() {
+		int usuario = nuevoUsuario(10000);
+		int producto = productoConStock("OG Kush", 10);
+		int impaga = comprar(usuario, producto, 1, false);
+		int pagada = comprar(usuario, producto, 1, true);
+
+		List<Integer> ids = new ArrayList<>();
+		for (Compra compra : service.comprasImpagas(admin)) {
+			ids.add(compra.getId());
+		}
+
+		assertTrue(ids.contains(impaga));
+		assertFalse(ids.contains(pagada));
+	}
+
+	// Los listados de indoors, empleados y usuarios incluyen lo que se dio de alta
+	@Test
+	public void losListadosIncluyenLoDadoDeAlta() {
+		int indoor = service.crearIndoor(admin).getId();
+		int empleado = nuevoEmpleado();
+		int usuario = nuevoUsuario(0);
+
+		assertTrue(service.indoors(admin).stream().anyMatch(i -> i.getId() == indoor));
+		assertTrue(service.empleados(admin).stream().anyMatch(e -> e.getId() == empleado));
+		assertTrue(service.usuarios(admin).stream().anyMatch(u -> u.getId() == usuario));
+	}
+
+	// --- compras por aprobar y limites ---
+
+	// Un pedido aparece en las compras por aprobar y no en las impagas; al aprobarlo pasa a las impagas
+	@Test
+	public void unPedidoEsperaYAlAprobarloPasaALasImpagas() {
+		int usuario = nuevoUsuario(10000);
+		int producto = productoConStock("OG Kush", 10);
+		int pedido = compraService.realizarCompra(usuario, List.of(new LineaCompra(producto, 2)), false).getId();
+		recargar();
+
+		assertTrue(service.comprasPendientes(admin).stream().anyMatch(c -> c.getId() == pedido));
+		assertFalse(service.comprasImpagas(admin).stream().anyMatch(c -> c.getId() == pedido));
+
+		service.aprobarCompra(admin, pedido);
+		recargar();
+
+		assertFalse(service.comprasPendientes(admin).stream().anyMatch(c -> c.getId() == pedido));
+		assertTrue(service.comprasImpagas(admin).stream().anyMatch(c -> c.getId() == pedido));
+		assertEquals(2000, em.find(Usuario.class, usuario).getDeuda().getMonto());
+	}
+
+	// El administrador rechaza un pedido: queda rechazado y el stock vuelve
+	@Test
+	public void elAdministradorRechazaUnPedido() {
+		int usuario = nuevoUsuario(0);
+		int producto = productoConStock("OG Kush", 10);
+		int pedido = compraService.realizarCompra(usuario, List.of(new LineaCompra(producto, 4)), true).getId();
+		recargar();
+
+		service.rechazarCompra(admin, pedido);
+		recargar();
+
+		assertTrue(em.find(Compra.class, pedido).isRechazada());
+		assertEquals(10, em.find(Producto.class, producto).getStock());
+	}
+
+	// Cambiar los limites queda guardado y rige para los pedidos siguientes
+	@Test
+	public void losLimitesQueCambiaElAdministradorRigenParaLosPedidos() {
+		int usuario = nuevoUsuario(0);
+		int producto = productoConStock("OG Kush", 50);
+
+		service.cambiarLimites(admin, 10, 20);
+		recargar();
+
+		assertEquals(10, service.limitesDeCompra(admin).getMinimoGramos());
+		assertEquals(20, service.limitesDeCompra(admin).getMaximoGramos());
+		assertThrows(OperacionInvalidaException.class,
+				() -> compraService.realizarCompra(usuario, List.of(new LineaCompra(producto, 9)), true));
+		assertThrows(OperacionInvalidaException.class,
+				() -> compraService.realizarCompra(usuario, List.of(new LineaCompra(producto, 21)), true));
+		compraService.realizarCompra(usuario, List.of(new LineaCompra(producto, 15)), true);
+	}
+
+	// Limites invalidos se rechazan y quedan los anteriores
+	@Test
+	public void limitesInvalidosNoCambianNada() {
+		service.cambiarLimites(admin, 5, 40);
+		recargar();
+
+		assertThrows(IllegalArgumentException.class, () -> service.cambiarLimites(admin, 30, 10));
+		recargar();
+
+		assertEquals(5, service.limitesDeCompra(admin).getMinimoGramos());
+		assertEquals(40, service.limitesDeCompra(admin).getMaximoGramos());
+	}
+
 	// --- helpers ---
 
 	private int nuevoEmpleado() {
@@ -783,9 +961,25 @@ public class AdministradorServiceImplTest {
 	}
 
 	private int nuevoUsuario(int tope, String email) {
-		int id = service.registrarUsuario(admin, "Juan", "Perez", email, "12345", tope).getId();
+		int id = solicitud(email);
+		service.aprobarUsuario(admin, id, tope);
 		recargar();
 		return id;
+	}
+
+	// la solicitud de registro que manda quien quiere una cuenta: queda pendiente
+	private int solicitud(String email) {
+		int id = usuarioService.registrar("Juan", "Perez", email, "12345").getId();
+		recargar();
+		return id;
+	}
+
+	private List<Integer> idsDe(List<Usuario> usuarios) {
+		List<Integer> ids = new ArrayList<>();
+		for (Usuario usuario : usuarios) {
+			ids.add(usuario.getId());
+		}
+		return ids;
 	}
 
 	private int productoConStock(String genetica, int stock) {
@@ -795,8 +989,10 @@ public class AdministradorServiceImplTest {
 		return id;
 	}
 
+	// el usuario la pide y el administrador la aprueba
 	private int comprar(int usuario, int producto, int cantidad, boolean pagado) {
 		int id = compraService.realizarCompra(usuario, List.of(new LineaCompra(producto, cantidad)), pagado).getId();
+		service.aprobarCompra(admin, id);
 		recargar();
 		return id;
 	}
@@ -823,13 +1019,26 @@ public class AdministradorServiceImplTest {
 				() -> service.cambiarPrecio(quien, producto, 5000),
 				() -> service.fijarStock(quien, producto, 0),
 				() -> service.ajustarStock(quien, producto, -5),
-				() -> service.registrarUsuario(quien, "Ana", "Lopez", "ana@test.com", "12345", 0),
+				() -> service.solicitudesPendientes(quien),
+				() -> service.aprobarUsuario(quien, INEXISTENTE, 0),
+				() -> service.rechazarUsuario(quien, INEXISTENTE),
 				() -> service.asignarTope(quien, INEXISTENTE, 5000),
 				() -> service.anularCompra(quien, INEXISTENTE),
 				() -> service.registrosDeProduccion(quien),
 				() -> service.registrosDePago(quien),
 				() -> service.deudores(quien),
-				() -> service.eventosPendientes(quien));
+				() -> service.eventosPendientes(quien),
+				() -> service.plantar(quien, INEXISTENTE, new Planta("OG Kush", LocalDate.now(), LocalDate.now(), 60, 120, 30)),
+				() -> service.indoors(quien),
+				() -> service.empleados(quien),
+				() -> service.productos(quien),
+				() -> service.usuarios(quien),
+				() -> service.comprasImpagas(quien),
+				() -> service.comprasPendientes(quien),
+				() -> service.aprobarCompra(quien, INEXISTENTE),
+				() -> service.rechazarCompra(quien, INEXISTENTE),
+				() -> service.limitesDeCompra(quien),
+				() -> service.cambiarLimites(quien, 1, 10));
 	}
 
 	private int eventoPendiente(int indoor) {

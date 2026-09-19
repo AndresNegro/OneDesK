@@ -4,13 +4,19 @@ import java.util.List;
 
 import com.OneDesK.evento.Evento;
 import com.OneDesK.modelo.EmpleadoIndoor;
+import com.OneDesK.modelo.Planta;
 
 public interface EmpleadoIndoorService {
 
 	public EmpleadoIndoor registrar(String nombre, String apellido, String email, String contrasenia,
 			int salarioMensual);
 
+	public EmpleadoIndoor buscar(int empleadoId);
+
 	public EmpleadoIndoor cambiarSalario(int empleadoId, int salarioMensual);
+
+	/** El empleado planta en uno de los indoors que tiene a cargo. */
+	public Planta plantar(int empleadoId, int indoorId, Planta planta);
 
 	public void asignarIndoor(int empleadoId, int indoorId);
 

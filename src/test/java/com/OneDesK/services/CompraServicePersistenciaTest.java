@@ -23,11 +23,13 @@ import com.OneDesK.modelo.Usuario;
 // Complementa a CompraServiceImplTest con casos de persistencia: anulaciones combinadas y varios productos por compra
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(CompraServiceImpl.class)
+@Import({ CompraServiceImpl.class, LimitesDeCompraServiceImpl.class })
 public class CompraServicePersistenciaTest {
 
 	@Autowired
 	private CompraService service;
+	@Autowired
+	private LimitesDeCompraService limites;
 	@Autowired
 	private TestEntityManager em;
 
@@ -37,11 +39,13 @@ public class CompraServicePersistenciaTest {
 	@BeforeEach
 	public void setUp() {
 		usuario = new Usuario("Andres", "Negro", "comprador@test.com", "12345");
+		usuario.aprobar(0);
 		usuario.setTopeCredito(10000);
 		em.persist(usuario);
 		kush = new Producto("OG Kush", 10, 1000);
 		em.persist(kush);
 		em.flush();
+		limites.cambiar(1, 1000);
 	}
 
 	// Una compra impaga queda guardada en la base con sus items, la deuda del usuario y el stock descontado
@@ -116,6 +120,7 @@ public class CompraServicePersistenciaTest {
 	@Test
 	public void anularUnaCompraRecienCreadaTambienLaBorra() {
 		Usuario cliente = new Usuario("Ana", "Perez", "otra@test.com", "12345");
+		cliente.aprobar(0);
 		cliente.setTopeCredito(20000);
 		em.persist(cliente);
 		Producto otro = new Producto("Amnesia Haze", 50, 1000);
@@ -161,7 +166,9 @@ public class CompraServicePersistenciaTest {
 		assertNotNull(em.find(Compra.class, idPrimera));
 	}
 
+	// pedida en cuenta corriente y aprobada por el administrador
 	private Compra comprarKush(int cantidad) {
-		return service.realizarCompra(usuario.getId(), List.of(new LineaCompra(kush.getId(), cantidad)), false);
+		Compra compra = service.realizarCompra(usuario.getId(), List.of(new LineaCompra(kush.getId(), cantidad)), false);
+		return service.aprobarCompra(compra.getId());
 	}
 }

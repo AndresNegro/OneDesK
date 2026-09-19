@@ -56,6 +56,18 @@ public class ProductoServiceImpl implements ProductoService {
 
 	@Override
 	@Transactional
+	public Producto buscar(int productoId) {
+		return buscarProducto(productoId);
+	}
+
+	@Override
+	@Transactional
+	public List<Producto> listarTodos() {
+		return repositorio.findAllByOrderByGeneticaAsc();
+	}
+
+	@Override
+	@Transactional
 	public List<Producto> listarProductos() {
 		return repositorio.findByStockGreaterThanOrderByGeneticaAsc(SIN_STOCK);
 	}

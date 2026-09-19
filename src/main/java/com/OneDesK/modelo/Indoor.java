@@ -63,6 +63,9 @@ public class Indoor extends Persistible{
 
     public List<Planta> getPlantas() { return Collections.unmodifiableList(plantas); }
 
+    // solo lectura: las asignaciones se cambian desde EmpleadoIndoor
+    public List<EmpleadoIndoor> getEmpleadosAsignados() { return Collections.unmodifiableList(empleadosAsignados); }
+
 
     public void recibirEvento(Evento e) {
         Planta planta = e.getPlanta();

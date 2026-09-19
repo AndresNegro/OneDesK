@@ -66,6 +66,17 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-jpa</artifactId>
 	  </dependency>
+
+      <!-- capa de presentacion: controllers con un servidor web embebido y vistas con Thymeleaf -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+	  </dependency>
+
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-thymeleaf</artifactId>
+	  </dependency>
 	    
 	<dependency>
 	    <groupId>org.springframework.boot</groupId>
@@ -103,6 +114,15 @@
   </dependencies>
 
   <build>
+    <!-- Una sola carpeta de recursos, sin filtrado. El parent de Spring Boot declara dos entradas
+         (una que filtra application*.properties y otra que las excluye) y mvn eclipse:eclipse solo
+         copia la segunda al .classpath: Eclipse dejaba afuera application.properties y la
+         aplicacion arrancaba sin la configuracion de la base. -->
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+    </resources>
     <plugins>
     	<plugin>
     		<groupId>org.springframework.boot</groupId>

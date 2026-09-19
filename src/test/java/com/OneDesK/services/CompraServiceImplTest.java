@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -31,13 +32,15 @@ import com.OneDesK.modelo.Usuario;
 // hubiera tocado algo antes de rechazar la operacion, ese cambio aparece y el test falla.
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(CompraServiceImpl.class)
+@Import({ CompraServiceImpl.class, LimitesDeCompraServiceImpl.class })
 public class CompraServiceImplTest {
 
 	private static final int INEXISTENTE = 999999;
 
 	@Autowired
 	private CompraService service;
+	@Autowired
+	private LimitesDeCompraService limites;
 	@Autowired
 	private TestEntityManager em;
 
@@ -47,6 +50,7 @@ public class CompraServiceImplTest {
 	@BeforeEach
 	public void setUp() {
 		Usuario usuario = new Usuario("Andres", "Negro", "andres@test.com", "12345");
+		usuario.aprobar(0);
 		Producto kush = new Producto("OG Kush", 10, 1000);
 		em.persist(usuario);
 		em.persist(kush);
@@ -54,6 +58,8 @@ public class CompraServiceImplTest {
 		em.clear();
 		idUsuario = usuario.getId();
 		idKush = kush.getId();
+		// limites amplios: aca se prueban las demas reglas; los limites de gramos tienen sus propios tests
+		limites.cambiar(1, 1000);
 	}
 
 	// --- realizarCompra: camino feliz ---
@@ -181,6 +187,20 @@ public class CompraServiceImplTest {
 
 		assertTrue(em.find(Compra.class, idCompra).isPagado());
 		assertEquals(6, stockKush());
+	}
+
+	// Un usuario que todavia no fue aprobado no puede comprar, aunque llegue al service
+	@Test
+	public void unUsuarioPendienteNoPuedeComprar() {
+		Usuario pendiente = new Usuario("Ana", "Lopez", "pendiente@test.com", "12345");
+		em.persist(pendiente);
+		recargar();
+
+		assertThrows(OperacionInvalidaException.class, () -> service.realizarCompra(pendiente.getId(),
+				List.of(new LineaCompra(idKush, 1)), true));
+		recargar();
+
+		assertEquals(10, stockKush());
 	}
 
 	// --- realizarCompra: entradas invalidas ---
@@ -354,9 +374,280 @@ public class CompraServiceImplTest {
 		assertEquals(LocalDate.now(), em.find(Compra.class, idCompra).getFechaPago());
 	}
 
+	// --- compras del usuario (lo que usa Mis compras) ---
+
+	// Las compras del usuario vienen de la mas reciente a la mas vieja, y no incluyen las de otro
+	@Test
+	public void comprasDeTraeSoloLasDelUsuarioDeLaMasNueva() {
+		int otro = otroUsuario();
+		int primera = comprarKush(1, true).getId();
+		int segunda = comprarKush(1, true).getId();
+		service.realizarCompra(otro, List.of(new LineaCompra(idKush, 1)), true);
+		recargar();
+
+		List<Compra> compras = service.comprasDe(idUsuario);
+
+		assertEquals(2, compras.size());
+		assertEquals(segunda, compras.get(0).getId());
+		assertEquals(primera, compras.get(1).getId());
+	}
+
+	// El usuario paga su propia compra y queda guardada como pagada
+	@Test
+	public void registrarPagoDeSuPropiaCompra() {
+		asignarTope(5000);
+		int idCompra = comprarKush(2, false).getId();
+		recargar();
+
+		service.registrarPagoDe(idUsuario, idCompra);
+		recargar();
+
+		assertTrue(em.find(Compra.class, idCompra).isPagado());
+		assertEquals(0, deuda());
+	}
+
+	// Otro usuario no puede pagar ni anular esa compra: se rechaza y no cambia nada
+	@Test
+	public void otroUsuarioNoPuedePagarNiAnularLaCompra() {
+		asignarTope(5000);
+		int idCompra = comprarKush(2, false).getId();
+		int otro = otroUsuario();
+
+		assertThrows(OperacionInvalidaException.class, () -> service.registrarPagoDe(otro, idCompra));
+		assertThrows(OperacionInvalidaException.class, () -> service.anularCompraDe(otro, idCompra));
+		recargar();
+
+		assertFalse(em.find(Compra.class, idCompra).isPagado());
+		assertEquals(8, stockKush());
+		assertEquals(2000, deuda());
+	}
+
+	// El usuario anula su propia compra impaga: se borra y vuelve el stock
+	@Test
+	public void anularSuPropiaCompra() {
+		asignarTope(5000);
+		int idCompra = comprarKush(2, false).getId();
+		recargar();
+
+		service.anularCompraDe(idUsuario, idCompra);
+		recargar();
+
+		assertNull(em.find(Compra.class, idCompra));
+		assertEquals(10, stockKush());
+	}
+
+	// --- aprobacion del administrador ---
+
+	// Un pedido queda pendiente: el stock ya esta reservado, pero no hay cobro ni deuda
+	@Test
+	public void unPedidoQuedaPendienteConElStockReservado() {
+		asignarTope(5000);
+		int idCompra = pedirKush(3, false).getId();
+		recargar();
+
+		Compra compra = em.find(Compra.class, idCompra);
+		assertTrue(compra.isPendiente());
+		assertFalse(compra.isPagado());
+		assertEquals(7, stockKush());
+		assertEquals(0, deuda());
+		assertTrue(idsDe(service.comprasPendientes()).contains(idCompra));
+	}
+
+	// Aprobar un pedido en cuenta corriente lo pasa a la deuda
+	@Test
+	public void aprobarUnPedidoEnCuentaGeneraDeuda() {
+		asignarTope(5000);
+		int idCompra = pedirKush(3, false).getId();
+		recargar();
+
+		service.aprobarCompra(idCompra);
+		recargar();
+
+		assertTrue(em.find(Compra.class, idCompra).isAprobada());
+		assertEquals(3000, deuda());
+		assertFalse(idsDe(service.comprasPendientes()).contains(idCompra));
+	}
+
+	// Aprobar un pedido que se paga lo deja pagado con fecha de hoy, sin deuda
+	@Test
+	public void aprobarUnPedidoQueSePagaLoCobra() {
+		int idCompra = pedirKush(3, true).getId();
+		recargar();
+
+		service.aprobarCompra(idCompra);
+		recargar();
+
+		Compra compra = em.find(Compra.class, idCompra);
+		assertTrue(compra.isPagado());
+		assertEquals(LocalDate.now(), compra.getFechaPago());
+		assertEquals(0, deuda());
+	}
+
+	// Rechazar un pedido lo deja rechazado en el historial y el stock vuelve
+	@Test
+	public void rechazarUnPedidoDevuelveElStock() {
+		asignarTope(5000);
+		int idCompra = pedirKush(4, false).getId();
+		recargar();
+
+		service.rechazarCompra(idCompra);
+		recargar();
+
+		Compra compra = em.find(Compra.class, idCompra);
+		assertTrue(compra.isRechazada());
+		assertEquals(10, stockKush());
+		assertEquals(0, deuda());
+		assertEquals(1, comprasGuardadas());
+	}
+
+	// Un pedido no se aprueba ni rechaza dos veces
+	@Test
+	public void unPedidoSeRespondeUnaSolaVez() {
+		int aprobado = comprarKush(1, true).getId();
+		int rechazado = pedirKush(1, true).getId();
+		service.rechazarCompra(rechazado);
+		recargar();
+
+		assertThrows(OperacionInvalidaException.class, () -> service.aprobarCompra(aprobado));
+		assertThrows(OperacionInvalidaException.class, () -> service.rechazarCompra(rechazado));
+		recargar();
+
+		assertEquals(9, stockKush());
+	}
+
+	// Un pedido pendiente no se puede pagar desde Mis compras
+	@Test
+	public void unPedidoPendienteNoSePuedePagar() {
+		asignarTope(5000);
+		int idCompra = pedirKush(2, false).getId();
+		recargar();
+
+		assertThrows(OperacionInvalidaException.class, () -> service.registrarPago(idCompra));
+	}
+
+	// El usuario puede anular su pedido pendiente y el stock vuelve; una compra rechazada no se anula
+	@Test
+	public void anularUnPendienteSiUnRechazadoNo() {
+		int pendiente = pedirKush(2, true).getId();
+		int rechazado = pedirKush(3, true).getId();
+		service.rechazarCompra(rechazado);
+		recargar();
+
+		service.anularCompraDe(idUsuario, pendiente);
+		assertThrows(OperacionInvalidaException.class, () -> service.anularCompraDe(idUsuario, rechazado));
+		recargar();
+
+		assertNull(em.find(Compra.class, pendiente));
+		assertEquals(10, stockKush());
+	}
+
+	// El tope cuenta lo que ya pidio en cuenta corriente y espera aprobacion
+	@Test
+	public void elTopeCuentaLosPedidosPendientesEnCuenta() {
+		asignarTope(5000);
+		pedirKush(3, false);
+		recargar();
+
+		assertThrows(TopeCreditoExcedidoException.class, () -> pedirKush(3, false));
+		pedirKush(3, true);
+	}
+
+	// Si el tope bajo entre el pedido y la aprobacion, aprobarlo se rechaza y sigue pendiente
+	@Test
+	public void alAprobarSeVuelveAMirarElTope() {
+		asignarTope(5000);
+		int idCompra = pedirKush(3, false).getId();
+		asignarTope(1000);
+
+		assertThrows(TopeCreditoExcedidoException.class, () -> service.aprobarCompra(idCompra));
+		recargar();
+
+		assertTrue(em.find(Compra.class, idCompra).isPendiente());
+		assertEquals(0, deuda());
+	}
+
+	// Aprobar o rechazar un pedido que no existe falla con RecursoNoEncontradoException
+	@Test
+	public void responderUnPedidoInexistenteFalla() {
+		assertThrows(RecursoNoEncontradoException.class, () -> service.aprobarCompra(INEXISTENTE));
+		assertThrows(RecursoNoEncontradoException.class, () -> service.rechazarCompra(INEXISTENTE));
+	}
+
+	// --- limites de gramos ---
+
+	// Con los limites de 5 g a 40 g, un pedido de 4 g o de 41 g se rechaza sin tocar el stock
+	@Test
+	public void unPedidoFueraDeLosLimitesSeRechaza() {
+		limites.cambiar(5, 40);
+		Producto grande = new Producto("Amnesia Haze", 100, 1000);
+		em.persist(grande);
+		recargar();
+
+		assertThrows(OperacionInvalidaException.class, () -> pedirKush(4, true));
+		assertThrows(OperacionInvalidaException.class,
+				() -> service.realizarCompra(idUsuario, List.of(new LineaCompra(grande.getId(), 41)), true));
+		recargar();
+
+		assertEquals(10, stockKush());
+		assertEquals(100, em.find(Producto.class, grande.getId()).getStock());
+		assertEquals(0, comprasGuardadas());
+	}
+
+	// Justo en el minimo y justo en el maximo se aceptan
+	@Test
+	public void losBordesDeLosLimitesSeAceptan() {
+		limites.cambiar(5, 10);
+
+		pedirKush(5, true);
+		limites.cambiar(1, 5);
+		pedirKush(5, true);
+		recargar();
+
+		assertEquals(0, stockKush());
+	}
+
+	// Los gramos se suman entre geneticas: 3 g de una y 3 g de otra llegan al minimo de 5 g
+	@Test
+	public void losLimitesSeAplicanAlTotalDelPedido() {
+		limites.cambiar(5, 40);
+		Producto haze = new Producto("Amnesia Haze", 100, 1000);
+		em.persist(haze);
+		recargar();
+
+		int idCompra = service.realizarCompra(idUsuario,
+				List.of(new LineaCompra(idKush, 3), new LineaCompra(haze.getId(), 3)), true).getId();
+		assertThrows(OperacionInvalidaException.class, () -> service.realizarCompra(idUsuario,
+				List.of(new LineaCompra(idKush, 5), new LineaCompra(haze.getId(), 36)), true));
+		recargar();
+
+		assertEquals(6, em.find(Compra.class, idCompra).getGramos());
+	}
+
 	// --- helpers ---
 
+	private List<Integer> idsDe(List<Compra> compras) {
+		List<Integer> ids = new ArrayList<>();
+		for (Compra compra : compras) {
+			ids.add(compra.getId());
+		}
+		return ids;
+	}
+
+	private int otroUsuario() {
+		Usuario otro = new Usuario("Ana", "Lopez", "otra@test.com", "12345");
+		otro.aprobar(0);
+		em.persist(otro);
+		recargar();
+		return otro.getId();
+	}
+
+	// el circuito completo: el usuario la pide y el administrador la aprueba
 	private Compra comprarKush(int cantidad, boolean pagado) {
+		return service.aprobarCompra(pedirKush(cantidad, pagado).getId());
+	}
+
+	// solo el pedido: queda pendiente de aprobacion
+	private Compra pedirKush(int cantidad, boolean pagado) {
 		return service.realizarCompra(idUsuario, List.of(new LineaCompra(idKush, cantidad)), pagado);
 	}
 

@@ -15,6 +15,8 @@ public interface ProductoRepository extends JpaRepository<Producto,Integer> {
 
 	boolean existsByGeneticaIgnoreCase(String genetica);
 
+	List<Producto> findAllByOrderByGeneticaAsc();
+
 	List<Producto> findByStockGreaterThanOrderByGeneticaAsc(int stock);
 
 	List<Producto> findByGeneticaContainingIgnoreCaseAndStockGreaterThanOrderByGeneticaAsc(String texto, int stock);

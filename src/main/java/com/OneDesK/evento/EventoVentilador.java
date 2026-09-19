@@ -21,6 +21,9 @@ public class EventoVentilador extends Evento {
     }
 
     @Override
+    public String getTipo() { return "VENTILADOR"; }
+
+    @Override
     public synchronized void setRealizado(boolean r) { this.realizado = r; }
 
     @Override

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es" data-bs-theme="dark" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos :: cabeza('Mis compras')}"></head>
+<body>
+
+<nav th:replace="~{fragmentos :: menuUsuario('compras')}"></nav>
+
+<header class="portada portada--baja">
+    <img class="portada__foto" th:src="@{/img/cogollo-negro.jpg}" alt="" style="object-position: 50% 10%;">
+    <div class="container portada__contenido">
+        <p class="etiqueta mb-4" th:text="${usuario.nombre} + ' ' + ${usuario.apellido} + ' · ' + ${usuario.email}">Andrés Negro · andres@onedesk.com</p>
+        <h1 class="titulo-serif mb-0">Mis <em>compras</em></h1>
+    </div>
+</header>
+
+<main class="container pb-5">
+
+    <div class="mt-4" th:replace="~{fragmentos :: avisos}"></div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4 mb-5 mt-1"
+         th:with="deuda=${usuario.deuda.monto}, tope=${usuario.topeCredito}">
+        <div class="col">
+            <div class="panel-destacado h-100 p-4">
+                <p class="etiqueta mb-3">Deuda</p>
+                <p class="dato-destacado mb-3" style="color: var(--violeta-suave);" th:text="'$' + ${#numbers.formatInteger(deuda, 1, 'POINT')}">$3.000</p>
+                <div class="medidor"><span th:style="'width: ' + ${tope == 0 ? (deuda > 0 ? 100 : 0) : (deuda >= tope ? 100 : deuda * 100 / tope)} + '%;'"></span></div>
+                <p class="apagado small mb-0 mt-2" th:if="${tope > 0}" th:text="${deuda * 100 / tope} + '% de tu tope'">30% de tu tope</p>
+                <p class="apagado small mb-0 mt-2" th:if="${tope == 0}">Sin tope de crédito asignado</p>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 p-4">
+                <p class="etiqueta mb-3">Tope de crédito</p>
+                <p class="dato-destacado mb-0" th:text="'$' + ${#numbers.formatInteger(tope, 1, 'POINT')}">$10.000</p>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 p-4">
+                <p class="etiqueta mb-3">Disponible en cuenta</p>
+                <p class="dato-destacado mb-0" style="color: var(--verde-suave);"
+                   th:text="'$' + ${#numbers.formatInteger(tope > deuda ? tope - deuda : 0, 1, 'POINT')}">$7.000</p>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="titulo-bloque">Historial</h2>
+
+    <div class="card p-5 text-center" th:if="${compras.isEmpty()}">
+        <p class="apagado mb-3">Todavía no hiciste ninguna compra.</p>
+        <a th:href="@{/catalogo}" class="btn btn-primary align-self-center">Ir al catálogo</a>
+    </div>
+
+    <div class="card" th:unless="${compras.isEmpty()}">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle tabla-datos">
+                <thead>
+                    <tr>
+                        <th scope="col" class="ps-4">Compra</th>
+                        <th scope="col">Fecha</th>
+                        <th scope="col">Genéticas</th>
+                        <th scope="col" class="text-end">Total</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col" class="pe-4"><span class="visually-hidden">Acciones</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="c : ${compras}">
+                        <th scope="row" class="ps-4 fw-normal apagado" th:text="'#' + ${c.id}">#14</th>
+                        <td class="apagado" th:text="${#temporals.format(c.fechaCompra, 'dd/MM/yyyy')}">14/09/2026</td>
+                        <td>
+                            <span th:each="item, it : ${c.items}"
+                                  th:text="${item.producto.genetica} + ' ' + ${item.cantidad} + ' g' + (${it.last} ? '' : ', ')">OG Kush 3 g</span>
+                        </td>
+                        <td class="text-end fw-semibold" th:text="'$' + ${#numbers.formatInteger(c.precio, 1, 'POINT')}">$3.000</td>
+                        <td th:if="${c.pendiente}">
+                            <span class="punto-vivo punto-vivo--violeta me-2"></span>
+                            <span style="color: var(--violeta-suave);">Esperando aprobación</span>
+                        </td>
+                        <td th:if="${c.rechazada}">
+                            <span class="punto-muerto me-2"></span><span class="apagado">Rechazada</span>
+                        </td>
+                        <td th:if="${c.aprobada and c.pagado}">
+                            <span class="punto-muerto me-2"></span>
+                            <span class="apagado" th:text="'Pagada el ' + ${#temporals.format(c.fechaPago, 'dd/MM')}">Pagada</span>
+                        </td>
+                        <td th:if="${c.aprobada and !c.pagado}">
+                            <span class="punto-vivo me-2"></span>
+                            <span style="color: var(--verde-suave);">Aprobada · impaga</span>
+                        </td>
+                        <td class="text-end pe-4 text-nowrap" th:if="${c.pendiente or (c.aprobada and !c.pagado)}">
+                            <form th:action="@{/mis-compras/{id}/pagar(id=${c.id})}" method="post" class="d-inline" th:if="${c.aprobada}">
+                                <button type="submit" class="btn btn-sm btn-primary">Pagar</button>
+                            </form>
+                            <form th:action="@{/mis-compras/{id}/anular(id=${c.id})}" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Anular</button>
+                            </form>
+                        </td>
+                        <td class="text-end pe-4 apagado small" th:if="${c.rechazada or c.pagado}">—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <p class="apagado small mt-3 mb-0">
+        Cada pedido queda esperando que la administración lo apruebe. Podés anular los pendientes y los impagos,
+        y el stock vuelve al catálogo; una compra pagada ya no se anula.
+    </p>
+</main>
+
+<th:block th:replace="~{fragmentos :: scripts}"></th:block>
+</body>
+</html>

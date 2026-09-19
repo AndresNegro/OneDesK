@@ -29,7 +29,8 @@ import com.OneDesK.modelo.Usuario;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import({ UsuarioServiceImpl.class, EmpleadoIndoorServiceImpl.class, IndoorServiceImpl.class,
-		ProductoServiceImpl.class, RegistroProduccionServiceImpl.class, CompraServiceImpl.class })
+		ProductoServiceImpl.class, RegistroProduccionServiceImpl.class, CompraServiceImpl.class,
+		LimitesDeCompraServiceImpl.class })
 public class FlujoCompletoTest {
 
 	@Autowired
@@ -45,13 +46,15 @@ public class FlujoCompletoTest {
 	@Autowired
 	private CompraService compraService;
 	@Autowired
+	private LimitesDeCompraService limites;
+	@Autowired
 	private TestEntityManager em;
 
 	// Del alta del indoor hasta la venta: cosechar carga el stock y comprar lo descuenta
 	@Test
 	public void deLaCosechaALaVenta() {
 		Usuario cliente = usuarioService.registrar("Ana", "Perez", "cliente@test.com", "12345");
-		usuarioService.asignarTopeCredito(cliente.getId(), 20000);
+		cliente.aprobar(20000);
 		EmpleadoIndoor empleado = empleadoService.registrar("Andres", "Negro", "cultivador@test.com", "12345", 500000);
 
 		Indoor indoor = indoorService.crearIndoor();
@@ -63,7 +66,7 @@ public class FlujoCompletoTest {
 		assertEquals(50, kush.getStock());
 		assertTrue(planta.isCosechada());
 
-		Compra compra = compraService.realizarCompra(cliente.getId(),
+		Compra compra = pedirYAprobar(cliente.getId(),
 				List.of(new LineaCompra(kush.getId(), 3)), false);
 
 		assertEquals(47, kush.getStock());
@@ -83,13 +86,13 @@ public class FlujoCompletoTest {
 	@Test
 	public void pagarUnaCompraYAnularOtraDejanTodoEnOrden() {
 		Usuario cliente = usuarioService.registrar("Ana", "Perez", "cliente@test.com", "12345");
-		usuarioService.asignarTopeCredito(cliente.getId(), 20000);
+		cliente.aprobar(20000);
 		Producto kush = productoService.crearProducto("OG Kush", 1000);
 		cargarStock(kush, 50);
 
-		Compra pagada = compraService.realizarCompra(cliente.getId(),
+		Compra pagada = pedirYAprobar(cliente.getId(),
 				List.of(new LineaCompra(kush.getId(), 3)), false);
-		Compra anulada = compraService.realizarCompra(cliente.getId(),
+		Compra anulada = pedirYAprobar(cliente.getId(),
 				List.of(new LineaCompra(kush.getId(), 5)), false);
 		assertEquals(8000, cliente.getDeuda().getMonto());
 		assertEquals(42, kush.getStock());
@@ -134,9 +137,10 @@ public class FlujoCompletoTest {
 	@Test
 	public void sinStockSuficienteNoSeVende() {
 		Usuario cliente = usuarioService.registrar("Ana", "Perez", "cliente@test.com", "12345");
-		usuarioService.asignarTopeCredito(cliente.getId(), 20000);
+		cliente.aprobar(20000);
 		Producto kush = productoService.crearProducto("OG Kush", 1000);
 		cargarStock(kush, 2);
+		limites.cambiar(1, 1000);
 
 		assertThrows(StockInsuficienteException.class, () -> compraService.realizarCompra(cliente.getId(),
 				List.of(new LineaCompra(kush.getId(), 3)), false));
@@ -158,5 +162,11 @@ public class FlujoCompletoTest {
 
 	private Planta nuevaPlanta(String genetica) {
 		return new Planta(genetica, LocalDate.now().minusDays(80), LocalDate.now().minusDays(90), 60, 120, 30);
+	}
+
+	// el cliente pide la compra y el administrador la aprueba, con limites amplios para probar el resto
+	private Compra pedirYAprobar(int usuarioId, List<LineaCompra> lineas, boolean pagado) {
+		limites.cambiar(1, 1000);
+		return compraService.aprobarCompra(compraService.realizarCompra(usuarioId, lineas, pagado).getId());
 	}
 }

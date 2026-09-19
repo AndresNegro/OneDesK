@@ -24,6 +24,9 @@ public class Usuario extends Persona {
     private Deuda deuda;
 	@Column(name="topeCredito")
     private int topeCredito;
+	// al registrarse queda pendiente: recien puede ingresar y comprar cuando el administrador lo aprueba
+	@Column(name="aprobado")
+    private boolean aprobado;
 
 	Usuario(){
 	}
@@ -33,6 +36,19 @@ public class Usuario extends Persona {
         this.compras = new ArrayList<>();
         this.deuda = new Deuda();
         this.topeCredito = 0;
+        this.aprobado = false;
+    }
+
+    public boolean isAprobado() { return aprobado; }
+
+    /** El administrador acepta la solicitud de registro y le asigna el tope de credito en el mismo paso. */
+    public void aprobar(int topeCredito) {
+        if (aprobado) {
+            throw new OperacionInvalidaException("El usuario " + getEmail() + " ya esta aprobado");
+        }
+        // el tope se valida antes de aprobar: si es invalido, el usuario sigue pendiente
+        setTopeCredito(topeCredito);
+        this.aprobado = true;
     }
 
     public void agregarCompra(Compra c) {
@@ -54,16 +70,27 @@ public class Usuario extends Persona {
 
     public void recalcularDeuda() {
         int total = 0;
+        // una compra pendiente o rechazada todavia no se debe
         for (Compra c : compras) {
-            if (!c.isPagado()) total += c.getPrecio();
+            if (c.isAprobada() && !c.isPagado()) total += c.getPrecio();
         }
         deuda.setMonto(total);
+    }
+
+    /** Lo que ya debe mas lo que pidio en cuenta corriente y espera aprobacion: es lo que se compara con el tope. */
+    public int deudaComprometida() {
+        recalcularDeuda();
+        int total = deuda.getMonto();
+        for (Compra c : compras) {
+            if (c.isPendiente() && !c.isPagaAlAprobar()) total += c.getPrecio();
+        }
+        return total;
     }
 
     public List<Compra> comprasImpagas() {
         List<Compra> impagas = new ArrayList<>();
         for (Compra c : compras) {
-            if (!c.isPagado()) impagas.add(c);
+            if (c.isAprobada() && !c.isPagado()) impagas.add(c);
         }
         return impagas;
     }

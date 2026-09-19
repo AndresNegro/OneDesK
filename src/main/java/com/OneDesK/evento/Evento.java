@@ -29,6 +29,9 @@ public abstract class Evento extends Persistible {
 
     public Planta getPlanta() { return planta; }
 
+    /** REGADO, LUZ o VENTILADOR: el mismo valor que la columna tipo de la tabla Evento. */
+    public abstract String getTipo();
+
     public abstract void setRealizado(boolean r);
     public abstract boolean getRealizado();
 

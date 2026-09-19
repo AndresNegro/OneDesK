@@ -22,6 +22,9 @@ public class EventoRegado extends Evento {
     }
 
     @Override
+    public String getTipo() { return "REGADO"; }
+
+    @Override
     public synchronized void setRealizado(boolean r) { this.regado = r; }
 
     @Override

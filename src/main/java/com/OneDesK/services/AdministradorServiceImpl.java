@@ -9,16 +9,21 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.OneDesK.evento.Evento;
 import com.OneDesK.excepciones.EmailDuplicadoException;
+import com.OneDesK.excepciones.OperacionInvalidaException;
 import com.OneDesK.excepciones.RecursoNoEncontradoException;
 import com.OneDesK.modelo.Administrador;
 import com.OneDesK.modelo.Compra;
 import com.OneDesK.modelo.EmpleadoIndoor;
+import com.OneDesK.modelo.EstadoCompra;
 import com.OneDesK.modelo.Indoor;
+import com.OneDesK.modelo.LimitesDeCompra;
+import com.OneDesK.modelo.Planta;
 import com.OneDesK.modelo.Producto;
 import com.OneDesK.modelo.RegistroProduccion;
 import com.OneDesK.modelo.Usuario;
 import com.OneDesK.repositories.AdministradorRepository;
 import com.OneDesK.repositories.CompraRepository;
+import com.OneDesK.repositories.EmpleadoIndoorRepository;
 import com.OneDesK.repositories.IndoorRepository;
 import com.OneDesK.repositories.PersonaRepository;
 import com.OneDesK.repositories.RegistroProduccionRepository;
@@ -38,6 +43,8 @@ public class AdministradorServiceImpl implements AdministradorService {
 	@Autowired
 	private IndoorRepository indoorRepository;
 	@Autowired
+	private EmpleadoIndoorRepository empleadoRepository;
+	@Autowired
 	private UsuarioRepository usuarioRepository;
 	@Autowired
 	private CompraRepository compraRepository;
@@ -54,6 +61,8 @@ public class AdministradorServiceImpl implements AdministradorService {
 	private UsuarioService usuarioService;
 	@Autowired
 	private CompraService compraService;
+	@Autowired
+	private LimitesDeCompraService limitesDeCompraService;
 
 	@Override
 	@Transactional
@@ -105,6 +114,87 @@ public class AdministradorServiceImpl implements AdministradorService {
 		return empleadoService.cambiarSalario(empleadoId, salarioMensual);
 	}
 
+	@Override
+	@Transactional
+	public Planta plantar(int adminId, int indoorId, Planta planta) {
+		verificarAdministrador(adminId);
+		return indoorService.plantar(indoorId, planta);
+	}
+
+	// --- listados para el panel ---
+
+	@Override
+	@Transactional
+	public List<Indoor> indoors(int adminId) {
+		verificarAdministrador(adminId);
+		return indoorRepository.findAll();
+	}
+
+	@Override
+	@Transactional
+	public List<EmpleadoIndoor> empleados(int adminId) {
+		verificarAdministrador(adminId);
+		return empleadoRepository.findAll();
+	}
+
+	@Override
+	@Transactional
+	public List<Producto> productos(int adminId) {
+		verificarAdministrador(adminId);
+		return productoService.listarTodos();
+	}
+
+	@Override
+	@Transactional
+	public List<Usuario> usuarios(int adminId) {
+		verificarAdministrador(adminId);
+		return usuarioRepository.findByAprobadoTrueOrderByApellidoAscNombreAsc();
+	}
+
+	@Override
+	@Transactional
+	public List<Compra> comprasImpagas(int adminId) {
+		verificarAdministrador(adminId);
+		return compraRepository.findByPagadoFalseAndEstadoOrderByFechaCompraAscIdAsc(EstadoCompra.APROBADA);
+	}
+
+	// --- compras por aprobar y limites ---
+
+	@Override
+	@Transactional
+	public List<Compra> comprasPendientes(int adminId) {
+		verificarAdministrador(adminId);
+		return compraService.comprasPendientes();
+	}
+
+	@Override
+	@Transactional
+	public Compra aprobarCompra(int adminId, int compraId) {
+		verificarAdministrador(adminId);
+		return compraService.aprobarCompra(compraId);
+	}
+
+	@Override
+	@Transactional
+	public Compra rechazarCompra(int adminId, int compraId) {
+		verificarAdministrador(adminId);
+		return compraService.rechazarCompra(compraId);
+	}
+
+	@Override
+	@Transactional
+	public LimitesDeCompra limitesDeCompra(int adminId) {
+		verificarAdministrador(adminId);
+		return limitesDeCompraService.obtener();
+	}
+
+	@Override
+	@Transactional
+	public LimitesDeCompra cambiarLimites(int adminId, int minimoGramos, int maximoGramos) {
+		verificarAdministrador(adminId);
+		return limitesDeCompraService.cambiar(minimoGramos, maximoGramos);
+	}
+
 	// --- productos ---
 
 	@Override
@@ -139,16 +229,31 @@ public class AdministradorServiceImpl implements AdministradorService {
 
 	@Override
 	@Transactional
-	public Usuario registrarUsuario(int adminId, String nombre, String apellido, String email, String contrasenia,
-			int topeCredito) {
+	public List<Usuario> solicitudesPendientes(int adminId) {
 		verificarAdministrador(adminId);
-		// el tope se valida antes de registrar, para no guardar un usuario y despues rechazar su tope
-		if (topeCredito < 0) {
-			throw new IllegalArgumentException("El tope de credito no puede ser negativo");
-		}
-		Usuario usuario = usuarioService.registrar(nombre, apellido, email, contrasenia);
-		usuario.setTopeCredito(topeCredito);
+		return usuarioRepository.findByAprobadoFalseOrderByIdAsc();
+	}
+
+	@Override
+	@Transactional
+	public Usuario aprobarUsuario(int adminId, int usuarioId, int topeCredito) {
+		verificarAdministrador(adminId);
+		Usuario usuario = usuarioService.buscar(usuarioId);
+		usuario.aprobar(topeCredito);
 		return usuario;
+	}
+
+	@Override
+	@Transactional
+	public void rechazarUsuario(int adminId, int usuarioId) {
+		verificarAdministrador(adminId);
+		Usuario usuario = usuarioService.buscar(usuarioId);
+		if (usuario.isAprobado()) {
+			throw new OperacionInvalidaException("El usuario " + usuario.getEmail()
+					+ " ya esta aprobado: solo se rechazan solicitudes pendientes");
+		}
+		// un pendiente no pudo comprar, asi que no tiene compras: se borra con su deuda en cero
+		usuarioRepository.delete(usuario);
 	}
 
 	@Override

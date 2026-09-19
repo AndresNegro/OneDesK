@@ -1,6 +1,7 @@
 package com.OneDesK.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,7 @@ public class UsuarioServiceImplTest {
 
 	// --- registrar ---
 
-	// Registrar un usuario con un email libre lo deja guardado en la base
+	// Registrar un usuario con un email libre lo deja guardado en la base, pendiente de aprobacion
 	@Test
 	public void registrarGuardaAlUsuario() {
 		int id = service.registrar("Andres", "Negro", "andres@test.com", "12345").getId();
@@ -37,6 +38,7 @@ public class UsuarioServiceImplTest {
 		Usuario recargado = em.find(Usuario.class, id);
 		assertEquals("andres@test.com", recargado.getEmail());
 		assertEquals(0, recargado.getTopeCredito());
+		assertFalse(recargado.isAprobado());
 		assertEquals(0, recargado.getDeuda().getMonto());
 	}
 

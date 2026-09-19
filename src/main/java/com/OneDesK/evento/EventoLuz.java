@@ -21,6 +21,9 @@ public class EventoLuz extends Evento {
     }
 
     @Override
+    public String getTipo() { return "LUZ"; }
+
+    @Override
     public synchronized void setRealizado(boolean r) { this.realizado = r; }
 
     @Override

@@ -1,6 +1,7 @@
 package com.OneDesK.modelo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -104,5 +105,85 @@ public class CompraTest {
 		deAyer.marcarComoPagada();
 
 		assertEquals(LocalDate.now(), deAyer.getFechaPago());
+	}
+
+	// --- aprobacion del administrador ---
+
+	// Una compra pedida queda pendiente, sin pagar y sin fecha de pago
+	@Test
+	public void unaCompraPedidaQuedaPendiente() {
+		Compra pedida = Compra.pedida(LocalDate.now(), usuario, true);
+
+		assertTrue(pedida.isPendiente());
+		assertFalse(pedida.isPagado());
+		assertNull(pedida.getFechaPago());
+	}
+
+	// Si el cliente eligio pagar, al aprobarla queda pagada con la fecha de la aprobacion
+	@Test
+	public void aprobarUnaCompraQuePagaLaDejaPagada() {
+		Compra pedida = Compra.pedida(LocalDate.now().minusDays(2), usuario, true);
+
+		pedida.aprobar();
+
+		assertTrue(pedida.isAprobada());
+		assertTrue(pedida.isPagado());
+		assertEquals(LocalDate.now(), pedida.getFechaPago());
+	}
+
+	// Si el cliente eligio cuenta corriente, al aprobarla queda aprobada pero impaga
+	@Test
+	public void aprobarUnaCompraEnCuentaLaDejaImpaga() {
+		Compra pedida = Compra.pedida(LocalDate.now(), usuario, false);
+
+		pedida.aprobar();
+
+		assertTrue(pedida.isAprobada());
+		assertFalse(pedida.isPagado());
+	}
+
+	// Rechazarla la deja rechazada y sin pagar
+	@Test
+	public void rechazarLaDejaRechazada() {
+		Compra pedida = Compra.pedida(LocalDate.now(), usuario, true);
+
+		pedida.rechazar();
+
+		assertTrue(pedida.isRechazada());
+		assertFalse(pedida.isPagado());
+	}
+
+	// Una compra ya aprobada o rechazada no se vuelve a aprobar ni a rechazar
+	@Test
+	public void soloSeApruebaORechazaUnaVez() {
+		Compra aprobada = Compra.pedida(LocalDate.now(), usuario, false);
+		aprobada.aprobar();
+		Compra rechazada = Compra.pedida(LocalDate.now(), usuario, false);
+		rechazada.rechazar();
+
+		assertThrows(OperacionInvalidaException.class, aprobada::aprobar);
+		assertThrows(OperacionInvalidaException.class, aprobada::rechazar);
+		assertThrows(OperacionInvalidaException.class, rechazada::aprobar);
+		assertThrows(OperacionInvalidaException.class, rechazada::rechazar);
+	}
+
+	// Una compra pendiente o rechazada no se puede marcar como pagada
+	@Test
+	public void noSePagaUnaCompraSinAprobar() {
+		Compra pendiente = Compra.pedida(LocalDate.now(), usuario, false);
+		Compra rechazada = Compra.pedida(LocalDate.now(), usuario, false);
+		rechazada.rechazar();
+
+		assertThrows(OperacionInvalidaException.class, pendiente::marcarComoPagada);
+		assertThrows(OperacionInvalidaException.class, rechazada::marcarComoPagada);
+	}
+
+	// Los gramos de la compra son la suma de los de todas sus lineas
+	@Test
+	public void losGramosSumanTodasLasLineas() {
+		compra.addItem(new ItemCompra(kush, 12));
+		compra.addItem(new ItemCompra(haze, 8));
+
+		assertEquals(20, compra.getGramos());
 	}
 }

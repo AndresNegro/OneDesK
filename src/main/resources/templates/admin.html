@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="es" data-bs-theme="dark" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos :: cabeza('Administración')}"></head>
+<body>
+
+<nav th:replace="~{fragmentos :: menuPanel('Administración', '/admin')}"></nav>
+
+<header class="portada portada--baja">
+    <img class="portada__foto" th:src="@{/img/cogollos-violetas.jpg}" alt="" style="object-position: 50% 45%;">
+    <div class="container portada__contenido">
+        <p class="etiqueta mb-4" th:text="${nombre} + ' · administración'">Administración</p>
+        <h1 class="titulo-serif mb-3">Todo el <em>negocio</em></h1>
+        <p class="portada__bajada mb-0">Indoors, empleados, catálogo, clientes y los números del día.</p>
+    </div>
+</header>
+
+<main class="container pb-5">
+
+    <div class="mt-4" th:replace="~{fragmentos :: avisos}"></div>
+
+    <!-- resumen -->
+    <div class="row row-cols-2 row-cols-lg-4 g-3 mb-5 mt-1">
+        <div class="col">
+            <div class="card h-100 p-4">
+                <p class="etiqueta mb-3">Indoors</p>
+                <p class="dato-destacado mb-1" th:text="${indoors.size()}">2</p>
+                <p class="apagado small mb-0" th:text="${plantasEnCultivo} + ' plantas en cultivo'">14 plantas en cultivo</p>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 p-4">
+                <p class="etiqueta mb-3">Por aprobar</p>
+                <p class="dato-destacado mb-1" style="color: var(--violeta-suave);" th:text="${comprasPendientes.size() + solicitudes.size()}">3</p>
+                <p class="apagado small mb-0" th:text="${comprasPendientes.size()} + ' compras · ' + ${solicitudes.size()} + ' cuentas'">2 compras · 1 cuenta</p>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 p-4">
+                <p class="etiqueta mb-3">Eventos</p>
+                <p class="dato-destacado mb-1" th:text="${pendientes.size()}">3</p>
+                <p class="apagado small mb-0"><span class="punto-vivo punto-vivo--violeta me-2" th:if="${!pendientes.isEmpty()}"></span>sin atender</p>
+            </div>
+        </div>
+        <div class="col">
+            <div class="panel-destacado h-100 p-4">
+                <p class="etiqueta mb-3">Deuda total</p>
+                <p class="dato-destacado mb-1" style="color: var(--violeta-suave);" th:text="'$' + ${#numbers.formatInteger(deudaTotal, 1, 'POINT')}">$4.500</p>
+                <p class="apagado small mb-0" th:text="${deudores.size()} + ' deudores'">2 deudores</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- secciones -->
+    <ul class="nav pestanas mb-4" id="secciones" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-indoors" data-bs-toggle="tab" data-bs-target="#indoors"
+                    type="button" role="tab" aria-controls="indoors" aria-selected="true">
+                <i class="bi bi-house-gear me-2"></i>Indoors y empleados
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-productos" data-bs-toggle="tab" data-bs-target="#productos"
+                    type="button" role="tab" aria-controls="productos" aria-selected="false">
+                <i class="bi bi-box-seam me-2"></i>Productos y stock
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-compras" data-bs-toggle="tab" data-bs-target="#compras"
+                    type="button" role="tab" aria-controls="compras" aria-selected="false">
+                <i class="bi bi-bag-check me-2"></i>Compras
+                <span class="contador" th:if="${!comprasPendientes.isEmpty()}" th:text="${comprasPendientes.size()}">2</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-usuarios" data-bs-toggle="tab" data-bs-target="#usuarios"
+                    type="button" role="tab" aria-controls="usuarios" aria-selected="false">
+                <i class="bi bi-people me-2"></i>Usuarios y topes
+                <span class="contador" th:if="${!solicitudes.isEmpty()}" th:text="${solicitudes.size()}">1</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-reportes" data-bs-toggle="tab" data-bs-target="#reportes"
+                    type="button" role="tab" aria-controls="reportes" aria-selected="false">
+                <i class="bi bi-journal-text me-2"></i>Reportes
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <!-- ============ indoors y empleados ============ -->
+        <section class="tab-pane fade show active" id="indoors" role="tabpanel" aria-labelledby="tab-indoors">
+            <div class="row g-4">
+
+                <div class="col-lg-7">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="titulo-bloque mb-0">Indoors</h2>
+                        <form th:action="@{/admin/indoors}" method="post">
+                            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg me-1"></i>Crear indoor</button>
+                        </form>
+                    </div>
+
+                    <div class="card mb-5">
+                        <p class="apagado m-0 p-4" th:if="${indoors.isEmpty()}">Todavía no hay indoors.</p>
+                        <div class="table-responsive" th:unless="${indoors.isEmpty()}">
+                            <table class="table table-hover align-middle tabla-datos">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="ps-4">Indoor</th>
+                                        <th scope="col">En cultivo</th>
+                                        <th scope="col">Empleados</th>
+                                        <th scope="col" class="pe-4">Pendientes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="i : ${indoors}">
+                                        <td class="ps-4"><span class="badge-genetica" th:text="'Indoor ' + ${i.id}">Indoor 1</span></td>
+                                        <td th:text="${i.plantas.?[!cosechada].size()}">8</td>
+                                        <td class="apagado">
+                                            <span th:if="${i.empleadosAsignados.isEmpty()}">Sin empleados</span>
+                                            <span th:each="e, it : ${i.empleadosAsignados}" th:text="${e.nombre} + ' ' + ${e.apellido} + (${it.last} ? '' : ', ')">Andrés Negro</span>
+                                        </td>
+                                        <td class="pe-4">
+                                            <span class="punto-vivo punto-vivo--violeta me-2" th:if="${!i.eventosPendientes.isEmpty()}"></span>
+                                            <span th:text="${i.eventosPendientes.size()}">2</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <h2 class="titulo-bloque">Empleados</h2>
+
+                    <div class="card mb-5">
+                        <p class="apagado m-0 p-4" th:if="${empleados.isEmpty()}">Todavía no hay empleados.</p>
+                        <div class="table-responsive" th:unless="${empleados.isEmpty()}">
+                            <table class="table align-middle tabla-datos">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="ps-4">Empleado</th>
+                                        <th scope="col">Indoors a cargo</th>
+                                        <th scope="col" class="pe-4" style="min-width: 13rem;">Salario</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="e : ${empleados}">
+                                        <td class="ps-4">
+                                            <p class="mb-0 fw-semibold" th:text="${e.nombre} + ' ' + ${e.apellido}">Andrés Negro</p>
+                                            <p class="mb-0 apagado small" th:text="${e.email}">andres@onedesk.com</p>
+                                        </td>
+                                        <td>
+                                            <span class="apagado small" th:if="${e.sectoresACargo.isEmpty()}">Sin indoor asignado</span>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <form th:each="i : ${e.sectoresACargo}" th:action="@{/admin/empleados/desasignar}" method="post" class="chip">
+                                                    <input type="hidden" name="empleadoId" th:value="${e.id}">
+                                                    <input type="hidden" name="indoorId" th:value="${i.id}">
+                                                    <span th:text="'Indoor ' + ${i.id}">Indoor 1</span>
+                                                    <button type="submit" th:aria-label="'Desasignar del Indoor ' + ${i.id}"><i class="bi bi-x"></i></button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                        <td class="pe-4">
+                                            <form th:action="@{/admin/empleados/salario}" method="post" class="input-group input-group-sm">
+                                                <input type="hidden" name="empleadoId" th:value="${e.id}">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" name="salario" th:value="${e.salarioMensual}" min="1" required
+                                                       th:aria-label="'Salario de ' + ${e.nombre}">
+                                                <button type="submit" class="btn btn-outline-primary">Guardar</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <h2 class="titulo-bloque">Plantar</h2>
+
+                    <div class="card p-4">
+                        <p class="apagado m-0" th:if="${indoors.isEmpty()}">Primero creá un indoor.</p>
+                        <form th:action="@{/admin/plantar}" method="post" th:unless="${indoors.isEmpty()}">
+                            <div class="row g-3">
+                                <div class="col-sm-4">
+                                    <label for="plantar-indoor" class="form-label">Indoor</label>
+                                    <select class="form-select" id="plantar-indoor" name="indoorId" required>
+                                        <option th:each="i : ${indoors}" th:value="${i.id}" th:text="'Indoor ' + ${i.id}">Indoor 1</option>
+                                    </select>
+                                </div>
+                                <div class="col-sm-8">
+                                    <label for="plantar-genetica" class="form-label">Genética</label>
+                                    <input type="text" class="form-control" id="plantar-genetica" name="genetica" required>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label for="plantar-germinado" class="form-label">Germinó</label>
+                                    <input type="date" class="form-control" id="plantar-germinado" name="fechaGerminado" th:max="${hoy}" required>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label for="plantar-plantado" class="form-label">Plantada</label>
+                                    <input type="date" class="form-control" id="plantar-plantado" name="fechaPlantado" th:value="${hoy}" th:max="${hoy}" required>
+                                </div>
+                                <div class="col-4">
+                                    <label for="plantar-riego" class="form-label">Riego (min)</label>
+                                    <input type="number" class="form-control" id="plantar-riego" name="tiempoRegado" min="1" value="720" required>
+                                </div>
+                                <div class="col-4">
+                                    <label for="plantar-luz" class="form-label">Luz (min)</label>
+                                    <input type="number" class="form-control" id="plantar-luz" name="tiempoLuz" min="1" value="720" required>
+                                </div>
+                                <div class="col-4">
+                                    <label for="plantar-ventilacion" class="form-label">Ventil. (min)</label>
+                                    <input type="number" class="form-control" id="plantar-ventilacion" name="tiempoVentilacion" min="1" value="240" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-outline-primary w-100 mt-4">Plantar</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <h2 class="titulo-bloque">Asignar empleado</h2>
+                    <div class="panel-destacado p-4 mb-5">
+                        <p class="apagado m-0" th:if="${empleados.isEmpty() or indoors.isEmpty()}">Hacen falta al menos un empleado y un indoor.</p>
+                        <form th:action="@{/admin/empleados/asignar}" method="post" th:unless="${empleados.isEmpty() or indoors.isEmpty()}">
+                            <div class="mb-3">
+                                <label for="asignar-empleado" class="form-label">Empleado</label>
+                                <select class="form-select" id="asignar-empleado" name="empleadoId" required>
+                                    <option th:each="e : ${empleados}" th:value="${e.id}" th:text="${e.nombre} + ' ' + ${e.apellido}">Martín Ruiz</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label for="asignar-indoor" class="form-label">Indoor</label>
+                                <select class="form-select" id="asignar-indoor" name="indoorId" required>
+                                    <option th:each="i : ${indoors}" th:value="${i.id}" th:text="'Indoor ' + ${i.id}">Indoor 1</option>
+                                </select>
+                                <div class="form-text">Un empleado no puede tener dos veces el mismo indoor.</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Asignar</button>
+                        </form>
+                    </div>
+
+                    <h2 class="titulo-bloque">Alta de empleado</h2>
+                    <div class="card p-4">
+                        <form th:action="@{/admin/empleados}" method="post">
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <label for="emp-nombre" class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="emp-nombre" name="nombre" required>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label for="emp-apellido" class="form-label">Apellido</label>
+                                    <input type="text" class="form-control" id="emp-apellido" name="apellido" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="emp-email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="emp-email" name="email" required>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label for="emp-contrasenia" class="form-label">Contraseña</label>
+                                    <input type="password" class="form-control" id="emp-contrasenia" name="contrasenia" minlength="5" required>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label for="emp-salario" class="form-label">Salario</label>
+                                    <input type="number" class="form-control" id="emp-salario" name="salario" min="1" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-outline-primary w-100 mt-4">Dar de alta</button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ============ productos y stock ============ -->
+        <section class="tab-pane fade" id="productos" role="tabpanel" aria-labelledby="tab-productos">
+            <div class="row g-4">
+
+                <div class="col-lg-8">
+                    <h2 class="titulo-bloque">Catálogo completo</h2>
+                    <p class="apagado small mb-3">Incluye los productos sin stock, que no se ven en el catálogo de los clientes. Precios por gramo.</p>
+
+                    <div class="card">
+                        <p class="apagado m-0 p-4" th:if="${productos.isEmpty()}">Todavía no hay productos.</p>
+                        <div class="table-responsive" th:unless="${productos.isEmpty()}">
+                            <table class="table align-middle tabla-datos">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="ps-4" style="min-width: 11rem;">Genética</th>
+                                        <th scope="col" style="min-width: 11rem;">Precio</th>
+                                        <th scope="col" style="min-width: 10rem;">Fijar stock</th>
+                                        <th scope="col" class="pe-4" style="min-width: 10rem;">Sumar o restar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="p : ${productos}">
+                                        <td class="ps-4">
+                                            <span class="badge-genetica" th:classappend="${p.stock == 0} ? 'apagado'" th:text="${p.genetica}">OG Kush</span>
+                                            <p class="mb-0 apagado small" th:if="${p.stock > 0}" th:text="'Stock actual: ' + ${p.stock} + ' g'">Stock actual: 12 g</p>
+                                            <p class="mb-0 small" th:if="${p.stock == 0}" style="color: var(--violeta-suave);">Sin stock · no se vende</p>
+                                        </td>
+                                        <td>
+                                            <form th:action="@{/admin/productos/precio}" method="post" class="input-group input-group-sm">
+                                                <input type="hidden" name="productoId" th:value="${p.id}">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" name="precio" th:value="${p.precio}" min="1" required th:aria-label="'Precio de ' + ${p.genetica}">
+                                                <button type="submit" class="btn btn-outline-primary" aria-label="Guardar precio"><i class="bi bi-check-lg"></i></button>
+                                            </form>
+                                        </td>
+                                        <td>
+                                            <form th:action="@{/admin/productos/fijar}" method="post" class="input-group input-group-sm">
+                                                <input type="hidden" name="productoId" th:value="${p.id}">
+                                                <input type="number" class="form-control" name="stock" th:value="${p.stock}" min="0" required th:aria-label="'Stock contado de ' + ${p.genetica}">
+                                                <button type="submit" class="btn btn-outline-primary">Fijar</button>
+                                            </form>
+                                        </td>
+                                        <td class="pe-4">
+                                            <form th:action="@{/admin/productos/ajustar}" method="post" class="input-group input-group-sm">
+                                                <input type="hidden" name="productoId" th:value="${p.id}">
+                                                <input type="number" class="form-control" name="cantidad" placeholder="+5 / -3" required th:aria-label="'Ajuste de stock de ' + ${p.genetica}">
+                                                <button type="submit" class="btn btn-outline-primary">Ajustar</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <h2 class="titulo-bloque">Alta de producto</h2>
+                    <div class="panel-destacado p-4 mb-4">
+                        <form th:action="@{/admin/productos}" method="post">
+                            <div class="mb-3">
+                                <label for="prod-genetica" class="form-label">Genética</label>
+                                <input type="text" class="form-control" id="prod-genetica" name="genetica" placeholder="Northern Lights" required>
+                                <div class="form-text">No puede repetirse una genética ya cargada.</div>
+                            </div>
+                            <div class="mb-4">
+                                <label for="prod-precio" class="form-label">Precio por gramo</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="prod-precio" name="precio" min="1" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Dar de alta</button>
+                        </form>
+                    </div>
+
+                    <div class="aviso">
+                        <i class="bi bi-info-circle"></i>
+                        <p class="mb-0 apagado small">
+                            <strong>Fijar</strong> deja el stock en lo que contaste. <strong>Sumar o restar</strong>
+                            lo mueve desde el valor actual. Ninguno lo deja en negativo.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ============ compras ============ -->
+        <section class="tab-pane fade" id="compras" role="tabpanel" aria-labelledby="tab-compras">
+            <div class="row g-4">
+
+                <div class="col-lg-8">
+                    <h2 class="titulo-bloque">Compras por aprobar</h2>
+
+                    <div class="card mb-5">
+                        <p class="apagado m-0 p-4" th:if="${comprasPendientes.isEmpty()}">No hay pedidos esperando respuesta.</p>
+                        <div class="table-responsive" th:unless="${comprasPendientes.isEmpty()}">
+                            <table class="table table-hover align-middle tabla-datos">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="ps-4">Pedido</th>
+                                        <th scope="col">Usuario</th>
+                                        <th scope="col">Genéticas</th>
+                                        <th scope="col" class="text-end">Total</th>
+                                        <th scope="col">Pago</th>
+                                        <th scope="col" class="pe-4"><span class="visually-hidden">Acciones</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="c : ${comprasPendientes}">
+                                        <th scope="row" class="ps-4 fw-normal apagado">
+                                            <span th:text="'#' + ${c.id}">#15</span>
+                                            <span class="d-block small" th:text="${#temporals.format(c.fechaCompra, 'dd/MM')}">18/09</span>
+                                        </th>
+                                        <td th:text="${c.usuario.nombre} + ' ' + ${c.usuario.apellido}">Sofía Paz</td>
+                                        <td class="small">
+                                            <span class="d-block" th:each="item : ${c.items}"
+                                                  th:text="${item.producto.genetica} + ' ' + ${item.cantidad} + ' g'">OG Kush 3 g</span>
+                                        </td>
+                                        <td class="text-end fw-semibold" th:text="'$' + ${#numbers.formatInteger(c.precio, 1, 'POINT')}">$3.000</td>
+                                        <td class="small apagado" th:text="${c.pagaAlAprobar} ? 'Paga al aprobar' : 'Cuenta corriente'">Cuenta corriente</td>
+                                        <td class="text-end pe-4 text-nowrap">
+                                            <form th:action="@{/admin/compras/aprobar}" method="post" class="d-inline">
+                                                <input type="hidden" name="compraId" th:value="${c.id}">
+                                                <button type="submit" class="btn btn-sm btn-primary">Aprobar</button>
+                                            </form>
+                                            <form th:action="@{/admin/compras/rechazar}" method="post" class="d-inline">
+                                                <input type="hidden" name="compraId" th:value="${c.id}">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">Rechazar</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <h2 class="titulo-bloque">Compras impagas</h2>
+
+                    <div class="card">
+                        <p class="apagado m-0 p-4" th:if="${comprasImpagas.isEmpty()}">No hay compras impagas.</p>
+                        <div class="table-responsive" th:unless="${comprasImpagas.isEmpty()}">
+                            <table class="table table-hover align-middle tabla-datos">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="ps-4">Compra</th>
+                                        <th scope="col">Usuario</th>
+                                        <th scope="col">Fecha</th>
+                                        <th scope="col" class="text-end">Total</th>
+                                        <th scope="col" class="pe-4"><span class="visually-hidden">Acciones</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="c : ${comprasImpagas}">
+                                        <th scope="row" class="ps-4 fw-normal apagado" th:text="'#' + ${c.id}">#14</th>
+                                        <td th:text="${c.usuario.nombre} + ' ' + ${c.usuario.apellido}">Andrés Negro</td>
+                                        <td class="apagado" th:text="${#temporals.format(c.fechaCompra, 'dd/MM/yyyy')}">14/09/2026</td>
+                                        <td class="text-end fw-semibold" th:text="'$' + ${#numbers.formatInteger(c.precio, 1, 'POINT')}">$3.000</td>
+                                        <td class="text-end pe-4">
+                                            <form th:action="@{/admin/compras/anular}" method="post">
+                                                <input type="hidden" name="compraId" th:value="${c.id}">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">Anular</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <p class="apagado small mt-3 mb-0">Anular devuelve el stock al catálogo. Las compras pagadas no se anulan.</p>
+                </div>
+
+                <div class="col-lg-4">
+                    <h2 class="titulo-bloque">Gramos por compra</h2>
+                    <div class="panel-destacado p-4 mb-4">
+                        <form th:action="@{/admin/limites}" method="post">
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <label for="limite-minimo" class="form-label">Mínimo</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="limite-minimo" name="minimo" th:value="${limites.minimoGramos}" min="1" required>
+                                        <span class="input-group-text">g</span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label for="limite-maximo" class="form-label">Máximo</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="limite-maximo" name="maximo" th:value="${limites.maximoGramos}" min="1" required>
+                                        <span class="input-group-text">g</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 mt-4">Guardar límites</button>
+                        </form>
+                    </div>
+
+                    <div class="aviso">
+                        <i class="bi bi-info-circle"></i>
+                        <p class="mb-0 apagado small">
+                            Se cuentan los gramos de todo el pedido, sumando sus genéticas. Rige para los pedidos nuevos:
+                            los que ya esperan aprobación no cambian.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ============ usuarios y topes ============ -->
+        <section class="tab-pane fade" id="usuarios" role="tabpanel" aria-labelledby="tab-usuarios">
+            <div class="row g-4">
+
+                <div class="col-lg-8">
+                    <h2 class="titulo-bloque">Usuarios</h2>
+
+                    <div class="card">
+                        <p class="apagado m-0 p-4" th:if="${usuarios.isEmpty()}">Todavía no hay usuarios aprobados.</p>
+                        <div class="table-responsive" th:unless="${usuarios.isEmpty()}">
+                            <table class="table align-middle tabla-datos">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="ps-4">Usuario</th>
+                                        <th scope="col" class="text-end">Deuda</th>
+                                        <th scope="col" class="pe-4" style="min-width: 13rem;">Tope de crédito</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="u : ${usuarios}">
+                                        <td class="ps-4">
+                                            <p class="mb-0 fw-semibold" th:text="${u.nombre} + ' ' + ${u.apellido}">Andrés Negro</p>
+                                            <p class="mb-0 apagado small" th:text="${u.email}">andres@onedesk.com</p>
+                                        </td>
+                                        <td class="text-end" th:classappend="${u.deuda.monto == 0} ? 'apagado'"
+                                            th:style="${u.deuda.monto > 0} ? 'color: var(--violeta-suave);'"
+                                            th:text="'$' + ${#numbers.formatInteger(u.deuda.monto, 1, 'POINT')}">$3.000</td>
+                                        <td class="pe-4">
+                                            <form th:action="@{/admin/usuarios/tope}" method="post" class="input-group input-group-sm">
+                                                <input type="hidden" name="usuarioId" th:value="${u.id}">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" name="tope" th:value="${u.topeCredito}" min="0" required th:aria-label="'Tope de ' + ${u.nombre}">
+                                                <button type="submit" class="btn btn-outline-primary">Guardar</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <h2 class="titulo-bloque">Solicitudes de registro</h2>
+                    <div class="panel-destacado p-4">
+                        <p class="apagado m-0" th:if="${solicitudes.isEmpty()}">No hay solicitudes esperando respuesta.</p>
+                        <div th:each="s, it : ${solicitudes}" th:classappend="${!it.last} ? 'solicitud'">
+                            <p class="mb-0 fw-semibold" th:text="${s.nombre} + ' ' + ${s.apellido}">Juan Pérez</p>
+                            <p class="mb-3 apagado small" th:text="${s.email}">juan@mail.com</p>
+                            <form th:action="@{/admin/solicitudes/aprobar}" method="post" class="mb-2">
+                                <input type="hidden" name="usuarioId" th:value="${s.id}">
+                                <label class="form-label" th:for="'tope-' + ${s.id}">Tope de crédito</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" th:id="'tope-' + ${s.id}" name="tope" value="0" min="0" required>
+                                    <button type="submit" class="btn btn-primary">Aprobar</button>
+                                </div>
+                            </form>
+                            <form th:action="@{/admin/solicitudes/rechazar}" method="post">
+                                <input type="hidden" name="usuarioId" th:value="${s.id}">
+                                <button type="submit" class="btn btn-sm btn-outline-primary w-100">Rechazar</button>
+                            </form>
+                        </div>
+                        <p class="form-text mt-3 mb-0" th:unless="${solicitudes.isEmpty()}">Con tope $0 solo puede comprar pagando.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ============ reportes ============ -->
+        <section class="tab-pane fade" id="reportes" role="tabpanel" aria-labelledby="tab-reportes">
+            <div class="row g-4">
+
+                <div class="col-lg-7">
+                    <h2 class="titulo-bloque">Registros de producción</h2>
+                    <div class="card mb-5">
+                        <p class="apagado m-0 p-4" th:if="${registrosDeProduccion.isEmpty()}">Todavía no hay cosechas registradas.</p>
+                        <div class="table-responsive" th:unless="${registrosDeProduccion.isEmpty()}">
+                            <table class="table table-hover align-middle tabla-datos">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="ps-4">Fecha</th>
+                                        <th scope="col">Genética</th>
+                                        <th scope="col">Indoor</th>
+                                        <th scope="col">Empleado</th>
+                                        <th scope="col" class="text-end pe-4">Cosecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="r : ${registrosDeProduccion}">
+                                        <td class="ps-4 apagado" th:text="${#temporals.format(r.fechaRegistro, 'dd/MM/yyyy')}">10/09/2026</td>
+                                        <td><span class="badge-genetica" th:text="${r.producto.genetica}">Blue Dream</span></td>
+                                        <td th:text="'Indoor ' + ${r.indoor.id}">Indoor 1</td>
+                                        <td class="apagado" th:text="${r.empleadoIndoor.nombre} + ' ' + ${r.empleadoIndoor.apellido}">Andrés Negro</td>
+                                        <td class="text-end pe-4 fw-semibold" th:text="${r.cantidad} + ' g'">40 g</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <h2 class="titulo-bloque">Registros de pago</h2>
+                    <div class="card">
+                        <p class="apagado m-0 p-4" th:if="${registrosDePago.isEmpty()}">Todavía no hay pagos.</p>
+                        <div class="table-responsive" th:unless="${registrosDePago.isEmpty()}">
+                            <table class="table table-hover align-middle tabla-datos">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="ps-4">Pagada el</th>
+                                        <th scope="col">Compra</th>
+                                        <th scope="col">Usuario</th>
+                                        <th scope="col" class="text-end pe-4">Monto</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="c : ${registrosDePago}">
+                                        <td class="ps-4 apagado" th:text="${#temporals.format(c.fechaPago, 'dd/MM/yyyy')}">09/09/2026</td>
+                                        <td class="apagado" th:text="'#' + ${c.id} + ' · del ' + ${#temporals.format(c.fechaCompra, 'dd/MM')}">#11 · del 07/09</td>
+                                        <td th:text="${c.usuario.nombre} + ' ' + ${c.usuario.apellido}">Andrés Negro</td>
+                                        <td class="text-end pe-4 fw-semibold" style="color: var(--verde-suave);"
+                                            th:text="'$' + ${#numbers.formatInteger(c.precio, 1, 'POINT')}">$5.800</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <h2 class="titulo-bloque">Deudores</h2>
+                    <div class="card mb-5">
+                        <p class="apagado m-0 p-4" th:if="${deudores.isEmpty()}">Nadie debe plata.</p>
+                        <div class="evento" th:each="u : ${deudores}"
+                             th:with="deuda=${u.deuda.monto}, tope=${u.topeCredito}">
+                            <span class="icono-evento"><i class="bi bi-person"></i></span>
+                            <div class="flex-grow-1">
+                                <p class="mb-0 fw-semibold" th:text="${u.nombre} + ' ' + ${u.apellido}">Andrés Negro</p>
+                                <div class="medidor mt-2"><span th:style="'width: ' + ${tope == 0 or deuda >= tope ? 100 : deuda * 100 / tope} + '%;'"></span></div>
+                                <p class="mb-0 apagado small mt-1" th:if="${tope > 0}"
+                                   th:text="${deuda * 100 / tope} + '% de su tope de $' + ${#numbers.formatInteger(tope, 1, 'POINT')}">30% de su tope</p>
+                                <p class="mb-0 apagado small mt-1" th:if="${tope == 0}">Sin tope asignado</p>
+                            </div>
+                            <p class="mb-0 fw-semibold" style="color: var(--violeta-suave);" th:text="'$' + ${#numbers.formatInteger(deuda, 1, 'POINT')}">$3.000</p>
+                        </div>
+                    </div>
+
+                    <h2 class="titulo-bloque">Eventos pendientes</h2>
+                    <div class="card">
+                        <p class="apagado m-0 p-4" th:if="${pendientes.isEmpty()}">No hay eventos sin atender.</p>
+                        <div class="evento" th:each="e : ${pendientes}">
+                            <span class="icono-evento" th:switch="${e.tipo}">
+                                <i th:case="'REGADO'" class="bi bi-droplet"></i>
+                                <i th:case="'LUZ'" class="bi bi-lightbulb"></i>
+                                <i th:case="*" class="bi bi-fan"></i>
+                            </span>
+                            <div class="flex-grow-1">
+                                <p class="mb-0 fw-semibold" th:switch="${e.tipo}">
+                                    <span th:case="'REGADO'">Riego</span>
+                                    <span th:case="'LUZ'">Luz</span>
+                                    <span th:case="*">Ventilación</span>
+                                </p>
+                                <p class="mb-0 apagado small" th:text="${e.planta.genetica} + ' · Indoor ' + ${e.planta.indoor.id}">OG Kush · Indoor 1</p>
+                            </div>
+                            <span class="punto-vivo punto-vivo--violeta"></span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+</main>
+
+<th:block th:replace="~{fragmentos :: scripts}"></th:block>
+<script>
+    // despues de cada accion se vuelve con #seccion en la direccion: se abre esa pestana
+    (function () {
+        var boton = document.querySelector('[data-bs-target="' + location.hash + '"]');
+        if (location.hash && boton) {
+            bootstrap.Tab.getOrCreateInstance(boton).show();
+        }
+    })();
+</script>
+</body>
+</html>

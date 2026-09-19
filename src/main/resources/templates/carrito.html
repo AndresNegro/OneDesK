@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="es" data-bs-theme="dark" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos :: cabeza('Carrito')}"></head>
+<body>
+
+<nav th:replace="~{fragmentos :: menuUsuario('carrito')}"></nav>
+
+<header class="portada portada--baja">
+    <img class="portada__foto" th:src="@{/img/cogollo-tricomas.jpg}" alt="" style="object-position: 50% 50%;">
+    <div class="container portada__contenido">
+        <p class="etiqueta mb-4">Paso final</p>
+        <h1 class="titulo-serif mb-3">Tu <em>compra</em></h1>
+        <p class="portada__bajada mb-0">El precio queda fijo al pedirla. La administración revisa cada pedido antes de aceptarlo.</p>
+    </div>
+</header>
+
+<main class="container pb-5">
+
+    <div class="mt-4" th:replace="~{fragmentos :: avisos}"></div>
+
+    <div class="row g-4 mt-1" th:if="${lineas.isEmpty()}">
+        <div class="col-lg-8">
+            <div class="card p-5 text-center">
+                <p class="dato-destacado mb-2">Tu carrito está vacío</p>
+                <p class="apagado mb-4">Elegí genéticas en el catálogo y van a aparecer acá.</p>
+                <a th:href="@{/catalogo}" class="btn btn-primary align-self-center">Ir al catálogo</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1" th:unless="${lineas.isEmpty()}">
+
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle tabla-datos">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="ps-4">Genética</th>
+                                <th scope="col" class="text-end">Precio por gramo</th>
+                                <th scope="col" style="min-width: 9rem;">Gramos</th>
+                                <th scope="col" class="text-end">Subtotal</th>
+                                <th scope="col" class="pe-4"><span class="visually-hidden">Quitar</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="l : ${lineas}">
+                                <td class="ps-4"><span class="badge-genetica" th:text="${l.producto.genetica}">OG Kush</span></td>
+                                <td class="text-end apagado" th:text="'$' + ${#numbers.formatInteger(l.producto.precio, 1, 'POINT')}">$1.000</td>
+                                <td>
+                                    <form th:action="@{/carrito/cantidad}" method="post" class="input-group input-group-sm">
+                                        <input type="hidden" name="productoId" th:value="${l.producto.id}">
+                                        <input type="number" class="form-control" name="cantidad" th:value="${l.cantidad}"
+                                               min="1" th:max="${l.producto.stock}" th:aria-label="'Gramos de ' + ${l.producto.genetica}">
+                                        <button type="submit" class="btn btn-outline-primary" aria-label="Actualizar gramos"><i class="bi bi-arrow-repeat"></i></button>
+                                    </form>
+                                </td>
+                                <td class="text-end fw-semibold" th:text="'$' + ${#numbers.formatInteger(l.subtotal, 1, 'POINT')}">$3.000</td>
+                                <td class="text-end pe-4">
+                                    <form th:action="@{/carrito/quitar}" method="post">
+                                        <input type="hidden" name="productoId" th:value="${l.producto.id}">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary" th:aria-label="'Quitar ' + ${l.producto.genetica}">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <a th:href="@{/catalogo}" class="btn btn-link px-0 mt-3">
+                <i class="bi bi-arrow-left me-1"></i> Seguir comprando
+            </a>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="panel-destacado p-4"
+                 th:with="fueraDeLimite=${gramos < limites.minimoGramos or gramos > limites.maximoGramos}">
+                <p class="etiqueta mb-3">Total</p>
+                <p class="dato-destacado mb-2" th:text="'$' + ${#numbers.formatInteger(total, 1, 'POINT')}">$6.000</p>
+                <p class="small mb-4" th:classappend="${fueraDeLimite} ? '' : 'apagado'"
+                   th:style="${fueraDeLimite} ? 'color: #FFB3C4;'"
+                   th:text="${gramos} + ' g · cada compra va de ' + ${limites.minimoGramos} + ' g a ' + ${limites.maximoGramos} + ' g'">5 g · de 5 g a 40 g</p>
+
+                <form th:action="@{/carrito/confirmar}" method="post">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="pago" id="pago-ahora" value="ahora" checked>
+                        <label class="form-check-label" for="pago-ahora">Pagar cuando se apruebe</label>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="radio" name="pago" id="pago-cuenta" value="cuenta">
+                        <label class="form-check-label" for="pago-cuenta">Dejarla en cuenta corriente</label>
+                    </div>
+
+                    <div class="mb-2 d-flex justify-content-between small">
+                        <span class="apagado">Deuda si no pagás</span>
+                        <span class="tabla-datos"
+                              th:text="'$' + ${#numbers.formatInteger(deudaSiNoPaga, 1, 'POINT')} + ' de $' + ${#numbers.formatInteger(usuario.topeCredito, 1, 'POINT')}">$9.000 de $10.000</span>
+                    </div>
+                    <div class="medidor mb-2">
+                        <span th:style="'width: ' + ${usuario.topeCredito == 0 or deudaSiNoPaga >= usuario.topeCredito ? 100 : deudaSiNoPaga * 100 / usuario.topeCredito} + '%;'"></span>
+                    </div>
+                    <p class="small mb-4" th:if="${deudaSiNoPaga > usuario.topeCredito}" style="color: #FFB3C4;">
+                        Supera tu tope: este pedido solo se puede pagar al aprobarse.
+                    </p>
+                    <p class="small mb-4 apagado" th:unless="${deudaSiNoPaga > usuario.topeCredito}">Entra en tu tope de crédito.</p>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100">Enviar pedido</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<th:block th:replace="~{fragmentos :: scripts}"></th:block>
+</body>
+</html>

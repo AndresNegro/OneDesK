@@ -213,4 +213,97 @@ public class UsuarioTest {
 		compra.addItem(new ItemCompra(new Producto("OG Kush", 10, 1000), cantidad));
 		return compra;
 	}
+
+	// --- aprobacion ---
+
+	// Un usuario recien registrado queda pendiente, con tope 0
+	@Test
+	public void unUsuarioNuevoQuedaPendiente() {
+		Usuario usuario = new Usuario("Andres", "Negro", "nuevo@test.com", "12345");
+
+		assertFalse(usuario.isAprobado());
+		assertEquals(0, usuario.getTopeCredito());
+	}
+
+	// Aprobarlo lo habilita y le asigna el tope en el mismo paso
+	@Test
+	public void aprobarLoHabilitaConSuTope() {
+		Usuario usuario = new Usuario("Andres", "Negro", "nuevo@test.com", "12345");
+
+		usuario.aprobar(7000);
+
+		assertTrue(usuario.isAprobado());
+		assertEquals(7000, usuario.getTopeCredito());
+	}
+
+	// Con un tope negativo no se aprueba: sigue pendiente y con el tope que tenia
+	@Test
+	public void conTopeNegativoSigueSinAprobar() {
+		Usuario usuario = new Usuario("Andres", "Negro", "nuevo@test.com", "12345");
+
+		assertThrows(IllegalArgumentException.class, () -> usuario.aprobar(-1));
+
+		assertFalse(usuario.isAprobado());
+		assertEquals(0, usuario.getTopeCredito());
+	}
+
+	// Un usuario ya aprobado no se vuelve a aprobar, y su tope no cambia por esa via
+	@Test
+	public void noSeApruebaDosVeces() {
+		Usuario usuario = new Usuario("Andres", "Negro", "nuevo@test.com", "12345");
+		usuario.aprobar(7000);
+
+		assertThrows(OperacionInvalidaException.class, () -> usuario.aprobar(100));
+
+		assertEquals(7000, usuario.getTopeCredito());
+	}
+
+	// --- compras pendientes y rechazadas ---
+
+	// La deuda solo suma las compras aprobadas sin pagar: una pendiente o rechazada todavia no se debe
+	@Test
+	public void laDeudaNoCuentaPendientesNiRechazadas() {
+		Usuario usuario = new Usuario("Andres", "Negro", "deudor@test.com", "12345");
+		usuario.agregarCompra(compraDe(usuario, false, 3));
+		Compra pendiente = pedidaDe(usuario, false, 2);
+		Compra rechazada = pedidaDe(usuario, false, 4);
+		usuario.agregarCompra(pendiente);
+		usuario.agregarCompra(rechazada);
+		rechazada.rechazar();
+		usuario.recalcularDeuda();
+
+		assertEquals(3000, usuario.getDeuda().getMonto());
+		assertEquals(1, usuario.comprasImpagas().size());
+	}
+
+	// Lo comprometido suma lo que debe y lo pedido en cuenta corriente, no lo que paga al aprobar
+	@Test
+	public void laDeudaComprometidaSumaLoPedidoEnCuentaCorriente() {
+		Usuario usuario = new Usuario("Andres", "Negro", "deudor@test.com", "12345");
+		usuario.agregarCompra(compraDe(usuario, false, 3));
+		usuario.agregarCompra(pedidaDe(usuario, false, 2));
+		usuario.agregarCompra(pedidaDe(usuario, true, 5));
+
+		assertEquals(5000, usuario.deudaComprometida());
+	}
+
+	// Al aprobar una pendiente en cuenta corriente, pasa a ser deuda
+	@Test
+	public void alAprobarlaPasaASerDeuda() {
+		Usuario usuario = new Usuario("Andres", "Negro", "deudor@test.com", "12345");
+		Compra pendiente = pedidaDe(usuario, false, 2);
+		usuario.agregarCompra(pendiente);
+		assertEquals(0, usuario.getDeuda().getMonto());
+
+		pendiente.aprobar();
+		usuario.recalcularDeuda();
+
+		assertEquals(2000, usuario.getDeuda().getMonto());
+	}
+
+	private Compra pedidaDe(Usuario usuario, boolean pagaAlAprobar, int cantidad) {
+		Compra compra = Compra.pedida(LocalDate.now(), usuario, pagaAlAprobar);
+		compra.addItem(new ItemCompra(new Producto("OG Kush", 10, 1000), cantidad));
+		return compra;
+	}
 }

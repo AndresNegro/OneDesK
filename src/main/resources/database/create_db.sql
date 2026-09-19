@@ -18,6 +18,7 @@ CREATE TABLE Usuario (
     ID INT NOT NULL,
     ID_DEUDA INT NOT NULL,
     topeCredito INT NOT NULL DEFAULT 0,
+    aprobado BOOLEAN NOT NULL DEFAULT 0,
     PRIMARY KEY (ID)
 );
 
@@ -59,6 +60,15 @@ CREATE TABLE Compra (
     precio INT NOT NULL,
     pagado BOOLEAN NOT NULL,
     fechaPago DATE,
+    estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE',
+    pagaAlAprobar BOOLEAN NOT NULL DEFAULT 0,
+    PRIMARY KEY (ID)
+);
+
+CREATE TABLE LimitesDeCompra (
+    ID INT NOT NULL AUTO_INCREMENT,
+    minimoGramos INT NOT NULL,
+    maximoGramos INT NOT NULL,
     PRIMARY KEY (ID)
 );
 

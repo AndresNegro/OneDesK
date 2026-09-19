@@ -31,7 +31,7 @@ import com.OneDesK.modelo.Usuario;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(EmpleadoIndoorServiceImpl.class)
+@Import({ EmpleadoIndoorServiceImpl.class, IndoorServiceImpl.class })
 public class EmpleadoIndoorServiceImplTest {
 
 	@Autowired
@@ -238,6 +238,41 @@ public class EmpleadoIndoorServiceImplTest {
 
 		assertThrows(RecursoNoEncontradoException.class,
 				() -> service.atenderEvento(empleado.getId(), otroIndoor.getId(), luz.getId()));
+	}
+
+	// --- plantar ---
+
+	// El empleado planta en un indoor que tiene a cargo y la planta queda guardada ahi
+	@Test
+	public void unEmpleadoPlantaEnSuIndoor() {
+		service.asignarIndoor(empleado.getId(), indoor.getId());
+		em.flush();
+
+		int planta = service.plantar(empleado.getId(), indoor.getId(), nuevaPlanta("Amnesia")).getId();
+		em.flush();
+		em.clear();
+
+		assertEquals(indoor.getId(), em.find(Planta.class, planta).getIndoor().getId());
+	}
+
+	// En un indoor que no tiene a cargo no puede plantar y no se guarda nada
+	@Test
+	public void unEmpleadoNoPlantaEnUnIndoorAjeno() {
+		em.flush();
+		em.clear();
+
+		assertThrows(OperacionInvalidaException.class,
+				() -> service.plantar(empleado.getId(), indoor.getId(), nuevaPlanta("Amnesia")));
+		em.flush();
+		em.clear();
+
+		assertEquals(1, em.find(Indoor.class, indoor.getId()).getPlantas().size());
+	}
+
+	// Buscar un empleado que no existe falla con RecursoNoEncontradoException
+	@Test
+	public void buscarUnEmpleadoInexistenteFalla() {
+		assertThrows(RecursoNoEncontradoException.class, () -> service.buscar(9999));
 	}
 
 	private Planta nuevaPlanta(String genetica) {

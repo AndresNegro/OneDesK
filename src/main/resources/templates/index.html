@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es" data-bs-theme="dark" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos :: cabeza('Ingresar')}"></head>
+<body>
+
+<main class="acceso">
+
+    <section class="acceso__foto">
+        <img th:src="@{/img/cogollo-negro.jpg}" alt="" style="object-position: 50% 30%;">
+        <p class="acceso__marca navbar-brand mb-0 fs-3">OneDesK</p>
+
+        <div class="acceso__texto">
+            <p class="etiqueta mb-4">Cultivo indoor</p>
+            <h1 class="titulo-serif mb-4">
+                Todo el indoor,<br>
+                <em>bajo control.</em>
+            </h1>
+            <p class="portada__bajada mb-0">
+                Riego, luz y ventilación planta por planta, y el catálogo al día con cada cosecha.
+            </p>
+        </div>
+    </section>
+
+    <section class="acceso__formulario">
+        <div>
+            <p class="etiqueta mb-3">Bienvenido</p>
+            <h2 class="display-6 mb-2">Ingresar</h2>
+            <p class="apagado mb-4">Clientes, empleados y administración entran por acá.</p>
+
+            <div th:replace="~{fragmentos :: avisos}"></div>
+
+            <form th:action="@{/ingresar}" method="post">
+                <div class="mb-4">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control form-control-lg" id="email" name="email"
+                           placeholder="nombre@dominio.com" required autofocus>
+                </div>
+
+                <div class="mb-5">
+                    <label for="contrasenia" class="form-label">Contraseña</label>
+                    <input type="password" class="form-control form-control-lg" id="contrasenia"
+                           name="contrasenia" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    Ingresar <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </form>
+
+            <p class="mt-4 mb-0 apagado">
+                ¿No tenés cuenta? <a th:href="@{/registro}">Registrate</a>
+            </p>
+        </div>
+    </section>
+
+</main>
+
+<th:block th:replace="~{fragmentos :: scripts}"></th:block>
+</body>
+</html>

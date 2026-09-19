@@ -76,6 +76,8 @@ DROP TABLE Planta;
 
 DROP TABLE Indoor;
 
+DROP TABLE LimitesDeCompra;
+
 DROP TABLE Producto;
 
 DROP TABLE Usuario;

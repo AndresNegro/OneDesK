@@ -10,7 +10,9 @@ import com.OneDesK.evento.Evento;
 import com.OneDesK.excepciones.EmailDuplicadoException;
 import com.OneDesK.excepciones.RecursoNoEncontradoException;
 import com.OneDesK.modelo.EmpleadoIndoor;
+import com.OneDesK.excepciones.OperacionInvalidaException;
 import com.OneDesK.modelo.Indoor;
+import com.OneDesK.modelo.Planta;
 import com.OneDesK.repositories.EmpleadoIndoorRepository;
 import com.OneDesK.repositories.IndoorRepository;
 import com.OneDesK.repositories.PersonaRepository;
@@ -24,6 +26,8 @@ public class EmpleadoIndoorServiceImpl implements EmpleadoIndoorService {
 	private IndoorRepository indoorRepository;
 	@Autowired
 	private PersonaRepository personaRepository;
+	@Autowired
+	private IndoorService indoorService;
 
 	@Override
 	@Transactional
@@ -35,6 +39,22 @@ public class EmpleadoIndoorServiceImpl implements EmpleadoIndoorService {
 			throw new EmailDuplicadoException("Ya existe una persona registrada con el email " + empleado.getEmail());
 		}
 		return repositorio.save(empleado);
+	}
+
+	@Override
+	@Transactional
+	public EmpleadoIndoor buscar(int empleadoId) {
+		return buscarEmpleado(empleadoId);
+	}
+
+	@Override
+	@Transactional
+	public Planta plantar(int empleadoId, int indoorId, Planta planta) {
+		EmpleadoIndoor empleado = buscarEmpleado(empleadoId);
+		if (!empleado.estaAsignadoA(buscarIndoor(indoorId))) {
+			throw new OperacionInvalidaException("No estas asignado al indoor " + indoorId);
+		}
+		return indoorService.plantar(indoorId, planta);
 	}
 
 	@Override

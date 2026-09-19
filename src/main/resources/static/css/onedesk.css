@@ -551,6 +551,38 @@ h1 em, h2 em, .titulo-serif em {
 
 .aviso i { color: var(--violeta-suave); }
 
+/* --- resultado de una accion: exito o error ---------------------------- */
+
+.aviso-accion {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .9rem 1.1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+    animation: subir .5s var(--suave) both;
+}
+
+.aviso-accion--exito {
+    background: rgba(53, 192, 122, .1);
+    border: 1px solid rgba(53, 192, 122, .45);
+    color: var(--verde-suave);
+}
+
+.aviso-accion--error {
+    background: rgba(255, 122, 154, .1);
+    border: 1px solid rgba(255, 122, 154, .45);
+    color: #FFB3C4;
+}
+
+/* el boton de salir se ve como un link mas del menu */
+.navbar-od .btn-link.nav-link {
+    border: 0;
+    font-weight: 500;
+    text-decoration: none;
+}
+
 /* --- pestanas del panel de administracion ------------------------------ */
 
 .pestanas {
@@ -619,6 +651,13 @@ h1 em, h2 em, .titulo-serif em {
 }
 
 .chip button:hover { background: rgba(143, 107, 255, .3); }
+
+/* cada solicitud de registro separada de la siguiente por un filete */
+.solicitud {
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--borde);
+}
 
 /* --- tablas ------------------------------------------------------------- */
 
