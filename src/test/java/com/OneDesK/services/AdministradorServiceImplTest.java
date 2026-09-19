@@ -883,6 +883,19 @@ public class AdministradorServiceImplTest {
 		assertTrue(service.usuarios(admin).stream().anyMatch(u -> u.getId() == usuario));
 	}
 
+	// El administrador edita un indoor y el cambio queda guardado
+	@Test
+	public void elAdministradorEditaUnIndoor() {
+		int indoor = service.crearIndoor(admin, "Carpa vieja", 5).getId();
+		recargar();
+
+		service.editarIndoor(admin, indoor, "Carpa nueva", 9);
+		recargar();
+
+		assertEquals("Carpa nueva", em.find(Indoor.class, indoor).getNombre());
+		assertEquals(9, em.find(Indoor.class, indoor).getCapacidad());
+	}
+
 	// --- compras por aprobar y limites ---
 
 	// Un pedido aparece en las compras por aprobar y no en las impagas; al aprobarlo pasa a las impagas
@@ -1040,7 +1053,8 @@ public class AdministradorServiceImplTest {
 				() -> service.aprobarCompra(quien, INEXISTENTE),
 				() -> service.rechazarCompra(quien, INEXISTENTE),
 				() -> service.limitesDeCompra(quien),
-				() -> service.cambiarLimites(quien, 1, 10));
+				() -> service.cambiarLimites(quien, 1, 10),
+				() -> service.editarIndoor(quien, INEXISTENTE, "Carpa", 5));
 	}
 
 	private int eventoPendiente(int indoor) {

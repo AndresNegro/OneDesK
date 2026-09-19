@@ -87,6 +87,13 @@ public class AdministradorServiceImpl implements AdministradorService {
 
 	@Override
 	@Transactional
+	public Indoor editarIndoor(int adminId, int indoorId, String nombre, int capacidad) {
+		verificarAdministrador(adminId);
+		return indoorService.editarIndoor(indoorId, nombre, capacidad);
+	}
+
+	@Override
+	@Transactional
 	public EmpleadoIndoor registrarEmpleado(int adminId, String nombre, String apellido, String email,
 			String contrasenia, int salarioMensual) {
 		verificarAdministrador(adminId);

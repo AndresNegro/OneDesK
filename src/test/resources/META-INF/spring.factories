@@ -1,0 +1,2 @@
+# Solo lo lee el framework de tests de Spring: hace que los tests usen la base onedesk_test (ver BaseDeTest)
+org.springframework.test.context.ContextCustomizerFactory=com.OneDesK.BaseDeTest

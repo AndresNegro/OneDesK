@@ -26,6 +26,8 @@ public interface AdministradorService {
 
 	public Indoor crearIndoor(int adminId, String nombre, int capacidad);
 
+	public Indoor editarIndoor(int adminId, int indoorId, String nombre, int capacidad);
+
 	public EmpleadoIndoor registrarEmpleado(int adminId, String nombre, String apellido, String email,
 			String contrasenia, int salarioMensual);
 

@@ -28,6 +28,20 @@ public class IndoorServiceImpl implements IndoorService {
 
 	@Override
 	@Transactional
+	public Indoor editarIndoor(int indoorId, String nombre, int capacidad) {
+		Indoor indoor = buscarIndoor(indoorId);
+		// el nombre se compara ya sin espacios de mas, como lo guarda Indoor
+		String nombreNuevo = nombre == null ? null : nombre.trim();
+		if (nombreNuevo != null && repositorio.existsByNombreIgnoreCaseAndIdNot(nombreNuevo, indoorId)) {
+			throw new OperacionInvalidaException("Ya existe un indoor llamado " + nombreNuevo);
+		}
+		// sin save: el indoor ya esta guardado y el cambio se escribe al terminar la transaccion
+		indoor.editar(nombreNuevo, capacidad);
+		return indoor;
+	}
+
+	@Override
+	@Transactional
 	public Planta plantar(int indoorId, Planta planta) {
 		Indoor indoor = buscarIndoor(indoorId);
 		if (planta.getIndoor() != null) {

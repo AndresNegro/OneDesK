@@ -89,6 +89,14 @@ public class AdminController {
 		return "redirect:/admin#indoors";
 	}
 
+	@PostMapping("/admin/indoors/editar")
+	public String editarIndoor(@RequestParam("indoorId") int indoorId, @RequestParam("nombre") String nombre,
+			@RequestParam("capacidad") int capacidad, HttpSession sesion, RedirectAttributes flash) {
+		Indoor indoor = admin.editarIndoor(Sesion.personaId(sesion), indoorId, nombre, capacidad);
+		flash.addFlashAttribute("exito", "Guardaste los cambios de " + indoor.getNombre());
+		return "redirect:/admin#indoors";
+	}
+
 	@PostMapping("/admin/plantar")
 	public String plantar(@RequestParam("indoorId") int indoorId, @RequestParam("genetica") String genetica,
 			@RequestParam("fechaGerminado") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaGerminado,

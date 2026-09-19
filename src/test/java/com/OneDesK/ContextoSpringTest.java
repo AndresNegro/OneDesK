@@ -74,4 +74,10 @@ public class ContextoSpringTest {
 			indoor.borrar();
 		}
 	}
+
+	// Los tests trabajan sobre onedesk_test y nunca sobre la base real onedesk (ver BaseDeTest)
+	@Test
+	public void losTestsUsanLaBaseDeTest() {
+		assertEquals("onedesk_test", jdbc.queryForObject("SELECT DATABASE()", String.class));
+	}
 }

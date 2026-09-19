@@ -163,6 +163,75 @@ public class IndoorServiceImplTest {
 		assertEquals(1, em.find(Indoor.class, id).getPlantas().size());
 	}
 
+	// --- editar ---
+
+	// Editar queda guardado en la base, sin save
+	@Test
+	public void editarQuedaGuardado() {
+		int id = service.crearIndoor("Carpa del fondo", 8).getId();
+		em.flush();
+		em.clear();
+
+		service.editarIndoor(id, "Carpa del frente", 15);
+		em.flush();
+		em.clear();
+
+		Indoor recargado = em.find(Indoor.class, id);
+		assertEquals("Carpa del frente", recargado.getNombre());
+		assertEquals(15, recargado.getCapacidad());
+	}
+
+	// Se puede dejar el mismo nombre, o cambiarle solo las mayusculas, sin chocar consigo mismo
+	@Test
+	public void editarPuedeConservarSuPropioNombre() {
+		int id = service.crearIndoor("Carpa del fondo", 8).getId();
+		em.flush();
+
+		service.editarIndoor(id, "Carpa del fondo", 12);
+		service.editarIndoor(id, "CARPA DEL FONDO", 12);
+		em.flush();
+		em.clear();
+
+		assertEquals("CARPA DEL FONDO", em.find(Indoor.class, id).getNombre());
+	}
+
+	// No se puede usar el nombre de otro indoor, y el indoor queda como estaba
+	@Test
+	public void editarNoPuedeUsarElNombreDeOtro() {
+		service.crearIndoor("Carpa del fondo", 8);
+		int otro = service.crearIndoor("Carpa del frente", 8).getId();
+		em.flush();
+		em.clear();
+
+		assertThrows(OperacionInvalidaException.class, () -> service.editarIndoor(otro, " carpa DEL FONDO ", 8));
+		em.flush();
+		em.clear();
+
+		assertEquals("Carpa del frente", em.find(Indoor.class, otro).getNombre());
+	}
+
+	// Bajar la capacidad por debajo de lo plantado se rechaza y queda la anterior
+	@Test
+	public void editarNoBajaLaCapacidadDeLoPlantado() {
+		int id = service.crearIndoor("Carpa del fondo", 8).getId();
+		service.plantar(id, nuevaPlanta("OG Kush"));
+		service.plantar(id, nuevaPlanta("Amnesia"));
+		em.flush();
+		em.clear();
+
+		assertThrows(OperacionInvalidaException.class, () -> service.editarIndoor(id, "Carpa del fondo", 1));
+		em.flush();
+		em.clear();
+
+		assertEquals(8, em.find(Indoor.class, id).getCapacidad());
+	}
+
+	// Editar un indoor que no existe falla con RecursoNoEncontradoException
+	@Test
+	public void editarUnIndoorInexistenteFalla() {
+		assertThrows(RecursoNoEncontradoException.class, () -> service.editarIndoor(999999, "Carpa", 5));
+	}
+
 	private Planta nuevaPlanta(String genetica) {
 		return new Planta(genetica, LocalDate.now().minusDays(10), LocalDate.now().minusDays(20), 60, 120, 30);
 	}

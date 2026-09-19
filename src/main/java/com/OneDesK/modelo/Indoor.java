@@ -41,18 +41,30 @@ public class Indoor extends Persistible{
 
     public Indoor(String nombre, int capacidad) {
         this();
+        editar(nombre, capacidad);
+    }
+
+    public String getNombre() { return nombre; }
+    public int getCapacidad() { return capacidad; }
+
+    /**
+     * Cambia el nombre y la capacidad. Se validan los dos antes de cambiar nada: si alguno es invalido,
+     * el indoor queda como estaba. La capacidad no puede quedar por debajo de las plantas en cultivo.
+     */
+    public void editar(String nombre, int capacidad) {
         if (nombre == null || nombre.isBlank()) {
             throw new IllegalArgumentException("El nombre del indoor no puede estar vacío");
         }
         if (capacidad <= 0) {
             throw new IllegalArgumentException("La capacidad del indoor tiene que ser de al menos una planta");
         }
+        if (capacidad < plantasEnCultivo()) {
+            throw new OperacionInvalidaException("El indoor tiene " + plantasEnCultivo()
+                    + " plantas en cultivo: la capacidad no puede ser menor");
+        }
         this.nombre = nombre.trim();
         this.capacidad = capacidad;
     }
-
-    public String getNombre() { return nombre; }
-    public int getCapacidad() { return capacidad; }
 
     /** Las plantas que todavia no se cosecharon: son las que ocupan lugar. */
     public int plantasEnCultivo() {

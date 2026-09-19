@@ -109,7 +109,8 @@
                                         <th scope="col" class="ps-4">Indoor</th>
                                         <th scope="col">Plantas</th>
                                         <th scope="col">Empleados</th>
-                                        <th scope="col" class="pe-4">Pendientes</th>
+                                        <th scope="col">Pendientes</th>
+                                        <th scope="col" class="pe-4"><span class="visually-hidden">Editar</span></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -123,9 +124,15 @@
                                             <span th:if="${i.empleadosAsignados.isEmpty()}">Sin empleados</span>
                                             <span th:each="e, it : ${i.empleadosAsignados}" th:text="${e.nombre} + ' ' + ${e.apellido} + (${it.last} ? '' : ', ')">Andrés Negro</span>
                                         </td>
-                                        <td class="pe-4">
+                                        <td>
                                             <span class="punto-vivo punto-vivo--violeta me-2" th:if="${!i.eventosPendientes.isEmpty()}"></span>
                                             <span th:text="${i.eventosPendientes.size()}">2</span>
+                                        </td>
+                                        <td class="pe-4 text-end">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                                    th:data-bs-target="'#modal-editar-' + ${i.id}" th:aria-label="'Editar ' + ${i.nombre}">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -659,6 +666,42 @@
 
     </div>
 </main>
+
+<!-- una ventana de edicion por indoor, ya cargada con sus datos -->
+<div class="modal fade" th:each="i : ${indoors}" th:id="'modal-editar-' + ${i.id}" tabindex="-1"
+     th:aria-labelledby="'modal-editar-titulo-' + ${i.id}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content ventana" th:action="@{/admin/indoors/editar}" method="post">
+            <input type="hidden" name="indoorId" th:value="${i.id}">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <p class="etiqueta mb-2">Editar indoor</p>
+                    <h2 class="modal-title titulo-bloque mb-0" th:id="'modal-editar-titulo-' + ${i.id}" th:text="${i.nombre}">Carpa grande</h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4">
+                    <label th:for="'editar-nombre-' + ${i.id}" class="form-label">Nombre</label>
+                    <input type="text" class="form-control" th:id="'editar-nombre-' + ${i.id}" name="nombre" th:value="${i.nombre}" required>
+                </div>
+                <div>
+                    <label th:for="'editar-capacidad-' + ${i.id}" class="form-label">Capacidad</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" th:id="'editar-capacidad-' + ${i.id}" name="capacidad"
+                               th:value="${i.capacidad}" th:min="${i.plantasEnCultivo() > 0 ? i.plantasEnCultivo() : 1}" required>
+                        <span class="input-group-text">plantas</span>
+                    </div>
+                    <div class="form-text" th:text="'Tiene ' + ${i.plantasEnCultivo()} + ' en cultivo: la capacidad no puede ser menor.'">Tiene 3 en cultivo.</div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <!-- ventana para crear un indoor -->
 <div class="modal fade" id="modal-indoor" tabindex="-1" aria-labelledby="modal-indoor-titulo" aria-hidden="true">

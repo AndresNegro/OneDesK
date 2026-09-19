@@ -705,6 +705,31 @@ public class CircuitosWebTest {
 		assertEquals(1, contar("SELECT COUNT(*) FROM Planta WHERE ID_INDOOR = " + indoor));
 	}
 
+	// El admin edita un indoor desde su ventana: el nombre y la capacidad nuevos se ven en el panel
+	@Test
+	public void elAdminEditaUnIndoor() {
+		int indoor = crearIndoor("WEB Carpa vieja", 5);
+
+		admin.enviar("/admin/indoors/editar", "indoorId", "" + indoor, "nombre", "WEB Carpa nueva", "capacidad", "9");
+
+		assertTrue(admin.html().contains("Guardaste los cambios de WEB Carpa nueva"));
+		assertEquals(1, contar("SELECT COUNT(*) FROM Indoor WHERE ID = " + indoor
+				+ " AND nombre = 'WEB Carpa nueva' AND capacidad = 9"));
+		assertTrue(admin.html().contains("0 de 9"));
+	}
+
+	// Editar con el nombre de otro indoor muestra el error y no cambia nada
+	@Test
+	public void editarConElNombreDeOtroIndoorMuestraElError() {
+		crearIndoor("WEB Carpa uno", 5);
+		int segundo = crearIndoor("WEB Carpa dos", 5);
+
+		admin.enviar("/admin/indoors/editar", "indoorId", "" + segundo, "nombre", "WEB Carpa uno", "capacidad", "5");
+
+		assertTrue(admin.html().contains("Ya existe un indoor llamado WEB Carpa uno"));
+		assertEquals(1, contar("SELECT COUNT(*) FROM Indoor WHERE ID = " + segundo + " AND nombre = 'WEB Carpa dos'"));
+	}
+
 	// --- helpers ---
 
 	private Navegador ingresar(String email) {

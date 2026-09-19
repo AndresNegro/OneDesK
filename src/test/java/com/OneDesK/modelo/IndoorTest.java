@@ -158,6 +158,57 @@ public class IndoorTest {
 		assertEquals(1, chico.plantasEnCultivo());
 	}
 
+	// --- editar ---
+
+	// Editar cambia el nombre, sin espacios de mas, y la capacidad
+	@Test
+	public void editarCambiaNombreYCapacidad() {
+		Indoor indoor = new Indoor("Carpa", 10);
+
+		indoor.editar("  Carpa grande ", 25);
+
+		assertEquals("Carpa grande", indoor.getNombre());
+		assertEquals(25, indoor.getCapacidad());
+	}
+
+	// Con un dato invalido no cambia nada: ni el nombre ni la capacidad
+	@Test
+	public void editarConDatosInvalidosNoCambiaNada() {
+		Indoor indoor = new Indoor("Carpa", 10);
+
+		assertThrows(IllegalArgumentException.class, () -> indoor.editar("Nuevo nombre", 0));
+		assertThrows(IllegalArgumentException.class, () -> indoor.editar(" ", 20));
+
+		assertEquals("Carpa", indoor.getNombre());
+		assertEquals(10, indoor.getCapacidad());
+	}
+
+	// La capacidad no puede quedar por debajo de las plantas en cultivo; justo igual si se puede
+	@Test
+	public void laCapacidadNoBajaDeLoPlantado() {
+		Indoor indoor = new Indoor("Carpa", 10);
+		indoor.addPlanta(nuevaPlanta("OG Kush"));
+		indoor.addPlanta(nuevaPlanta("Amnesia"));
+
+		assertThrows(OperacionInvalidaException.class, () -> indoor.editar("Carpa", 1));
+		indoor.editar("Carpa", 2);
+
+		assertEquals(2, indoor.getCapacidad());
+		assertTrue(indoor.isLleno());
+	}
+
+	// Las plantas cosechadas no cuentan: se puede bajar la capacidad por debajo del total historico
+	@Test
+	public void lasCosechadasNoFrenanBajarLaCapacidad() {
+		Indoor indoor = new Indoor("Carpa", 10);
+		indoor.addPlanta(nuevaPlanta("OG Kush")).cosechar();
+		indoor.addPlanta(nuevaPlanta("Amnesia")).cosechar();
+
+		indoor.editar("Carpa", 1);
+
+		assertEquals(1, indoor.getCapacidad());
+	}
+
 	private Planta nuevaPlanta(String genetica) {
 		return new Planta(genetica, LocalDate.now().minusDays(10), LocalDate.now().minusDays(20), 60, 120, 30);
 	}
