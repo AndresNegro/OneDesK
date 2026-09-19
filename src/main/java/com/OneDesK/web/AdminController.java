@@ -89,10 +89,10 @@ public class AdminController {
 	}
 
 	@PostMapping("/admin/plantar")
-	public String plantar(@RequestParam int indoorId, @RequestParam String genetica,
-			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaGerminado,
-			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaPlantado,
-			@RequestParam int tiempoRegado, @RequestParam int tiempoLuz, @RequestParam int tiempoVentilacion,
+	public String plantar(@RequestParam("indoorId") int indoorId, @RequestParam("genetica") String genetica,
+			@RequestParam("fechaGerminado") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaGerminado,
+			@RequestParam("fechaPlantado") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaPlantado,
+			@RequestParam("tiempoRegado") int tiempoRegado, @RequestParam("tiempoLuz") int tiempoLuz, @RequestParam("tiempoVentilacion") int tiempoVentilacion,
 			HttpSession sesion, RedirectAttributes flash) {
 		Planta planta = new Planta(genetica, fechaPlantado, fechaGerminado, tiempoRegado, tiempoLuz,
 				tiempoVentilacion);
@@ -102,8 +102,8 @@ public class AdminController {
 	}
 
 	@PostMapping("/admin/empleados")
-	public String registrarEmpleado(@RequestParam String nombre, @RequestParam String apellido,
-			@RequestParam String email, @RequestParam String contrasenia, @RequestParam int salario,
+	public String registrarEmpleado(@RequestParam("nombre") String nombre, @RequestParam("apellido") String apellido,
+			@RequestParam("email") String email, @RequestParam("contrasenia") String contrasenia, @RequestParam("salario") int salario,
 			HttpSession sesion, RedirectAttributes flash) {
 		admin.registrarEmpleado(Sesion.personaId(sesion), nombre, apellido, email, contrasenia, salario);
 		flash.addFlashAttribute("exito", "Diste de alta a " + nombre.trim() + " " + apellido.trim());
@@ -111,7 +111,7 @@ public class AdminController {
 	}
 
 	@PostMapping("/admin/empleados/asignar")
-	public String asignar(@RequestParam int empleadoId, @RequestParam int indoorId, HttpSession sesion,
+	public String asignar(@RequestParam("empleadoId") int empleadoId, @RequestParam("indoorId") int indoorId, HttpSession sesion,
 			RedirectAttributes flash) {
 		admin.asignarEmpleado(Sesion.personaId(sesion), empleadoId, indoorId);
 		flash.addFlashAttribute("exito", "Asignación guardada");
@@ -119,7 +119,7 @@ public class AdminController {
 	}
 
 	@PostMapping("/admin/empleados/desasignar")
-	public String desasignar(@RequestParam int empleadoId, @RequestParam int indoorId, HttpSession sesion,
+	public String desasignar(@RequestParam("empleadoId") int empleadoId, @RequestParam("indoorId") int indoorId, HttpSession sesion,
 			RedirectAttributes flash) {
 		admin.desasignarEmpleado(Sesion.personaId(sesion), empleadoId, indoorId);
 		flash.addFlashAttribute("exito", "Desasignaste el Indoor " + indoorId);
@@ -127,7 +127,7 @@ public class AdminController {
 	}
 
 	@PostMapping("/admin/empleados/salario")
-	public String salario(@RequestParam int empleadoId, @RequestParam int salario, HttpSession sesion,
+	public String salario(@RequestParam("empleadoId") int empleadoId, @RequestParam("salario") int salario, HttpSession sesion,
 			RedirectAttributes flash) {
 		admin.cambiarSalario(Sesion.personaId(sesion), empleadoId, salario);
 		flash.addFlashAttribute("exito", "Salario actualizado");
@@ -137,7 +137,7 @@ public class AdminController {
 	// --- productos ---
 
 	@PostMapping("/admin/productos")
-	public String crearProducto(@RequestParam String genetica, @RequestParam int precio, HttpSession sesion,
+	public String crearProducto(@RequestParam("genetica") String genetica, @RequestParam("precio") int precio, HttpSession sesion,
 			RedirectAttributes flash) {
 		admin.crearProducto(Sesion.personaId(sesion), genetica, precio);
 		flash.addFlashAttribute("exito", "Diste de alta " + genetica.trim());
@@ -145,7 +145,7 @@ public class AdminController {
 	}
 
 	@PostMapping("/admin/productos/precio")
-	public String precio(@RequestParam int productoId, @RequestParam int precio, HttpSession sesion,
+	public String precio(@RequestParam("productoId") int productoId, @RequestParam("precio") int precio, HttpSession sesion,
 			RedirectAttributes flash) {
 		admin.cambiarPrecio(Sesion.personaId(sesion), productoId, precio);
 		flash.addFlashAttribute("exito", "Precio actualizado");
@@ -153,7 +153,7 @@ public class AdminController {
 	}
 
 	@PostMapping("/admin/productos/fijar")
-	public String fijarStock(@RequestParam int productoId, @RequestParam int stock, HttpSession sesion,
+	public String fijarStock(@RequestParam("productoId") int productoId, @RequestParam("stock") int stock, HttpSession sesion,
 			RedirectAttributes flash) {
 		admin.fijarStock(Sesion.personaId(sesion), productoId, stock);
 		flash.addFlashAttribute("exito", "Stock fijado en " + stock);
@@ -161,7 +161,7 @@ public class AdminController {
 	}
 
 	@PostMapping("/admin/productos/ajustar")
-	public String ajustarStock(@RequestParam int productoId, @RequestParam int cantidad, HttpSession sesion,
+	public String ajustarStock(@RequestParam("productoId") int productoId, @RequestParam("cantidad") int cantidad, HttpSession sesion,
 			RedirectAttributes flash) {
 		admin.ajustarStock(Sesion.personaId(sesion), productoId, cantidad);
 		flash.addFlashAttribute("exito", "Stock ajustado");
@@ -171,7 +171,7 @@ public class AdminController {
 	// --- usuarios y compras ---
 
 	@PostMapping("/admin/solicitudes/aprobar")
-	public String aprobar(@RequestParam int usuarioId, @RequestParam int tope, HttpSession sesion,
+	public String aprobar(@RequestParam("usuarioId") int usuarioId, @RequestParam("tope") int tope, HttpSession sesion,
 			RedirectAttributes flash) {
 		Usuario usuario = admin.aprobarUsuario(Sesion.personaId(sesion), usuarioId, tope);
 		flash.addFlashAttribute("exito", "Aprobaste a " + usuario.getNombre() + " " + usuario.getApellido());
@@ -179,14 +179,14 @@ public class AdminController {
 	}
 
 	@PostMapping("/admin/solicitudes/rechazar")
-	public String rechazar(@RequestParam int usuarioId, HttpSession sesion, RedirectAttributes flash) {
+	public String rechazar(@RequestParam("usuarioId") int usuarioId, HttpSession sesion, RedirectAttributes flash) {
 		admin.rechazarUsuario(Sesion.personaId(sesion), usuarioId);
 		flash.addFlashAttribute("exito", "Rechazaste la solicitud");
 		return "redirect:/admin#usuarios";
 	}
 
 	@PostMapping("/admin/usuarios/tope")
-	public String tope(@RequestParam int usuarioId, @RequestParam int tope, HttpSession sesion,
+	public String tope(@RequestParam("usuarioId") int usuarioId, @RequestParam("tope") int tope, HttpSession sesion,
 			RedirectAttributes flash) {
 		admin.asignarTope(Sesion.personaId(sesion), usuarioId, tope);
 		flash.addFlashAttribute("exito", "Tope actualizado");
@@ -194,28 +194,28 @@ public class AdminController {
 	}
 
 	@PostMapping("/admin/compras/anular")
-	public String anular(@RequestParam int compraId, HttpSession sesion, RedirectAttributes flash) {
+	public String anular(@RequestParam("compraId") int compraId, HttpSession sesion, RedirectAttributes flash) {
 		admin.anularCompra(Sesion.personaId(sesion), compraId);
 		flash.addFlashAttribute("exito", "Anulaste la compra #" + compraId);
 		return "redirect:/admin#compras";
 	}
 
 	@PostMapping("/admin/compras/aprobar")
-	public String aprobarCompra(@RequestParam int compraId, HttpSession sesion, RedirectAttributes flash) {
+	public String aprobarCompra(@RequestParam("compraId") int compraId, HttpSession sesion, RedirectAttributes flash) {
 		admin.aprobarCompra(Sesion.personaId(sesion), compraId);
 		flash.addFlashAttribute("exito", "Aprobaste la compra #" + compraId);
 		return "redirect:/admin#compras";
 	}
 
 	@PostMapping("/admin/compras/rechazar")
-	public String rechazarCompra(@RequestParam int compraId, HttpSession sesion, RedirectAttributes flash) {
+	public String rechazarCompra(@RequestParam("compraId") int compraId, HttpSession sesion, RedirectAttributes flash) {
 		admin.rechazarCompra(Sesion.personaId(sesion), compraId);
 		flash.addFlashAttribute("exito", "Rechazaste la compra #" + compraId + " y el stock volvió al catálogo");
 		return "redirect:/admin#compras";
 	}
 
 	@PostMapping("/admin/limites")
-	public String limites(@RequestParam int minimo, @RequestParam int maximo, HttpSession sesion,
+	public String limites(@RequestParam("minimo") int minimo, @RequestParam("maximo") int maximo, HttpSession sesion,
 			RedirectAttributes flash) {
 		admin.cambiarLimites(Sesion.personaId(sesion), minimo, maximo);
 		flash.addFlashAttribute("exito", "Ahora cada compra va de " + minimo + " g a " + maximo + " g");

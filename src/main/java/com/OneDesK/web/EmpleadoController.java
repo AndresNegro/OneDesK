@@ -54,7 +54,7 @@ public class EmpleadoController {
 	}
 
 	@PostMapping("/empleado/atender")
-	public String atender(@RequestParam int indoorId, @RequestParam int eventoId, HttpSession sesion,
+	public String atender(@RequestParam("indoorId") int indoorId, @RequestParam("eventoId") int eventoId, HttpSession sesion,
 			RedirectAttributes flash) {
 		empleadoService.atenderEvento(Sesion.personaId(sesion), indoorId, eventoId);
 		flash.addFlashAttribute("exito", "Evento atendido");
@@ -62,10 +62,10 @@ public class EmpleadoController {
 	}
 
 	@PostMapping("/empleado/plantar")
-	public String plantar(@RequestParam int indoorId, @RequestParam String genetica,
-			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaGerminado,
-			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaPlantado,
-			@RequestParam int tiempoRegado, @RequestParam int tiempoLuz, @RequestParam int tiempoVentilacion,
+	public String plantar(@RequestParam("indoorId") int indoorId, @RequestParam("genetica") String genetica,
+			@RequestParam("fechaGerminado") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaGerminado,
+			@RequestParam("fechaPlantado") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaPlantado,
+			@RequestParam("tiempoRegado") int tiempoRegado, @RequestParam("tiempoLuz") int tiempoLuz, @RequestParam("tiempoVentilacion") int tiempoVentilacion,
 			HttpSession sesion, RedirectAttributes flash) {
 		Planta planta = new Planta(genetica, fechaPlantado, fechaGerminado, tiempoRegado, tiempoLuz,
 				tiempoVentilacion);
@@ -76,17 +76,17 @@ public class EmpleadoController {
 
 	// el formulario manda solo la planta: el indoor se busca entre los que el empleado tiene a cargo
 	@PostMapping("/empleado/cosechar")
-	public String cosechar(@RequestParam int plantaId, @RequestParam int cantidad, HttpSession sesion,
+	public String cosechar(@RequestParam("plantaId") int plantaId, @RequestParam("cantidad") int cantidad, HttpSession sesion,
 			RedirectAttributes flash) {
 		int empleadoId = Sesion.personaId(sesion);
 		Indoor indoor = indoorDeLaPlanta(empleadoService.buscar(empleadoId), plantaId);
 		registroProduccionService.registrarCosecha(empleadoId, indoor.getId(), plantaId, cantidad);
-		flash.addFlashAttribute("exito", "Cosecha registrada: " + cantidad + " unidades al stock");
+		flash.addFlashAttribute("exito", "Cosecha registrada: " + cantidad + " g al stock");
 		return "redirect:/empleado";
 	}
 
 	@PostMapping("/empleado/productos")
-	public String altaProducto(@RequestParam String genetica, @RequestParam int precio, RedirectAttributes flash) {
+	public String altaProducto(@RequestParam("genetica") String genetica, @RequestParam("precio") int precio, RedirectAttributes flash) {
 		productoService.crearProducto(genetica, precio);
 		flash.addFlashAttribute("exito", "Diste de alta " + genetica.trim());
 		return "redirect:/empleado";

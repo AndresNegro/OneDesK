@@ -33,14 +33,14 @@ public class MisComprasController {
 
 	// el id de la compra viene de la pagina: el service verifica que sea del usuario de la sesion
 	@PostMapping("/mis-compras/{compraId}/pagar")
-	public String pagar(@PathVariable int compraId, HttpSession sesion, RedirectAttributes flash) {
+	public String pagar(@PathVariable("compraId") int compraId, HttpSession sesion, RedirectAttributes flash) {
 		compraService.registrarPagoDe(Sesion.personaId(sesion), compraId);
 		flash.addFlashAttribute("exito", "Pagaste la compra #" + compraId);
 		return "redirect:/mis-compras";
 	}
 
 	@PostMapping("/mis-compras/{compraId}/anular")
-	public String anular(@PathVariable int compraId, HttpSession sesion, RedirectAttributes flash) {
+	public String anular(@PathVariable("compraId") int compraId, HttpSession sesion, RedirectAttributes flash) {
 		compraService.anularCompraDe(Sesion.personaId(sesion), compraId);
 		flash.addFlashAttribute("exito", "Anulaste la compra #" + compraId + " y el stock volvió al catálogo");
 		return "redirect:/mis-compras";

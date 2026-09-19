@@ -32,7 +32,7 @@ public class AccesoController {
 	}
 
 	@PostMapping("/ingresar")
-	public String ingresar(@RequestParam String email, @RequestParam String contrasenia, HttpSession sesion) {
+	public String ingresar(@RequestParam("email") String email, @RequestParam("contrasenia") String contrasenia, HttpSession sesion) {
 		Persona persona = accesoService.ingresar(email, contrasenia);
 		Sesion.iniciar(sesion, persona);
 		return "redirect:" + Sesion.rol(sesion).getInicio();
@@ -45,8 +45,8 @@ public class AccesoController {
 
 	// registrarse es pedir una cuenta: queda pendiente hasta que la administracion la apruebe
 	@PostMapping("/registro")
-	public String registrarse(@RequestParam String nombre, @RequestParam String apellido,
-			@RequestParam String email, @RequestParam String contrasenia, @RequestParam String repetir,
+	public String registrarse(@RequestParam("nombre") String nombre, @RequestParam("apellido") String apellido,
+			@RequestParam("email") String email, @RequestParam("contrasenia") String contrasenia, @RequestParam("repetir") String repetir,
 			RedirectAttributes flash) {
 		if (!contrasenia.equals(repetir)) {
 			throw new IllegalArgumentException("Las contraseñas no coinciden");

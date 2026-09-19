@@ -35,8 +35,8 @@ public class CatalogoController {
 	private LimitesDeCompraService limitesDeCompra;
 
 	@GetMapping("/catalogo")
-	public String catalogo(@RequestParam(required = false) String busqueda,
-			@RequestParam(required = false) String orden, HttpSession sesion, Model modelo) {
+	public String catalogo(@RequestParam(name = "busqueda", required = false) String busqueda,
+			@RequestParam(name = "orden", required = false) String orden, HttpSession sesion, Model modelo) {
 		List<Producto> productos;
 		if (busqueda != null && !busqueda.isBlank()) {
 			productos = productoService.buscarPorGenetica(busqueda);
@@ -60,7 +60,7 @@ public class CatalogoController {
 	}
 
 	@PostMapping("/carrito/agregar")
-	public String agregar(@RequestParam int productoId, @RequestParam int cantidad, HttpSession sesion,
+	public String agregar(@RequestParam("productoId") int productoId, @RequestParam("cantidad") int cantidad, HttpSession sesion,
 			RedirectAttributes flash) {
 		Producto producto = productoService.buscar(productoId);
 		Sesion.carrito(sesion).agregar(productoId, cantidad);
@@ -89,13 +89,13 @@ public class CatalogoController {
 	}
 
 	@PostMapping("/carrito/cantidad")
-	public String cambiarCantidad(@RequestParam int productoId, @RequestParam int cantidad, HttpSession sesion) {
+	public String cambiarCantidad(@RequestParam("productoId") int productoId, @RequestParam("cantidad") int cantidad, HttpSession sesion) {
 		Sesion.carrito(sesion).cambiarCantidad(productoId, cantidad);
 		return "redirect:/carrito";
 	}
 
 	@PostMapping("/carrito/quitar")
-	public String quitar(@RequestParam int productoId, HttpSession sesion) {
+	public String quitar(@RequestParam("productoId") int productoId, HttpSession sesion) {
 		Sesion.carrito(sesion).quitar(productoId);
 		return "redirect:/carrito";
 	}
@@ -103,7 +103,7 @@ public class CatalogoController {
 	// confirmar manda el pedido a la administracion. El carrito se vacia solo si el pedido salio bien:
 	// si una regla lo rechaza (stock, tope, gramos), sigue ahi para corregirlo
 	@PostMapping("/carrito/confirmar")
-	public String confirmar(@RequestParam String pago, HttpSession sesion, RedirectAttributes flash) {
+	public String confirmar(@RequestParam("pago") String pago, HttpSession sesion, RedirectAttributes flash) {
 		Carrito carrito = Sesion.carrito(sesion);
 		Compra compra = compraService.realizarCompra(Sesion.personaId(sesion), carrito.comoLineasDeCompra(),
 				"ahora".equals(pago));
