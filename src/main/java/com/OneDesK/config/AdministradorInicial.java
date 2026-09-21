@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import com.OneDesK.repositories.AdministradorRepository;
@@ -17,6 +18,7 @@ import com.OneDesK.services.AdministradorService;
  * db-local.properties, que no se sube a GitHub. Si faltan, no se crea nada y se avisa en el log.
  */
 @Component
+@Order(1)
 public class AdministradorInicial implements ApplicationRunner {
 
 	private static final Logger log = LoggerFactory.getLogger(AdministradorInicial.class);

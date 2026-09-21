@@ -32,7 +32,8 @@ public class BaseDeTest implements ContextCustomizerFactory {
 
 		@Override
 		public void customizeContext(ConfigurableApplicationContext contexto, MergedContextConfiguration configuracion) {
-			TestPropertyValues.of("spring.datasource.url=" + URL).applyTo(contexto);
+			// los datos de ejemplo tambien se apagan: cada test arma los suyos
+			TestPropertyValues.of("spring.datasource.url=" + URL, "onedesk.demo.activo=false").applyTo(contexto);
 		}
 
 		// todos los tests piden lo mismo: asi Spring reutiliza el contexto entre clases de test
