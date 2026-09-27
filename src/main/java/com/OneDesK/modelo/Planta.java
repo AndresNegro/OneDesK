@@ -113,7 +113,7 @@ public class Planta extends Persistible{
      * Un tipo de evento no se repite mientras haya uno sin atender: su tiempo recien vuelve
      * a correr cuando el empleado lo atiende.
      */
-    public int generarEventosVencidos(LocalDateTime ahora) {
+    int generarEventosVencidos(LocalDateTime ahora) {
         if (indoor == null || isCosechada()) {
             return 0;
         }

@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.OneDesK.modelo.Indoor;
-import com.OneDesK.modelo.Planta;
 import com.OneDesK.repositories.IndoorRepository;
 
 @Service
@@ -23,10 +22,9 @@ public class GeneradorDeEventosServiceImpl implements GeneradorDeEventosService 
 	public int generarEventos() {
 		LocalDateTime ahora = LocalDateTime.now();
 		int creados = 0;
+		// cada indoor revisa sus propias plantas: el service solo recorre los indoors y suma
 		for (Indoor indoor : repositorio.findAll()) {
-			for (Planta planta : indoor.getPlantas()) {
-				creados += planta.generarEventosVencidos(ahora);
-			}
+			creados += indoor.generarEventosVencidos(ahora);
 		}
 		return creados;
 	}

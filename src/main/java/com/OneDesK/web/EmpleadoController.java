@@ -40,11 +40,7 @@ public class EmpleadoController {
 		EmpleadoIndoor empleado = empleadoService.buscar(empleadoId);
 		List<Planta> enCultivo = new ArrayList<>();
 		for (Indoor indoor : empleado.getSectoresACargo()) {
-			for (Planta planta : indoor.getPlantas()) {
-				if (!planta.isCosechada()) {
-					enCultivo.add(planta);
-				}
-			}
+			enCultivo.addAll(indoor.getPlantasEnCultivo());
 		}
 		modelo.addAttribute("empleado", empleado);
 		modelo.addAttribute("pendientes", empleadoService.eventosPendientes(empleadoId));

@@ -115,6 +115,29 @@ public class Indoor extends Persistible{
 
     public List<Planta> getPlantas() { return Collections.unmodifiableList(plantas); }
 
+    /** Las plantas que todavia se estan cultivando: las que el empleado tiene que atender. */
+    public List<Planta> getPlantasEnCultivo() {
+        List<Planta> enCultivo = new ArrayList<>();
+        for (Planta planta : plantas) {
+            if (!planta.isCosechada()) {
+                enCultivo.add(planta);
+            }
+        }
+        return enCultivo;
+    }
+
+    /**
+     * Revisa sus plantas y crea los eventos cuyo tiempo ya se cumplio: devuelve cuantos creo.
+     * La revision periodica le pide esto al indoor y no recorre sus plantas por su cuenta.
+     */
+    public int generarEventosVencidos(LocalDateTime ahora) {
+        int creados = 0;
+        for (Planta planta : plantas) {
+            creados += planta.generarEventosVencidos(ahora);
+        }
+        return creados;
+    }
+
     // solo lectura: las asignaciones se cambian desde EmpleadoIndoor
     public List<EmpleadoIndoor> getEmpleadosAsignados() { return Collections.unmodifiableList(empleadosAsignados); }
 

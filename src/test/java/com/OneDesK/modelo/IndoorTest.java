@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -207,6 +208,30 @@ public class IndoorTest {
 		indoor.editar("Carpa", 1);
 
 		assertEquals(1, indoor.getCapacidad());
+	}
+
+	// --- revisar sus propias plantas ---
+
+	// Las plantas en cultivo son las que no se cosecharon: las cosechadas no las tiene que atender nadie
+	@Test
+	public void lasPlantasEnCultivoDejanAfueraLasCosechadas() {
+		kush.cosechar();
+
+		assertEquals(1, indoor.getPlantasEnCultivo().size());
+		assertSame(amnesia, indoor.getPlantasEnCultivo().get(0));
+	}
+
+	// El indoor revisa sus plantas y crea los eventos vencidos de cada una, sin contar las cosechadas
+	@Test
+	public void elIndoorGeneraLosEventosVencidosDeSusPlantas() {
+		kush.cosechar();
+
+		// a los 61 minutos vencieron el regado (60) y la ventilacion (30), pero no la luz (120)
+		int creados = indoor.generarEventosVencidos(LocalDateTime.now().plusMinutes(61));
+
+		assertEquals(2, creados);
+		assertEquals(2, indoor.getEventosPendientes().size());
+		assertSame(amnesia, indoor.getEventosPendientes().get(0).getPlanta());
 	}
 
 	private Planta nuevaPlanta(String genetica) {

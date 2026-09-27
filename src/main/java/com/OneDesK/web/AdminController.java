@@ -57,11 +57,7 @@ public class AdminController {
 		// numeros del resumen de arriba
 		int plantasEnCultivo = 0;
 		for (Indoor indoor : indoors) {
-			for (Planta planta : indoor.getPlantas()) {
-				if (!planta.isCosechada()) {
-					plantasEnCultivo++;
-				}
-			}
+			plantasEnCultivo += indoor.plantasEnCultivo();
 		}
 		int sinIndoor = 0;
 		for (EmpleadoIndoor empleado : empleados) {
