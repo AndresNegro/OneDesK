@@ -1,8 +1,6 @@
 package com.OneDesK.web;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -38,13 +36,9 @@ public class EmpleadoController {
 	public String panel(HttpSession sesion, Model modelo) {
 		int empleadoId = Sesion.personaId(sesion);
 		EmpleadoIndoor empleado = empleadoService.buscar(empleadoId);
-		List<Planta> enCultivo = new ArrayList<>();
-		for (Indoor indoor : empleado.getSectoresACargo()) {
-			enCultivo.addAll(indoor.getPlantasEnCultivo());
-		}
 		modelo.addAttribute("empleado", empleado);
 		modelo.addAttribute("pendientes", empleadoService.eventosPendientes(empleadoId));
-		modelo.addAttribute("enCultivo", enCultivo);
+		modelo.addAttribute("enCultivo", empleado.plantasEnCultivo());
 		modelo.addAttribute("hoy", LocalDate.now());
 		return "empleado";
 	}
@@ -89,11 +83,10 @@ public class EmpleadoController {
 	}
 
 	private Indoor indoorDeLaPlanta(EmpleadoIndoor empleado, int plantaId) {
-		for (Indoor indoor : empleado.getSectoresACargo()) {
-			if (indoor.buscarPlanta(plantaId) != null) {
-				return indoor;
-			}
+		Indoor indoor = empleado.indoorDeLaPlanta(plantaId);
+		if (indoor == null) {
+			throw new RecursoNoEncontradoException("La planta " + plantaId + " no está en tus indoors");
 		}
-		throw new RecursoNoEncontradoException("La planta " + plantaId + " no está en tus indoors");
+		return indoor;
 	}
 }

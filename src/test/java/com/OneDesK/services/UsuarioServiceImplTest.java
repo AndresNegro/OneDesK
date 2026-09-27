@@ -39,7 +39,7 @@ public class UsuarioServiceImplTest {
 		assertEquals("andres@test.com", recargado.getEmail());
 		assertEquals(0, recargado.getTopeCredito());
 		assertFalse(recargado.isAprobado());
-		assertEquals(0, recargado.getDeuda().getMonto());
+		assertEquals(0, recargado.montoDeDeuda());
 	}
 
 	// Si el email ya esta registrado se rechaza y en la base sigue habiendo una sola persona con ese email

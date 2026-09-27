@@ -4,6 +4,7 @@ import com.OneDesK.DatosDePrueba;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -155,6 +156,38 @@ public class EmpleadoIndoorTest {
 
 		assertEquals(1, empleado.eventosPendientes().size());
 		assertSame(luz, empleado.eventosPendientes().get(0));
+	}
+
+	// --- lo que el empleado sabe de sus indoors ---
+
+	// Un empleado recien dado de alta no tiene indoors: el panel del admin lo muestra para asignarle uno
+	@Test
+	public void unEmpleadoNuevoEstaSinIndoor() {
+		assertFalse(empleado.estaSinIndoor());
+		assertTrue(new EmpleadoIndoor("Sofia", "Paz", "sofia@test.com", "12345", 400000).estaSinIndoor());
+	}
+
+	// Las plantas en cultivo son las de todos sus indoors, sin las cosechadas ni las de indoors ajenos
+	@Test
+	public void lasPlantasEnCultivoSonLasDeTodosSusIndoors() {
+		Indoor otroPropio = DatosDePrueba.indoor();
+		Planta amnesia = otroPropio.addPlanta(nuevaPlanta("Amnesia"));
+		otroPropio.addPlanta(nuevaPlanta("Gelato")).cosechar();
+		empleado.addIndoor(otroPropio);
+
+		Indoor ajeno = DatosDePrueba.indoor();
+		ajeno.addPlanta(nuevaPlanta("White Widow"));
+
+		assertEquals(2, empleado.plantasEnCultivo().size());
+		assertTrue(empleado.plantasEnCultivo().contains(planta));
+		assertTrue(empleado.plantasEnCultivo().contains(amnesia));
+	}
+
+	// El empleado dice en cual de sus indoors esta una planta, y null si no es de ninguno
+	@Test
+	public void elEmpleadoEncuentraElIndoorDeSuPlanta() {
+		assertSame(indoor, empleado.indoorDeLaPlanta(planta.getId()));
+		assertNull(empleado.indoorDeLaPlanta(9999));
 	}
 
 	private Planta nuevaPlanta(String genetica) {

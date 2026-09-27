@@ -58,7 +58,7 @@ public class CompraServiceImpl implements CompraService {
 		// el stock se reserva ahora: si el administrador la rechaza, vuelve
 		Compra compra = Compra.pedida(LocalDate.now(), usuario, pagado);
 		for (ItemPedido item : pedido) {
-			item.getProducto().descontarStock(item.getCantidad());
+			item.reservarStock();
 			compra.addItem(new ItemCompra(item.getProducto(), item.getCantidad()));
 		}
 		usuario.agregarCompra(compra);
@@ -133,7 +133,7 @@ public class CompraServiceImpl implements CompraService {
 		// el tope se vuelve a mirar: entre el pedido y la aprobacion pudo haber cambiado
 		if (compra.isPendiente() && !compra.isPagaAlAprobar()) {
 			usuario.recalcularDeuda();
-			verificarTope(usuario, usuario.getDeuda().getMonto() + compra.getPrecio());
+			verificarTope(usuario, usuario.montoDeDeuda() + compra.getPrecio());
 		}
 		compra.aprobar();
 		usuario.recalcularDeuda();
@@ -145,9 +145,7 @@ public class CompraServiceImpl implements CompraService {
 	public Compra rechazarCompra(int compraId) {
 		Compra compra = buscarCompra(compraId);
 		compra.rechazar();
-		for (ItemCompra item : compra.getItems()) {
-			item.getProducto().reponerStock(item.getCantidad());
-		}
+		compra.devolverStock();
 		compra.getUsuario().recalcularDeuda();
 		return compra;
 	}
@@ -182,9 +180,7 @@ public class CompraServiceImpl implements CompraService {
 		if (compra.isRechazada()) {
 			throw new OperacionInvalidaException("La compra " + compraId + " ya fue rechazada");
 		}
-		for (ItemCompra item : compra.getItems()) {
-			item.getProducto().reponerStock(item.getCantidad());
-		}
+		compra.devolverStock();
 		Usuario usuario = compra.getUsuario();
 		usuario.deleteCompra(compra);
 
@@ -216,7 +212,7 @@ public class CompraServiceImpl implements CompraService {
 
 	// un usuario no puede pagar ni anular la compra de otro cambiando el id en la pagina
 	private void verificarQueEsDelUsuario(int usuarioId, int compraId) {
-		if (buscarCompra(compraId).getUsuario().getId() != usuarioId) {
+		if (!buscarCompra(compraId).esDe(usuarioId)) {
 			throw new OperacionInvalidaException("La compra " + compraId + " no es tuya");
 		}
 	}
@@ -243,5 +239,6 @@ public class CompraServiceImpl implements CompraService {
 		Producto getProducto() { return producto; }
 		int getCantidad() { return cantidad; }
 		void sumarCantidad(int extra) { this.cantidad += extra; }
+		void reservarStock() { producto.descontarStock(cantidad); }
 	}
 }

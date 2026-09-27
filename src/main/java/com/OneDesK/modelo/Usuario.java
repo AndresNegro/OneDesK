@@ -98,6 +98,9 @@ public class Usuario extends Persona {
     // no modificable: agregar o sacar compras tiene que pasar por los metodos que recalculan la deuda
     public List<Compra> getCompras() { return Collections.unmodifiableList(compras); }
     public Deuda getDeuda() { return deuda; }
+
+    /** Cuanto debe hoy: afuera no hace falta saber que la deuda es un objeto aparte. */
+    public int montoDeDeuda() { return deuda.getMonto(); }
     public int getTopeCredito() { return topeCredito; }
     public void setTopeCredito(int topeCredito) {
         if (topeCredito < 0) {

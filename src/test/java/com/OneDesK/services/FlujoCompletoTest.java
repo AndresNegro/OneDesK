@@ -73,13 +73,13 @@ public class FlujoCompletoTest {
 
 		assertEquals(47, kush.getStock());
 		assertEquals(3000, compra.getPrecio());
-		assertEquals(3000, cliente.getDeuda().getMonto());
+		assertEquals(3000, cliente.montoDeDeuda());
 
 		em.flush();
 		em.clear();
 
 		Usuario recargado = em.find(Usuario.class, cliente.getId());
-		assertEquals(3000, recargado.getDeuda().getMonto());
+		assertEquals(3000, recargado.montoDeDeuda());
 		assertEquals(1, recargado.getCompras().size());
 		assertEquals(47, em.find(Producto.class, kush.getId()).getStock());
 	}
@@ -96,7 +96,7 @@ public class FlujoCompletoTest {
 				List.of(new LineaCompra(kush.getId(), 3)), false);
 		Compra anulada = pedirYAprobar(cliente.getId(),
 				List.of(new LineaCompra(kush.getId(), 5)), false);
-		assertEquals(8000, cliente.getDeuda().getMonto());
+		assertEquals(8000, cliente.montoDeDeuda());
 		assertEquals(42, kush.getStock());
 
 		compraService.registrarPago(pagada.getId());
@@ -105,7 +105,7 @@ public class FlujoCompletoTest {
 		em.clear();
 
 		Usuario recargado = em.find(Usuario.class, cliente.getId());
-		assertEquals(0, recargado.getDeuda().getMonto());
+		assertEquals(0, recargado.montoDeDeuda());
 		assertEquals(1, recargado.getCompras().size());
 		assertTrue(recargado.getCompras().get(0).isPagado());
 		assertEquals(47, em.find(Producto.class, kush.getId()).getStock());
@@ -148,7 +148,7 @@ public class FlujoCompletoTest {
 				List.of(new LineaCompra(kush.getId(), 3)), false));
 
 		assertEquals(2, kush.getStock());
-		assertEquals(0, cliente.getDeuda().getMonto());
+		assertEquals(0, cliente.montoDeDeuda());
 		assertTrue(cliente.getCompras().isEmpty());
 	}
 

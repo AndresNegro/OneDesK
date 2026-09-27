@@ -61,13 +61,13 @@ public class AdminController {
 		}
 		int sinIndoor = 0;
 		for (EmpleadoIndoor empleado : empleados) {
-			if (empleado.getSectoresACargo().isEmpty()) {
+			if (empleado.estaSinIndoor()) {
 				sinIndoor++;
 			}
 		}
 		int deudaTotal = 0;
 		for (Usuario deudor : deudores) {
-			deudaTotal += deudor.getDeuda().getMonto();
+			deudaTotal += deudor.montoDeDeuda();
 		}
 		modelo.addAttribute("plantasEnCultivo", plantasEnCultivo);
 		modelo.addAttribute("empleadosSinIndoor", sinIndoor);

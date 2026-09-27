@@ -60,7 +60,7 @@ public class CompraServicePersistenciaTest {
 		assertEquals(3000, compra.getPrecio());
 		assertEquals(1, compra.getItems().size());
 		assertEquals(1000, compra.getItems().get(0).getPrecioUnitario());
-		assertEquals(3000, em.find(Usuario.class, usuario.getId()).getDeuda().getMonto());
+		assertEquals(3000, em.find(Usuario.class, usuario.getId()).montoDeDeuda());
 		assertEquals(7, em.find(Producto.class, kush.getId()).getStock());
 	}
 
@@ -75,7 +75,7 @@ public class CompraServicePersistenciaTest {
 		em.clear();
 
 		assertTrue(em.find(Compra.class, idCompra).isPagado());
-		assertEquals(0, em.find(Usuario.class, usuario.getId()).getDeuda().getMonto());
+		assertEquals(0, em.find(Usuario.class, usuario.getId()).montoDeDeuda());
 	}
 
 	// Anular borra de la base la compra y sus items, devuelve el stock y deja la deuda en 0
@@ -93,7 +93,7 @@ public class CompraServicePersistenciaTest {
 				.getSingleResult();
 		assertEquals(0, items);
 		assertEquals(10, em.find(Producto.class, kush.getId()).getStock());
-		assertEquals(0, em.find(Usuario.class, usuario.getId()).getDeuda().getMonto());
+		assertEquals(0, em.find(Usuario.class, usuario.getId()).montoDeDeuda());
 	}
 
 	// Una compra de dos productos distintos: se guardan los dos items y se descuentan los dos stocks

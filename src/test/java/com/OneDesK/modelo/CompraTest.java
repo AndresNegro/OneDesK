@@ -186,4 +186,25 @@ public class CompraTest {
 
 		assertEquals(20, compra.getGramos());
 	}
+
+	// La compra le devuelve al catalogo el stock que tenia reservado cada una de sus lineas
+	@Test
+	public void devolverElStockReponeCadaProducto() {
+		kush.descontarStock(6);
+		haze.descontarStock(4);
+		compra.addItem(new ItemCompra(kush, 6));
+		compra.addItem(new ItemCompra(haze, 4));
+
+		compra.devolverStock();
+
+		assertEquals(10, kush.getStock());
+		assertEquals(10, haze.getStock());
+	}
+
+	// La compra sabe de quien es: con eso se controla que nadie pague ni anule la de otro
+	@Test
+	public void laCompraSabeDeQuienEs() {
+		assertTrue(compra.esDe(usuario.getId()));
+		assertFalse(compra.esDe(usuario.getId() + 1));
+	}
 }

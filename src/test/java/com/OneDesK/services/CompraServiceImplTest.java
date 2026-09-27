@@ -667,7 +667,7 @@ public class CompraServiceImplTest {
 	}
 
 	private int deuda() {
-		return em.find(Usuario.class, idUsuario).getDeuda().getMonto();
+		return em.find(Usuario.class, idUsuario).montoDeDeuda();
 	}
 
 	// solo las compras del usuario del test: la base puede tener otras cargadas

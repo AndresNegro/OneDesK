@@ -113,6 +113,17 @@ public class Compra extends Persistible{
         this.fechaPago = LocalDate.now();
     }
 
+    /** Devuelve al catalogo el stock de todos sus items: se usa al rechazarla y al anularla. */
+    public void devolverStock() {
+        for (ItemCompra item : items) {
+            item.devolverStock();
+        }
+    }
+
+    public boolean esDe(int usuarioId) {
+        return usuario.getId() == usuarioId;
+    }
+
     public LocalDate getFechaCompra() { return fechaCompra; }
     public LocalDate getFechaPago() { return fechaPago; }
     public boolean isPagado() { return pagado; }

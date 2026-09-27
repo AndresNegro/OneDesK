@@ -1,6 +1,7 @@
 package com.OneDesK.evento;
 
 
+import com.OneDesK.modelo.Indoor;
 import com.OneDesK.modelo.Persistible;
 import com.OneDesK.modelo.Planta;
 
@@ -28,6 +29,9 @@ public abstract class Evento extends Persistible {
     }
 
     public Planta getPlanta() { return planta; }
+
+    /** El indoor donde hay que atenderlo: es el de su planta. */
+    public Indoor getIndoor() { return planta.getIndoor(); }
 
     /** REGADO, LUZ o VENTILADOR: el mismo valor que la columna tipo de la tabla Evento. */
     public abstract String getTipo();

@@ -35,6 +35,11 @@ public class ItemCompra extends Persistible {
     public Producto getProducto() { return producto; }
     public int getCantidad() { return cantidad; }
 
+    /** Le devuelve al catalogo los gramos que este item tenia reservados. */
+    void devolverStock() {
+        producto.reponerStock(cantidad);
+    }
+
     public int getPrecioUnitario() { return precioUnitario; }
 
     public int getPrecio() {

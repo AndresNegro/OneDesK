@@ -336,7 +336,7 @@ public class AdministradorServiceImplTest {
 
 		assertNull(em.find(Compra.class, compra));
 		assertEquals(10, em.find(Producto.class, producto).getStock());
-		assertEquals(0, em.find(Usuario.class, usuario).getDeuda().getMonto());
+		assertEquals(0, em.find(Usuario.class, usuario).montoDeDeuda());
 	}
 
 	// Una compra pagada no se puede anular: sigue guardada y el stock no vuelve
@@ -728,7 +728,7 @@ public class AdministradorServiceImplTest {
 		recargar();
 
 		assertNotNull(em.find(Compra.class, primera));
-		assertEquals(2000, em.find(Usuario.class, usuario).getDeuda().getMonto());
+		assertEquals(2000, em.find(Usuario.class, usuario).montoDeDeuda());
 		assertEquals(8, em.find(Producto.class, producto).getStock());
 	}
 
@@ -914,7 +914,7 @@ public class AdministradorServiceImplTest {
 
 		assertFalse(service.comprasPendientes(admin).stream().anyMatch(c -> c.getId() == pedido));
 		assertTrue(service.comprasImpagas(admin).stream().anyMatch(c -> c.getId() == pedido));
-		assertEquals(2000, em.find(Usuario.class, usuario).getDeuda().getMonto());
+		assertEquals(2000, em.find(Usuario.class, usuario).montoDeDeuda());
 	}
 
 	// El administrador rechaza un pedido: queda rechazado y el stock vuelve

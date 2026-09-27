@@ -40,8 +40,12 @@ public class EmpleadoIndoor extends Empleado {
         return sectoresACargo.contains(indoor);
     }
 
+    public boolean estaSinIndoor() {
+        return sectoresACargo.isEmpty();
+    }
+
     public void atenderEvento(Evento e) {
-        if (!estaAsignadoA(e.getPlanta().getIndoor())) {
+        if (!estaAsignadoA(e.getIndoor())) {
             throw new OperacionInvalidaException(
                     "El empleado " + getNombre() + " no esta asignado al indoor de ese evento");
         }
@@ -94,6 +98,25 @@ public class EmpleadoIndoor extends Empleado {
             pendientes.addAll(indoor.getEventosPendientes());
         }
         return pendientes;
+    }
+
+    /** Las plantas que se estan cultivando en todos los indoors a cargo del empleado. */
+    public List<Planta> plantasEnCultivo() {
+        List<Planta> enCultivo = new ArrayList<>();
+        for (Indoor indoor : sectoresACargo) {
+            enCultivo.addAll(indoor.getPlantasEnCultivo());
+        }
+        return enCultivo;
+    }
+
+    /** En cual de sus indoors esta esa planta, o null si no esta en ninguno. */
+    public Indoor indoorDeLaPlanta(int plantaId) {
+        for (Indoor indoor : sectoresACargo) {
+            if (indoor.buscarPlanta(plantaId) != null) {
+                return indoor;
+            }
+        }
+        return null;
     }
 
     @Override

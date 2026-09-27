@@ -52,7 +52,7 @@ public class PersistenciaDeEntidadesTest {
 		assertEquals("andres@test.com", recargado.getEmail());
 		assertEquals("12345", recargado.getContrasenia());
 		assertEquals(20000, recargado.getTopeCredito());
-		assertEquals(0, recargado.getDeuda().getMonto());
+		assertEquals(0, recargado.montoDeDeuda());
 
 		assertEquals(1, contar("SELECT COUNT(*) FROM Persona WHERE ID = " + id));
 		assertEquals(1, contar("SELECT COUNT(*) FROM Usuario WHERE ID = " + id));

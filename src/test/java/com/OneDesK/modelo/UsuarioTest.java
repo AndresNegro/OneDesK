@@ -23,7 +23,7 @@ public class UsuarioTest {
 		assertEquals("Andres", usuario.getNombre());
 		assertEquals("andres@test.com", usuario.getEmail());
 		assertEquals(0, usuario.getTopeCredito());
-		assertEquals(0, usuario.getDeuda().getMonto());
+		assertEquals(0, usuario.montoDeDeuda());
 	}
 
 	// El email se normaliza al guardarse, para que las mayusculas no permitan registrarlo dos veces
@@ -99,7 +99,7 @@ public class UsuarioTest {
 	public void sePuedeBajarElTopePorDebajoDeLoQueDebe() {
 		Usuario usuario = nuevoUsuario("andres@test.com");
 		usuario.agregarCompra(compraDe(usuario, false, 3));
-		assertEquals(3000, usuario.getDeuda().getMonto());
+		assertEquals(3000, usuario.montoDeDeuda());
 
 		usuario.setTopeCredito(1000);
 
@@ -115,7 +115,7 @@ public class UsuarioTest {
 
 		usuario.agregarCompra(compraDe(usuario, false, 3));
 
-		assertEquals(3000, usuario.getDeuda().getMonto());
+		assertEquals(3000, usuario.montoDeDeuda());
 		assertEquals(1, usuario.comprasImpagas().size());
 	}
 
@@ -126,7 +126,7 @@ public class UsuarioTest {
 
 		usuario.agregarCompra(compraDe(usuario, true, 3));
 
-		assertEquals(0, usuario.getDeuda().getMonto());
+		assertEquals(0, usuario.montoDeDeuda());
 		assertEquals(0, usuario.comprasImpagas().size());
 	}
 
@@ -140,7 +140,7 @@ public class UsuarioTest {
 		usuario.registrarPago(compra);
 
 		assertTrue(compra.isPagado());
-		assertEquals(0, usuario.getDeuda().getMonto());
+		assertEquals(0, usuario.montoDeDeuda());
 		assertEquals(0, usuario.comprasImpagas().size());
 	}
 
@@ -152,7 +152,7 @@ public class UsuarioTest {
 
 		assertThrows(OperacionInvalidaException.class, () -> usuario.agregarCompra(compraDe(otro, false, 3)));
 
-		assertEquals(0, usuario.getDeuda().getMonto());
+		assertEquals(0, usuario.montoDeDeuda());
 	}
 
 	// Agregar dos veces la misma compra se rechaza, para no contar su deuda doble
@@ -164,7 +164,7 @@ public class UsuarioTest {
 
 		assertThrows(OperacionInvalidaException.class, () -> usuario.agregarCompra(compra));
 
-		assertEquals(3000, usuario.getDeuda().getMonto());
+		assertEquals(3000, usuario.montoDeDeuda());
 	}
 
 	// Un usuario no puede registrar el pago de una compra que no es suya
@@ -190,7 +190,7 @@ public class UsuarioTest {
 		usuario.deleteCompra(compra);
 
 		assertEquals(0, usuario.getCompras().size());
-		assertEquals(0, usuario.getDeuda().getMonto());
+		assertEquals(0, usuario.montoDeDeuda());
 	}
 
 	// La lista de compras es de solo lectura, asi nadie agrega compras salteando el recalculo de la deuda
@@ -201,7 +201,7 @@ public class UsuarioTest {
 
 		assertThrows(UnsupportedOperationException.class, () -> usuario.getCompras().add(compra));
 
-		assertEquals(0, usuario.getDeuda().getMonto());
+		assertEquals(0, usuario.montoDeDeuda());
 	}
 
 	private Usuario nuevoUsuario(String email) {
@@ -272,7 +272,7 @@ public class UsuarioTest {
 		rechazada.rechazar();
 		usuario.recalcularDeuda();
 
-		assertEquals(3000, usuario.getDeuda().getMonto());
+		assertEquals(3000, usuario.montoDeDeuda());
 		assertEquals(1, usuario.comprasImpagas().size());
 	}
 
@@ -293,12 +293,12 @@ public class UsuarioTest {
 		Usuario usuario = new Usuario("Andres", "Negro", "deudor@test.com", "12345");
 		Compra pendiente = pedidaDe(usuario, false, 2);
 		usuario.agregarCompra(pendiente);
-		assertEquals(0, usuario.getDeuda().getMonto());
+		assertEquals(0, usuario.montoDeDeuda());
 
 		pendiente.aprobar();
 		usuario.recalcularDeuda();
 
-		assertEquals(2000, usuario.getDeuda().getMonto());
+		assertEquals(2000, usuario.montoDeDeuda());
 	}
 
 	private Compra pedidaDe(Usuario usuario, boolean pagaAlAprobar, int cantidad) {

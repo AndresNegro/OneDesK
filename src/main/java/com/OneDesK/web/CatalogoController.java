@@ -75,8 +75,9 @@ public class CatalogoController {
 		int total = 0;
 		for (Carrito.Linea linea : Sesion.carrito(sesion).getLineas()) {
 			Producto producto = productoService.buscar(linea.getProductoId());
-			lineas.add(new LineaVista(producto, linea.getCantidad()));
-			total += producto.getPrecio() * linea.getCantidad();
+			LineaVista lineaVista = new LineaVista(producto, linea.getCantidad());
+			lineas.add(lineaVista);
+			total += lineaVista.getSubtotal();
 		}
 		modelo.addAttribute("lineas", lineas);
 		modelo.addAttribute("total", total);
