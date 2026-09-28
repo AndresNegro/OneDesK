@@ -6,8 +6,7 @@ public class ProductoNoEncontradoException extends RecursoNoEncontradoException 
 	private final String genetica;
 
 	public ProductoNoEncontradoException(String genetica) {
-		super("No hay un producto en el catalogo para la genetica " + genetica
-				+ ". Hay que darlo de alta antes de cosecharla");
+		super("error.producto.no.encontrado", genetica);
 		this.genetica = genetica;
 	}
 

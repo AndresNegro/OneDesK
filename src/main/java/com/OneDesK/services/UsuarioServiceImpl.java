@@ -25,7 +25,7 @@ public class UsuarioServiceImpl implements UsuarioService {
 
 		// se consulta con el email que ya normalizo Persona, asi las mayusculas no esquivan el chequeo
 		if (personaRepository.existsByEmail(usuario.getEmail())) {
-			throw new EmailDuplicadoException("Ya existe una persona registrada con el email " + usuario.getEmail());
+			throw new EmailDuplicadoException("error.email.duplicado", usuario.getEmail());
 		}
 		return repositorio.save(usuario);
 	}
@@ -45,6 +45,6 @@ public class UsuarioServiceImpl implements UsuarioService {
 	@Transactional
 	public Usuario buscar(int usuarioId) {
 		return repositorio.findById(usuarioId)
-				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el usuario " + usuarioId));
+				.orElseThrow(() -> new RecursoNoEncontradoException("error.no.existe.usuario", usuarioId));
 	}
 }

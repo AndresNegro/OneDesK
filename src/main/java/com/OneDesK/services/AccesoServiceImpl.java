@@ -30,8 +30,7 @@ public class AccesoServiceImpl implements AccesoService {
 		}
 		// se avisa despues de validar la contrasenia: solo el duenio de la cuenta sabe que esta pendiente
 		if (persona instanceof Usuario && !((Usuario) persona).isAprobado()) {
-			throw new OperacionInvalidaException(
-					"Tu cuenta todavía está esperando que la administración la apruebe");
+			throw new OperacionInvalidaException("error.cuenta.pendiente");
 		}
 		return persona;
 	}

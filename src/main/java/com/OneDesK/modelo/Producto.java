@@ -1,5 +1,6 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.excepciones.DatoInvalidoException;
 import com.OneDesK.excepciones.StockInsuficienteException;
 
 import jakarta.persistence.Column;
@@ -23,13 +24,13 @@ public class Producto extends Persistible{
 
     public Producto(String genetica, int stock, int precio) {
         if (genetica == null || genetica.isBlank()) {
-            throw new IllegalArgumentException("La genetica no puede estar vacia");
+            throw new DatoInvalidoException("error.genetica.vacia");
         }
         if (stock < 0) {
-            throw new IllegalArgumentException("El stock no puede ser negativo");
+            throw new DatoInvalidoException("error.stock.negativo");
         }
         if (precio <= 0) {
-            throw new IllegalArgumentException("El precio debe ser mayor a cero");
+            throw new DatoInvalidoException("error.precio");
         }
         this.genetica = genetica.trim();
         this.stock = stock;
@@ -44,7 +45,7 @@ public class Producto extends Persistible{
     public int getPrecio() { return precio; }
     public void setPrecio(int precio) {
         if (precio <= 0) {
-            throw new IllegalArgumentException("El precio debe ser mayor a cero");
+            throw new DatoInvalidoException("error.precio");
         }
         this.precio = precio;
     }
@@ -52,8 +53,7 @@ public class Producto extends Persistible{
     public void descontarStock(int cantidad) {
         validarCantidad(cantidad);
         if (cantidad > stock) {
-            throw new StockInsuficienteException(
-                "Stock insuficiente de " + genetica + ": hay " + stock + " y se piden " + cantidad);
+            throw new StockInsuficienteException("error.stock.insuficiente", genetica, stock, cantidad);
         }
         this.stock -= cantidad;
     }
@@ -66,7 +66,7 @@ public class Producto extends Persistible{
     /** Correccion de inventario: deja el stock en el valor que se conto. */
     public void fijarStock(int stockContado) {
         if (stockContado < 0) {
-            throw new IllegalArgumentException("El stock no puede ser negativo");
+            throw new DatoInvalidoException("error.stock.negativo");
         }
         this.stock = stockContado;
     }
@@ -74,7 +74,7 @@ public class Producto extends Persistible{
     /** Suma (cantidad positiva) o resta (cantidad negativa) al stock actual, sin dejarlo negativo. */
     public void ajustarStock(int cantidad) {
         if (cantidad == 0) {
-            throw new IllegalArgumentException("El ajuste de stock no puede ser cero");
+            throw new DatoInvalidoException("error.ajuste.cero");
         }
         if (cantidad > 0) {
             reponerStock(cantidad);
@@ -86,7 +86,7 @@ public class Producto extends Persistible{
     // una cantidad negativa daria vuelta la operacion: reponer -50 descontaria y podria dejar stock negativo
     private void validarCantidad(int cantidad) {
         if (cantidad <= 0) {
-            throw new IllegalArgumentException("La cantidad debe ser mayor a cero");
+            throw new DatoInvalidoException("error.cantidad");
         }
     }
 

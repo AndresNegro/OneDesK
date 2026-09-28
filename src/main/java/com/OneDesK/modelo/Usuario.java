@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.OneDesK.excepciones.DatoInvalidoException;
 import com.OneDesK.excepciones.OperacionInvalidaException;
 
 import jakarta.persistence.CascadeType;
@@ -44,7 +45,7 @@ public class Usuario extends Persona {
     /** El administrador acepta la solicitud de registro y le asigna el tope de credito en el mismo paso. */
     public void aprobar(int topeCredito) {
         if (aprobado) {
-            throw new OperacionInvalidaException("El usuario " + getEmail() + " ya esta aprobado");
+            throw new OperacionInvalidaException("error.usuario.ya.aprobado", getEmail());
         }
         // el tope se valida antes de aprobar: si es invalido, el usuario sigue pendiente
         setTopeCredito(topeCredito);
@@ -53,10 +54,10 @@ public class Usuario extends Persona {
 
     public void agregarCompra(Compra c) {
         if (c.getUsuario() != this) {
-            throw new OperacionInvalidaException("La compra pertenece a otro usuario");
+            throw new OperacionInvalidaException("error.compra.de.otro");
         }
         if (compras.contains(c)) {
-            throw new OperacionInvalidaException("La compra ya fue agregada");
+            throw new OperacionInvalidaException("error.compra.repetida");
         }
         compras.add(c);
         recalcularDeuda();
@@ -104,7 +105,7 @@ public class Usuario extends Persona {
     public int getTopeCredito() { return topeCredito; }
     public void setTopeCredito(int topeCredito) {
         if (topeCredito < 0) {
-            throw new IllegalArgumentException("El tope de credito no puede ser negativo");
+            throw new DatoInvalidoException("error.tope.negativo");
         }
         this.topeCredito = topeCredito;
     }
@@ -117,7 +118,7 @@ public class Usuario extends Persona {
 
     private void verificarQueEsSuya(Compra c) {
         if (!compras.contains(c)) {
-            throw new OperacionInvalidaException("La compra no pertenece a este usuario");
+            throw new OperacionInvalidaException("error.compra.de.otro");
         }
     }
 }

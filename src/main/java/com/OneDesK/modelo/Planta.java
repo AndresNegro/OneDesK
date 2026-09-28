@@ -1,5 +1,6 @@
 package com.OneDesK.modelo;
 import com.OneDesK.evento.*;
+import com.OneDesK.excepciones.DatoInvalidoException;
 import com.OneDesK.excepciones.OperacionInvalidaException;
 
 import jakarta.persistence.Column;
@@ -50,20 +51,20 @@ public class Planta extends Persistible{
     public Planta(String genetica, LocalDate fechaPlantado, LocalDate fechaGerminado,
                   int tiempoRegado, int tiempoLuz, int tiempoVentilacion) {
         if (genetica == null || genetica.isBlank()) {
-            throw new IllegalArgumentException("La genetica no puede estar vacia");
+            throw new DatoInvalidoException("error.genetica.vacia");
         }
         if (fechaPlantado == null || fechaGerminado == null) {
-            throw new IllegalArgumentException("Las fechas de germinado y plantado son obligatorias");
+            throw new DatoInvalidoException("error.fechas.obligatorias");
         }
         if (fechaPlantado.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("La fecha de plantado no puede ser futura");
+            throw new DatoInvalidoException("error.plantado.futuro");
         }
         // la semilla germina antes de plantarse: como el plantado no es futuro, el germinado tampoco
         if (fechaGerminado.isAfter(fechaPlantado)) {
-            throw new IllegalArgumentException("La planta no puede germinar despues de plantada");
+            throw new DatoInvalidoException("error.germinado.tarde");
         }
         if (tiempoRegado <= 0 || tiempoLuz <= 0 || tiempoVentilacion <= 0) {
-            throw new IllegalArgumentException("Los tiempos de riego, luz y ventilacion tienen que ser positivos");
+            throw new DatoInvalidoException("error.tiempos");
         }
         this.genetica = genetica.trim();
         this.fechaPlantado = fechaPlantado;
@@ -88,7 +89,7 @@ public class Planta extends Persistible{
 
     public void cosechar() {
         if (isCosechada()) {
-            throw new OperacionInvalidaException("La planta " + genetica + " ya fue cosechada el " + fechaCosecha);
+            throw new OperacionInvalidaException("error.planta.ya.cosechada", genetica, fechaCosecha);
         }
         this.fechaCosecha = LocalDate.now();
         if (indoor != null) {

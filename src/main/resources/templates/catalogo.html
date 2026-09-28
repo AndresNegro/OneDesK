@@ -1,22 +1,19 @@
 <!doctype html>
-<html lang="es" data-bs-theme="dark" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragmentos :: cabeza('Catálogo')}"></head>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head>
+<title th:text="#{pagina.catalogo}">Catálogo</title>
+</head>
 <body>
 
+<th:block layout:fragment="menu">
 <nav th:replace="~{fragmentos :: menuUsuario('catalogo')}"></nav>
+</th:block>
 
-<header class="portada">
-    <img class="portada__foto" th:src="@{/img/cogollo-tricomas.jpg}" alt="" style="object-position: 50% 30%;">
-    <div class="container portada__contenido">
-        <p class="etiqueta mb-4">Cosechado en nuestros indoors</p>
-        <h1 class="titulo-serif mb-3">Catálogo <em>de la casa</em></h1>
-        <p class="portada__bajada mb-0">
-            Solo aparecen las genéticas con stock. Cada compra va de
-            <span th:text="${limites.minimoGramos} + ' g a ' + ${limites.maximoGramos} + ' g'">5 g a 40 g</span>.
-            <span class="punto-vivo mx-2"></span><span th:text="${productos.size()} + ' disponibles hoy.'">4 disponibles hoy.</span>
-        </p>
-    </div>
-</header>
+<th:block layout:fragment="contenido">
+
+<header th:replace="~{fragmentos :: portada('', '/img/cogollo-tricomas.jpg', '50% 30%', #{catalogo.etiqueta},
+        #{catalogo.titulo}, #{catalogo.bajada(${limites.minimoGramos}, ${limites.maximoGramos}, ${productos.size()})})}"></header>
 
 <main class="container pb-5">
 
@@ -24,43 +21,43 @@
 
     <form class="row g-2 mb-5 mt-1" th:action="@{/catalogo}" method="get">
         <div class="col-12 col-md-6">
-            <label for="busqueda" class="visually-hidden">Buscar por genética</label>
+            <label for="busqueda" class="visually-hidden" th:text="#{catalogo.buscar.label}">Buscar por genética</label>
             <div class="input-group">
                 <span class="input-group-text border-end-0"><i class="bi bi-search"></i></span>
                 <input type="search" class="form-control border-start-0" id="busqueda" name="busqueda"
-                       th:value="${busqueda}" placeholder="Buscar por genética, por ejemplo: kush">
+                       th:value="${busqueda}" th:placeholder="#{catalogo.buscar.ejemplo}">
             </div>
         </div>
         <div class="col-8 col-md-4">
-            <label for="orden" class="visually-hidden">Ordenar</label>
+            <label for="orden" class="visually-hidden" th:text="#{catalogo.ordenar}">Ordenar</label>
             <select class="form-select" id="orden" name="orden">
-                <option value="genetica" th:selected="${orden != 'precio'}">Ordenar por genética</option>
-                <option value="precio" th:selected="${orden == 'precio'}">Precio: de menor a mayor</option>
+                <option value="genetica" th:selected="${orden != 'precio'}" th:text="#{catalogo.orden.genetica}">Ordenar por genética</option>
+                <option value="precio" th:selected="${orden == 'precio'}" th:text="#{catalogo.orden.precio}">Precio: de menor a mayor</option>
             </select>
         </div>
         <div class="col-4 col-md-2 d-grid">
-            <button type="submit" class="btn btn-outline-primary">Buscar</button>
+            <button type="submit" class="btn btn-outline-primary" th:text="#{catalogo.buscar}">Buscar</button>
         </div>
     </form>
 
     <p class="apagado" th:if="${productos.isEmpty()}">
-        No hay genéticas con stock<span th:if="${busqueda}" th:text="' que coincidan con «' + ${busqueda} + '»'"></span>.
+        <span th:text="#{catalogo.vacio}">No hay genéticas con stock</span><span th:if="${busqueda}" th:text="#{catalogo.vacio.busqueda(${busqueda})}"></span>.
     </p>
 
     <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
         <div class="col" th:each="p : ${productos}">
             <article class="producto">
                 <div class="producto__cuerpo">
-                    <p class="producto__stock mb-4" th:text="${p.stock} + ' g en stock'">12 g en stock</p>
+                    <p class="producto__stock mb-4" th:text="#{catalogo.stock(${p.stock})}">12 g en stock</p>
                     <h2 class="producto__nombre" th:text="${p.genetica}">OG Kush</h2>
-                    <p class="producto__precio mb-3" th:text="'$' + ${#numbers.formatInteger(p.precio, 1, 'POINT')} + ' el gramo'">$1.000 el gramo</p>
+                    <p class="producto__precio mb-3" th:text="#{catalogo.precio(${#numbers.formatInteger(p.precio, 1, 'POINT')})}">$1.000 el gramo</p>
                     <div class="medidor mb-4"><span th:style="'width: ' + ${p.stock * 100 / stockMaximo} + '%;'"></span></div>
                     <form class="mt-auto d-flex gap-2" th:action="@{/carrito/agregar}" method="post">
                         <input type="hidden" name="productoId" th:value="${p.id}">
-                        <label th:for="'cantidad-' + ${p.id}" class="visually-hidden" th:text="'Gramos de ' + ${p.genetica}">Gramos</label>
+                        <label th:for="'cantidad-' + ${p.id}" class="visually-hidden" th:text="#{gramos.de(${p.genetica})}">Gramos</label>
                         <input type="number" class="form-control" th:id="'cantidad-' + ${p.id}" name="cantidad"
                                value="1" min="1" th:max="${p.stock < limites.maximoGramos ? p.stock : limites.maximoGramos}" required>
-                        <button type="submit" class="btn btn-primary flex-shrink-0" th:aria-label="'Agregar ' + ${p.genetica} + ' al carrito'">
+                        <button type="submit" class="btn btn-primary flex-shrink-0" th:aria-label="#{catalogo.agregar(${p.genetica})}">
                             <i class="bi bi-bag-plus"></i>
                         </button>
                     </form>
@@ -70,6 +67,7 @@
     </div>
 </main>
 
-<th:block th:replace="~{fragmentos :: scripts}"></th:block>
+</th:block>
+
 </body>
 </html>

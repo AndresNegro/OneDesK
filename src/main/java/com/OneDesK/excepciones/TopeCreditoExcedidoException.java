@@ -1,8 +1,8 @@
 package com.OneDesK.excepciones;
 
-public class TopeCreditoExcedidoException extends RuntimeException {
+public class TopeCreditoExcedidoException extends ExcepcionDeNegocio {
 
-	public TopeCreditoExcedidoException(String mensaje) {
-		super(mensaje);
+	public TopeCreditoExcedidoException(String clave, Object... argumentos) {
+		super(clave, argumentos);
 	}
 }

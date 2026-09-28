@@ -1,86 +1,81 @@
 <!doctype html>
-<html lang="es" data-bs-theme="dark" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragmentos :: cabeza('Crear cuenta')}"></head>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head>
+<title th:text="#{pagina.registro}">Crear cuenta</title>
+</head>
 <body>
+
+<th:block layout:fragment="contenido">
 
 <main class="acceso">
 
-    <section class="acceso__foto">
-        <img th:src="@{/img/chalas-violeta.jpg}" alt="" style="object-position: 50% 55%;">
-        <p class="acceso__marca navbar-brand mb-0 fs-3">OneDesK</p>
-
-        <div class="acceso__texto">
-            <p class="etiqueta mb-4">Directo de la cosecha</p>
-            <h1 class="titulo-serif mb-4">
-                Sumate al<br>
-                <em>invernadero.</em>
-            </h1>
-            <p class="portada__bajada mb-0">
-                Stock real de cada genética, al precio del día en que comprás.
-            </p>
-        </div>
-    </section>
+    <section th:replace="~{fragmentos :: fotoDeAcceso('/img/chalas-violeta.jpg', '50% 55%',
+             #{registro.etiqueta.foto}, #{registro.titulo.foto}, #{registro.bajada.foto})}"></section>
 
     <section class="acceso__formulario">
         <div>
-            <p class="etiqueta mb-3">Cuenta nueva</p>
-            <h2 class="display-6 mb-2">Pedir una cuenta</h2>
-            <p class="apagado mb-4">La administración revisa cada solicitud antes de habilitarla.</p>
+            <div th:replace="~{fragmentos :: idiomaSuelto}"></div>
+
+            <p class="etiqueta mb-3" th:text="#{registro.etiqueta}">Cuenta nueva</p>
+            <h2 class="display-6 mb-2" th:text="#{registro.titulo}">Pedir una cuenta</h2>
+            <p class="apagado mb-4" th:text="#{registro.bajada}">La administración revisa cada solicitud antes de habilitarla.</p>
 
             <div th:replace="~{fragmentos :: avisos}"></div>
 
-            <form th:action="@{/registro}" method="post">
+            <form th:action="@{/registro}" method="post" th:object="${form}">
                 <div class="row g-3">
                     <div class="col-sm-6">
-                        <label for="nombre" class="form-label">Nombre</label>
-                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                        <label for="nombre" class="form-label" th:text="#{campo.nombre}">Nombre</label>
+                        <input type="text" class="form-control" th:field="*{nombre}" required>
                     </div>
 
                     <div class="col-sm-6">
-                        <label for="apellido" class="form-label">Apellido</label>
-                        <input type="text" class="form-control" id="apellido" name="apellido" required>
+                        <label for="apellido" class="form-label" th:text="#{campo.apellido}">Apellido</label>
+                        <input type="text" class="form-control" th:field="*{apellido}" required>
                     </div>
 
                     <div class="col-12">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email"
-                               placeholder="nombre@dominio.com" required>
-                        <div class="form-text">No puede estar registrado por otra persona.</div>
+                        <label for="email" class="form-label" th:text="#{campo.email}">Email</label>
+                        <input type="email" class="form-control" th:field="*{email}"
+                               th:placeholder="#{campo.email.ejemplo}" required>
+                        <div class="form-text" th:text="#{registro.email.ayuda}">No puede estar registrado por otra persona.</div>
                     </div>
 
                     <div class="col-sm-6">
-                        <label for="contrasenia" class="form-label">Contraseña</label>
-                        <input type="password" class="form-control" id="contrasenia" name="contrasenia"
+                        <label for="contrasenia" class="form-label" th:text="#{campo.contrasenia}">Contraseña</label>
+                        <input type="password" class="form-control" th:field="*{contrasenia}"
                                minlength="5" required>
-                        <div class="form-text">Al menos 5 caracteres.</div>
+                        <div class="form-text" th:text="#{registro.contrasenia.ayuda}">Al menos 5 caracteres.</div>
                     </div>
 
                     <div class="col-sm-6">
-                        <label for="repetir" class="form-label">Repetila</label>
-                        <input type="password" class="form-control" id="repetir" name="repetir"
+                        <label for="repetir" class="form-label" th:text="#{registro.repetir}">Repetila</label>
+                        <input type="password" class="form-control" th:field="*{repetir}"
                                minlength="5" required>
                     </div>
                 </div>
 
                 <div class="aviso mt-4 mb-4">
                     <i class="bi bi-envelope"></i>
-                    <p class="mb-0 apagado small">
-                        Tu cuenta queda pendiente hasta que la administración la apruebe. Te vamos a avisar
-                        por mail, y desde ahí vas a poder ingresar con este email y esta contraseña.
+                    <p class="mb-0 apagado small" th:text="#{registro.aviso}">
+                        Tu cuenta queda pendiente hasta que la administración la apruebe.
                     </p>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-lg w-100">Pedir cuenta</button>
+                <button type="submit" class="btn btn-primary btn-lg w-100" th:text="#{registro.boton}">Pedir cuenta</button>
             </form>
 
             <p class="mt-4 mb-0 apagado">
-                ¿Ya tenés cuenta? <a th:href="@{/}">Ingresá</a>
+                <span th:text="#{registro.con.cuenta}">¿Ya tenés cuenta?</span>
+                <a th:href="@{/}" th:text="#{registro.ingresa}">Ingresá</a>
             </p>
         </div>
     </section>
 
 </main>
 
-<th:block th:replace="~{fragmentos :: scripts}"></th:block>
+</th:block>
+
 </body>
 </html>

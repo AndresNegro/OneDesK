@@ -25,7 +25,7 @@ public class ProductoServiceImpl implements ProductoService {
 		Producto producto = new Producto(genetica, 0, precio);
 
 		if (repositorio.existsByGeneticaIgnoreCase(producto.getGenetica())) {
-			throw new OperacionInvalidaException("Ya existe un producto con la genetica " + producto.getGenetica());
+			throw new OperacionInvalidaException("error.producto.repetido", producto.getGenetica());
 		}
 		return repositorio.save(producto);
 	}
@@ -90,6 +90,6 @@ public class ProductoServiceImpl implements ProductoService {
 
 	private Producto buscarProducto(int productoId) {
 		return repositorio.findById(productoId)
-				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el producto " + productoId));
+				.orElseThrow(() -> new RecursoNoEncontradoException("error.no.existe.producto", productoId));
 	}
 }

@@ -1,5 +1,7 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.excepciones.DatoInvalidoException;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -25,7 +27,7 @@ public class ItemCompra extends Persistible {
 
     public ItemCompra(Producto producto, int cantidad) {
         if (cantidad <= 0) {
-            throw new IllegalArgumentException("La cantidad de un item debe ser mayor a cero");
+            throw new DatoInvalidoException("error.item.cantidad");
         }
         this.producto = producto;
         this.cantidad = cantidad;

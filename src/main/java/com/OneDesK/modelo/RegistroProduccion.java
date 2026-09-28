@@ -1,5 +1,7 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.excepciones.DatoInvalidoException;
+
 import java.time.LocalDate;
 
 import jakarta.persistence.Column;
@@ -36,7 +38,7 @@ public class RegistroProduccion extends Persistible {
     /** El indoor se toma de la planta, asi el registro no puede apuntar a un indoor distinto del de la planta. */
     public RegistroProduccion(Planta planta, EmpleadoIndoor empleado, Producto producto, int cantidad) {
         if (cantidad <= 0) {
-            throw new IllegalArgumentException("La cantidad cosechada debe ser mayor a cero");
+            throw new DatoInvalidoException("error.cosecha.cantidad");
         }
         this.planta = planta;
         this.indoor = planta.getIndoor();

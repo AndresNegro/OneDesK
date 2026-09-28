@@ -37,13 +37,13 @@ public class CompraServiceImpl implements CompraService {
 	@Transactional
 	public Compra realizarCompra(int usuarioId, List<LineaCompra> lineas, boolean pagado) {
 		if (lineas == null || lineas.isEmpty()) {
-			throw new OperacionInvalidaException("La compra debe tener al menos un item");
+			throw new OperacionInvalidaException("error.compra.vacia");
 		}
 
 		Usuario usuario = usuarioRepository.findById(usuarioId)
-				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el usuario " + usuarioId));
+				.orElseThrow(() -> new RecursoNoEncontradoException("error.no.existe.usuario", usuarioId));
 		if (!usuario.isAprobado()) {
-			throw new OperacionInvalidaException("El usuario " + usuarioId + " todavia no fue aprobado");
+			throw new OperacionInvalidaException("error.usuario.sin.aprobar", usuarioId);
 		}
 
 		List<ItemPedido> pedido = armarPedido(lineas);
@@ -71,16 +71,14 @@ public class CompraServiceImpl implements CompraService {
 		List<ItemPedido> pedido = new ArrayList<>();
 		for (LineaCompra linea : lineas) {
 			if (linea.cantidad() <= 0) {
-				throw new OperacionInvalidaException(
-						"La cantidad del producto " + linea.productoId() + " debe ser mayor a cero");
+				throw new OperacionInvalidaException("error.cantidad.de.producto", linea.productoId());
 			}
 			ItemPedido repetido = buscarPorProducto(pedido, linea.productoId());
 			if (repetido != null) {
 				repetido.sumarCantidad(linea.cantidad());
 			} else {
 				Producto producto = productoRepository.findById(linea.productoId())
-						.orElseThrow(() -> new RecursoNoEncontradoException(
-								"No existe el producto " + linea.productoId()));
+						.orElseThrow(() -> new RecursoNoEncontradoException("error.no.existe.producto", linea.productoId()));
 				pedido.add(new ItemPedido(linea.productoId(), producto, linea.cantidad()));
 			}
 		}
@@ -99,8 +97,7 @@ public class CompraServiceImpl implements CompraService {
 	/** Recorre todo el pedido antes de tocar nada, para que un item sin stock no deje descuentos a medias. */
 	private void verificarTope(Usuario usuario, int deudaResultante) {
 		if (deudaResultante > usuario.getTopeCredito()) {
-			throw new TopeCreditoExcedidoException("La compra deja al usuario " + usuario.getId()
-					+ " con una deuda de " + deudaResultante + " y su tope es " + usuario.getTopeCredito());
+			throw new TopeCreditoExcedidoException("error.tope.excedido", usuario.getId(), deudaResultante, usuario.getTopeCredito());
 		}
 	}
 
@@ -117,8 +114,7 @@ public class CompraServiceImpl implements CompraService {
 		for (ItemPedido item : pedido) {
 			Producto producto = item.getProducto();
 			if (producto.getStock() < item.getCantidad()) {
-				throw new StockInsuficienteException("Stock insuficiente de " + producto.getGenetica() + ": hay "
-						+ producto.getStock() + " y se piden " + item.getCantidad());
+				throw new StockInsuficienteException("error.stock.insuficiente", producto.getGenetica(), producto.getStock(), item.getCantidad());
 			}
 			total += producto.getPrecio() * item.getCantidad();
 		}
@@ -161,10 +157,10 @@ public class CompraServiceImpl implements CompraService {
 	public Compra registrarPago(int compraId) {
 		Compra compra = buscarCompra(compraId);
 		if (compra.isPagado()) {
-			throw new OperacionInvalidaException("La compra " + compraId + " ya esta pagada");
+			throw new OperacionInvalidaException("error.compra.numero.pagada", compraId);
 		}
 		if (!compra.isAprobada()) {
-			throw new OperacionInvalidaException("La compra " + compraId + " todavía no fue aprobada");
+			throw new OperacionInvalidaException("error.compra.numero.sin.aprobar", compraId);
 		}
 		compra.getUsuario().registrarPago(compra);
 		return compra;
@@ -175,10 +171,10 @@ public class CompraServiceImpl implements CompraService {
 	public void anularCompra(int compraId) {
 		Compra compra = buscarCompra(compraId);
 		if (compra.isPagado()) {
-			throw new OperacionInvalidaException("No se puede anular la compra " + compraId + " porque esta pagada");
+			throw new OperacionInvalidaException("error.compra.pagada.no.se.anula", compraId);
 		}
 		if (compra.isRechazada()) {
-			throw new OperacionInvalidaException("La compra " + compraId + " ya fue rechazada");
+			throw new OperacionInvalidaException("error.compra.numero.rechazada", compraId);
 		}
 		compra.devolverStock();
 		Usuario usuario = compra.getUsuario();
@@ -213,13 +209,13 @@ public class CompraServiceImpl implements CompraService {
 	// un usuario no puede pagar ni anular la compra de otro cambiando el id en la pagina
 	private void verificarQueEsDelUsuario(int usuarioId, int compraId) {
 		if (!buscarCompra(compraId).esDe(usuarioId)) {
-			throw new OperacionInvalidaException("La compra " + compraId + " no es tuya");
+			throw new OperacionInvalidaException("error.compra.ajena", compraId);
 		}
 	}
 
 	private Compra buscarCompra(int compraId) {
 		return repositorio.findById(compraId)
-				.orElseThrow(() -> new RecursoNoEncontradoException("No existe la compra " + compraId));
+				.orElseThrow(() -> new RecursoNoEncontradoException("error.no.existe.compra", compraId));
 	}
 
 	/** Producto ya resuelto del catalogo con la cantidad total pedida, antes de convertirse en ItemCompra. */

@@ -20,7 +20,7 @@ public class ControlDeAcceso implements HandlerInterceptor {
 			throws Exception {
 		HttpSession sesion = pedido.getSession(false);
 		if (!Sesion.ingreso(sesion)) {
-			respuesta.sendRedirect(pedido.getContextPath() + "/");
+			respuesta.sendRedirect(pedido.getContextPath() + AccesoController.LOGIN_URL);
 			return false;
 		}
 		Rol rol = Sesion.rol(sesion);
@@ -32,10 +32,10 @@ public class ControlDeAcceso implements HandlerInterceptor {
 	}
 
 	private Rol rolQuePide(String ruta) {
-		if (ruta.startsWith("/admin")) {
+		if (ruta.startsWith(AdminController.ADMIN_URL)) {
 			return Rol.ADMINISTRADOR;
 		}
-		if (ruta.startsWith("/empleado")) {
+		if (ruta.startsWith(EmpleadoController.EMPLEADO_URL)) {
 			return Rol.EMPLEADO;
 		}
 		return Rol.USUARIO;

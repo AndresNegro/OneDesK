@@ -21,7 +21,7 @@ public class IndoorServiceImpl implements IndoorService {
 	public Indoor crearIndoor(String nombre, int capacidad) {
 		Indoor indoor = new Indoor(nombre, capacidad);
 		if (repositorio.existsByNombreIgnoreCase(indoor.getNombre())) {
-			throw new OperacionInvalidaException("Ya existe un indoor llamado " + indoor.getNombre());
+			throw new OperacionInvalidaException("error.indoor.repetido", indoor.getNombre());
 		}
 		return repositorio.save(indoor);
 	}
@@ -33,7 +33,7 @@ public class IndoorServiceImpl implements IndoorService {
 		// el nombre se compara ya sin espacios de mas, como lo guarda Indoor
 		String nombreNuevo = nombre == null ? null : nombre.trim();
 		if (nombreNuevo != null && repositorio.existsByNombreIgnoreCaseAndIdNot(nombreNuevo, indoorId)) {
-			throw new OperacionInvalidaException("Ya existe un indoor llamado " + nombreNuevo);
+			throw new OperacionInvalidaException("error.indoor.repetido", nombreNuevo);
 		}
 		// sin save: el indoor ya esta guardado y el cambio se escribe al terminar la transaccion
 		indoor.editar(nombreNuevo, capacidad);
@@ -45,7 +45,7 @@ public class IndoorServiceImpl implements IndoorService {
 	public Planta plantar(int indoorId, Planta planta) {
 		Indoor indoor = buscarIndoor(indoorId);
 		if (planta.getIndoor() != null) {
-			throw new OperacionInvalidaException("La planta " + planta.getGenetica() + " ya esta plantada en un indoor");
+			throw new OperacionInvalidaException("error.planta.ya.plantada", planta.getGenetica());
 		}
 		indoor.addPlanta(planta);
 
@@ -61,13 +61,13 @@ public class IndoorServiceImpl implements IndoorService {
 		Indoor indoor = buscarIndoor(indoorId);
 		Planta planta = indoor.buscarPlanta(plantaId);
 		if (planta == null) {
-			throw new RecursoNoEncontradoException("El indoor " + indoorId + " no tiene la planta " + plantaId);
+			throw new RecursoNoEncontradoException("error.indoor.sin.planta", indoorId, plantaId);
 		}
 		indoor.deletePlanta(planta);
 	}
 
 	private Indoor buscarIndoor(int indoorId) {
 		return repositorio.findById(indoorId)
-				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el indoor " + indoorId));
+				.orElseThrow(() -> new RecursoNoEncontradoException("error.no.existe.indoor", indoorId));
 	}
 }

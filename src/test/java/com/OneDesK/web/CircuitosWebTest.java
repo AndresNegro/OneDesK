@@ -202,6 +202,37 @@ public class CircuitosWebTest {
 		assertEquals("/empleado", ingresar("empleado@web.test").ruta());
 	}
 
+	// El layout arma cada pagina entera: el titulo, el menu, el contenido y los scripts de esa pagina
+	@Test
+	public void elLayoutArmaLaPaginaEntera() {
+		String pagina = admin.abrir("/admin");
+
+		assertTrue(pagina.contains("<title>Administración · OneDesK</title>"));
+		// el menu y los avisos, que vienen de fragmentos.html
+		assertTrue(pagina.contains("navbar-brand"));
+		// los scripts: primero el de bootstrap que pone el layout, despues el propio del panel
+		assertTrue(pagina.contains("bootstrap.bundle.min.js"));
+		assertTrue(pagina.contains("bootstrap.Tab.getOrCreateInstance"));
+	}
+
+	// Con ?idioma=en la pagina y los avisos salen en ingles, y el idioma queda elegido para las que siguen
+	@Test
+	public void lasPaginasYLosAvisosSeVenEnElIdiomaElegido() {
+		registrarUsuario("cliente@web.test", 0);
+		Navegador cliente = ingresar("cliente@web.test");
+
+		assertTrue(cliente.abrir("/catalogo").contains("Cosechado en nuestros indoors"));
+
+		assertTrue(cliente.abrir("/catalogo?idioma=en").contains("Harvested in our indoors"));
+		// el idioma viaja en la sesion: la pagina siguiente tambien sale en ingles
+		assertTrue(cliente.abrir("/mis-compras").contains("Credit limit"));
+		// y los errores de negocio tambien se traducen: el carrito vacio no se puede confirmar
+		cliente.enviar("/carrito/confirmar", "pago", "ahora");
+		assertTrue(cliente.html().contains("The order must have at least one item"));
+
+		assertTrue(cliente.abrir("/catalogo?idioma=es").contains("Cosechado en nuestros indoors"));
+	}
+
 	// Nadie entra a la pagina de otro rol escribiendo la direccion: vuelve a la suya
 	@Test
 	public void nadieEntraALaPaginaDeOtroRol() {

@@ -780,6 +780,39 @@ h1 em, h2 em, .titulo-serif em {
     opacity: .7;
 }
 
+/* --- selector de idioma -------------------------------------------------- */
+
+.idiomas {
+    font: .75rem/1 var(--mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.idiomas a {
+    color: var(--humo);
+    text-decoration: none;
+    opacity: .7;
+}
+
+.idiomas a:hover {
+    opacity: 1;
+}
+
+.idiomas__actual {
+    color: var(--verde-suave) !important;
+    opacity: 1 !important;
+}
+
+.idiomas__separador {
+    color: var(--humo);
+    opacity: .4;
+    margin: 0 .35rem;
+}
+
+.idiomas--suelto {
+    display: block;
+}
+
 /* --- menos movimiento --------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {

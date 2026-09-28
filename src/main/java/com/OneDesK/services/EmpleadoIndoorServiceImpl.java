@@ -36,7 +36,7 @@ public class EmpleadoIndoorServiceImpl implements EmpleadoIndoorService {
 		EmpleadoIndoor empleado = new EmpleadoIndoor(nombre, apellido, email, contrasenia, salarioMensual);
 
 		if (personaRepository.existsByEmail(empleado.getEmail())) {
-			throw new EmailDuplicadoException("Ya existe una persona registrada con el email " + empleado.getEmail());
+			throw new EmailDuplicadoException("error.email.duplicado", empleado.getEmail());
 		}
 		return repositorio.save(empleado);
 	}
@@ -52,7 +52,7 @@ public class EmpleadoIndoorServiceImpl implements EmpleadoIndoorService {
 	public Planta plantar(int empleadoId, int indoorId, Planta planta) {
 		EmpleadoIndoor empleado = buscarEmpleado(empleadoId);
 		if (!empleado.estaAsignadoA(buscarIndoor(indoorId))) {
-			throw new OperacionInvalidaException("No estas asignado al indoor " + indoorId);
+			throw new OperacionInvalidaException("error.indoor.no.asignado", indoorId);
 		}
 		return indoorService.plantar(indoorId, planta);
 	}
@@ -91,18 +91,18 @@ public class EmpleadoIndoorServiceImpl implements EmpleadoIndoorService {
 
 		Evento evento = indoor.buscarEvento(eventoId);
 		if (evento == null) {
-			throw new RecursoNoEncontradoException("El indoor " + indoorId + " no tiene el evento " + eventoId);
+			throw new RecursoNoEncontradoException("error.indoor.sin.evento", indoorId, eventoId);
 		}
 		empleado.atenderEvento(evento);
 	}
 
 	private EmpleadoIndoor buscarEmpleado(int empleadoId) {
 		return repositorio.findById(empleadoId)
-				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el empleado " + empleadoId));
+				.orElseThrow(() -> new RecursoNoEncontradoException("error.no.existe.empleado", empleadoId));
 	}
 
 	private Indoor buscarIndoor(int indoorId) {
 		return indoorRepository.findById(indoorId)
-				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el indoor " + indoorId));
+				.orElseThrow(() -> new RecursoNoEncontradoException("error.no.existe.indoor", indoorId));
 	}
 }

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -15,7 +16,8 @@ import org.springframework.web.bind.annotation.RequestParam;
  * Eclipse compila sin guardar los nombres de los parametros (la opcion -parameters que si usa Maven).
  * Sin ellos, Spring no sabe que el campo "email" del formulario va en el parametro email, y todos los
  * formularios fallan al correr la aplicacion desde Eclipse, aunque los tests pasen con Maven.
- * Por eso cada @RequestParam y @PathVariable lleva su nombre escrito, y este test lo controla.
+ * Por eso cada @RequestParam, @PathVariable y @ModelAttribute lleva su nombre escrito, y este test lo
+ * controla. En el @ModelAttribute el nombre es ademas con el que la plantilla lo busca en th:object.
  */
 public class NombresDeParametrosTest {
 
@@ -47,6 +49,10 @@ public class NombresDeParametrosTest {
 		PathVariable pathVariable = parametro.getAnnotation(PathVariable.class);
 		if (pathVariable != null) {
 			return !pathVariable.value().isEmpty() || !pathVariable.name().isEmpty();
+		}
+		ModelAttribute modelAttribute = parametro.getAnnotation(ModelAttribute.class);
+		if (modelAttribute != null) {
+			return !modelAttribute.value().isEmpty() || !modelAttribute.name().isEmpty();
 		}
 		return true;
 	}

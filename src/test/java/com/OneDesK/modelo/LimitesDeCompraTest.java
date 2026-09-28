@@ -1,5 +1,6 @@
 package com.OneDesK.modelo;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -35,8 +36,10 @@ public class LimitesDeCompraTest {
 		LimitesDeCompra limites = new LimitesDeCompra();
 
 		assertThrows(OperacionInvalidaException.class, () -> limites.verificar(4));
-		String mensaje = assertThrows(OperacionInvalidaException.class, () -> limites.verificar(41)).getMessage();
-		assertTrue(mensaje.contains("5 g") && mensaje.contains("40 g"));
+		// el error viaja con su clave y con los tres numeros que van adentro del mensaje
+		OperacionInvalidaException error = assertThrows(OperacionInvalidaException.class, () -> limites.verificar(41));
+		assertEquals("error.gramos.fuera.de.limite", error.getClave());
+		assertArrayEquals(new Object[] { 5, 40, 41 }, error.getArgumentos());
 	}
 
 	// Cambiarlos aplica los valores nuevos a la verificacion

@@ -1,5 +1,7 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.excepciones.DatoInvalidoException;
+
 import com.OneDesK.helpers.ValidationUtils;
 
 import jakarta.persistence.Column;
@@ -35,7 +37,7 @@ public abstract class Persona extends Persistible {
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) {
         if (!ValidationUtils.tieneTexto(nombre)) {
-            throw new IllegalArgumentException("El nombre no puede estar vacio");
+            throw new DatoInvalidoException("error.nombre.vacio");
         }
         this.nombre = nombre.trim();
     }
@@ -43,7 +45,7 @@ public abstract class Persona extends Persistible {
     public String getApellido() { return apellido; }
     public void setApellido(String apellido) {
         if (!ValidationUtils.tieneTexto(apellido)) {
-            throw new IllegalArgumentException("El apellido no puede estar vacio");
+            throw new DatoInvalidoException("error.apellido.vacio");
         }
         this.apellido = apellido.trim();
     }
@@ -51,7 +53,7 @@ public abstract class Persona extends Persistible {
     public String getEmail() { return email; }
     public void setEmail(String email) {
         if (!ValidationUtils.isValidEmail(email)) {
-            throw new IllegalArgumentException("El email no es valido: " + email);
+            throw new DatoInvalidoException("error.email.invalido", email);
         }
         this.email = email.trim().toLowerCase();
     }
@@ -59,7 +61,7 @@ public abstract class Persona extends Persistible {
     public String getContrasenia() { return contrasenia; }
     public void setContrasenia(String contrasenia) {
         if (!ValidationUtils.tieneMasDe(contrasenia, 5)) {
-            throw new IllegalArgumentException("La contraseña debe tener al menos 5 caracteres");
+            throw new DatoInvalidoException("error.contrasenia.corta");
         }
         this.contrasenia = contrasenia;
     }

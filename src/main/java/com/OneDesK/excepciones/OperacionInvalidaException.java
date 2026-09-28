@@ -1,8 +1,8 @@
 package com.OneDesK.excepciones;
 
-public class OperacionInvalidaException extends RuntimeException {
+public class OperacionInvalidaException extends ExcepcionDeNegocio {
 
-	public OperacionInvalidaException(String mensaje) {
-		super(mensaje);
+	public OperacionInvalidaException(String clave, Object... argumentos) {
+		super(clave, argumentos);
 	}
 }

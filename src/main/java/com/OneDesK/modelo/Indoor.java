@@ -1,6 +1,7 @@
 package com.OneDesK.modelo;
 
 import com.OneDesK.evento.Evento;
+import com.OneDesK.excepciones.DatoInvalidoException;
 import com.OneDesK.excepciones.OperacionInvalidaException;
 
 import jakarta.persistence.CascadeType;
@@ -53,14 +54,13 @@ public class Indoor extends Persistible{
      */
     public void editar(String nombre, int capacidad) {
         if (nombre == null || nombre.isBlank()) {
-            throw new IllegalArgumentException("El nombre del indoor no puede estar vacío");
+            throw new DatoInvalidoException("error.indoor.nombre.vacio");
         }
         if (capacidad <= 0) {
-            throw new IllegalArgumentException("La capacidad del indoor tiene que ser de al menos una planta");
+            throw new DatoInvalidoException("error.indoor.capacidad");
         }
         if (capacidad < plantasEnCultivo()) {
-            throw new OperacionInvalidaException("El indoor tiene " + plantasEnCultivo()
-                    + " plantas en cultivo: la capacidad no puede ser menor");
+            throw new OperacionInvalidaException("error.indoor.capacidad.menor", plantasEnCultivo());
         }
         this.nombre = nombre.trim();
         this.capacidad = capacidad;
@@ -83,8 +83,7 @@ public class Indoor extends Persistible{
 
     public Planta addPlanta(Planta p) {
         if (isLleno()) {
-            throw new OperacionInvalidaException("El indoor " + nombre + " está lleno: tiene " + plantasEnCultivo()
-                    + " de " + capacidad + " plantas en cultivo");
+            throw new OperacionInvalidaException("error.indoor.lleno", nombre, plantasEnCultivo(), capacidad);
         }
         plantas.add(p);
         p.setIndoor(this);
@@ -95,8 +94,7 @@ public class Indoor extends Persistible{
     /** Quita una planta no cosechada junto con todos sus eventos, que sin la planta no tienen sentido. */
     public void deletePlanta(Planta p) {
         if (p.isCosechada()) {
-            throw new OperacionInvalidaException("No se puede quitar la planta " + p.getGenetica()
-                    + ": ya fue cosechada y su registro de produccion la necesita");
+            throw new OperacionInvalidaException("error.planta.cosechada.no.se.quita", p.getGenetica());
         }
         if (plantas.remove(p)) {
             colaEventos.removeIf(evento -> evento.getPlanta() == p);
@@ -145,11 +143,10 @@ public class Indoor extends Persistible{
     public void recibirEvento(Evento e) {
         Planta planta = e.getPlanta();
         if (!plantas.contains(planta)) {
-            throw new OperacionInvalidaException("La planta de ese evento no pertenece a este indoor");
+            throw new OperacionInvalidaException("error.evento.de.otra.planta");
         }
         if (planta.isCosechada()) {
-            throw new OperacionInvalidaException(
-                    "La planta " + planta.getGenetica() + " ya fue cosechada y no recibe eventos");
+            throw new OperacionInvalidaException("error.planta.cosechada.sin.eventos", planta.getGenetica());
         }
         colaEventos.add(e);
     }

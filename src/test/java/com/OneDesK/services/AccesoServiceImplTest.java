@@ -79,10 +79,10 @@ public class AccesoServiceImplTest {
 	// Un usuario que todavia no fue aprobado no puede ingresar, y se le dice por que
 	@Test
 	public void unUsuarioPendienteNoPuedeIngresar() {
-		String mensaje = assertThrows(OperacionInvalidaException.class,
-				() -> service.ingresar("pendiente@test.com", "clave-pendiente")).getMessage();
+		OperacionInvalidaException error = assertThrows(OperacionInvalidaException.class,
+				() -> service.ingresar("pendiente@test.com", "clave-pendiente"));
 
-		assertTrue(mensaje.contains("esperando"));
+		assertEquals("error.cuenta.pendiente", error.getClave());
 	}
 
 	// Con la contrasenia equivocada no se revela que la cuenta esta pendiente

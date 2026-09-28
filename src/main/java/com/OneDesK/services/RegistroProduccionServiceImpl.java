@@ -33,18 +33,17 @@ public class RegistroProduccionServiceImpl implements RegistroProduccionService 
 	@Transactional
 	public RegistroProduccion registrarCosecha(int empleadoId, int indoorId, int plantaId, int cantidad) {
 		EmpleadoIndoor empleado = empleadoRepository.findById(empleadoId)
-				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el empleado " + empleadoId));
+				.orElseThrow(() -> new RecursoNoEncontradoException("error.no.existe.empleado", empleadoId));
 		Indoor indoor = indoorRepository.findById(indoorId)
-				.orElseThrow(() -> new RecursoNoEncontradoException("No existe el indoor " + indoorId));
+				.orElseThrow(() -> new RecursoNoEncontradoException("error.no.existe.indoor", indoorId));
 
 		Planta planta = indoor.buscarPlanta(plantaId);
 		if (planta == null) {
-			throw new RecursoNoEncontradoException("El indoor " + indoorId + " no tiene la planta " + plantaId);
+			throw new RecursoNoEncontradoException("error.indoor.sin.planta", indoorId, plantaId);
 		}
 
 		if (!empleado.estaAsignadoA(indoor)) {
-			throw new OperacionInvalidaException(
-					"El empleado " + empleadoId + " no esta asignado al indoor " + indoorId);
+			throw new OperacionInvalidaException("error.empleado.no.asignado.indoor", empleadoId, indoorId);
 		}
 
 		Producto producto = productoRepository.findByGeneticaIgnoreCase(planta.getGenetica())

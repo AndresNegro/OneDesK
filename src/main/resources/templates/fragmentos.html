@@ -1,39 +1,29 @@
 <!doctype html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-<!-- Partes que se repiten en todas las paginas. Cada pagina las incluye con th:replace. -->
-<head th:fragment="cabeza(titulo)">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title th:text="${titulo} + ' · OneDesK'">OneDesK</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-<link th:href="@{/css/onedesk.css}" rel="stylesheet">
-</head>
+<!-- Los pedazos que se repiten entre paginas. El esqueleto esta en layout.html; esto son las piezas. -->
 <body>
 
 <!-- menu del usuario: activo es catalogo, compras o carrito -->
 <nav th:fragment="menuUsuario(activo)" class="navbar navbar-expand-lg navbar-od">
     <div class="container">
-        <a class="navbar-brand" th:href="@{/catalogo}">OneDesK</a>
+        <a class="navbar-brand" th:href="@{/catalogo}" th:text="#{app.nombre}">OneDesK</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
-                aria-controls="menu" aria-expanded="false" aria-label="Abrir menú">
+                aria-controls="menu" aria-expanded="false" th:aria-label="#{menu.abrir}">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="menu">
             <ul class="navbar-nav me-auto ms-lg-4">
-                <li class="nav-item"><a class="nav-link" th:classappend="${activo == 'catalogo'} ? 'active'" th:href="@{/catalogo}">Catálogo</a></li>
-                <li class="nav-item"><a class="nav-link" th:classappend="${activo == 'compras'} ? 'active'" th:href="@{/mis-compras}">Mis compras</a></li>
+                <li class="nav-item"><a class="nav-link" th:classappend="${activo == 'catalogo'} ? 'active'" th:href="@{/catalogo}" th:text="#{menu.catalogo}">Catálogo</a></li>
+                <li class="nav-item"><a class="nav-link" th:classappend="${activo == 'compras'} ? 'active'" th:href="@{/mis-compras}" th:text="#{menu.compras}">Mis compras</a></li>
             </ul>
             <ul class="navbar-nav align-items-lg-center">
                 <li class="nav-item">
                     <a class="nav-link" th:classappend="${activo == 'carrito'} ? 'active'" th:href="@{/carrito}">
-                        <i class="bi bi-bag"></i> Carrito
+                        <i class="bi bi-bag"></i> <span th:text="#{menu.carrito}">Carrito</span>
                         <span class="contador" th:if="${enCarrito != null and enCarrito > 0}" th:text="${enCarrito}">2</span>
                     </a>
                 </li>
+                <li class="nav-item" th:replace="~{fragmentos :: idioma}"></li>
                 <li class="nav-item" th:replace="~{fragmentos :: salir}"></li>
             </ul>
         </div>
@@ -43,9 +33,9 @@
 <!-- menu del empleado y del administrador: solo su panel y salir -->
 <nav th:fragment="menuPanel(titulo, inicio)" class="navbar navbar-expand-lg navbar-od">
     <div class="container">
-        <a class="navbar-brand" th:href="@{${inicio}}">OneDesK</a>
+        <a class="navbar-brand" th:href="@{${inicio}}" th:text="#{app.nombre}">OneDesK</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
-                aria-controls="menu" aria-expanded="false" aria-label="Abrir menú">
+                aria-controls="menu" aria-expanded="false" th:aria-label="#{menu.abrir}">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="menu">
@@ -53,6 +43,7 @@
                 <li class="nav-item"><a class="nav-link active" aria-current="page" th:href="@{${inicio}}" th:text="${titulo}">Panel</a></li>
             </ul>
             <ul class="navbar-nav align-items-lg-center">
+                <li class="nav-item" th:replace="~{fragmentos :: idioma}"></li>
                 <li class="nav-item" th:replace="~{fragmentos :: salir}"></li>
             </ul>
         </div>
@@ -62,9 +53,95 @@
 <!-- salir cierra la sesion: va por POST para que un link suelto no la cierre -->
 <li th:fragment="salir" class="nav-item">
     <form th:action="@{/salir}" method="post" class="m-0">
-        <button type="submit" class="nav-link btn btn-link">Salir</button>
+        <button type="submit" class="nav-link btn btn-link" th:text="#{menu.salir}">Salir</button>
     </form>
 </li>
+
+<!-- cambiar de idioma: vuelve a la misma pagina con ?idioma=es o ?idioma=en -->
+<li th:fragment="idioma" class="nav-item">
+    <span class="nav-link idiomas">
+        <a th:href="@{${rutaActual}(idioma='es')}" th:classappend="${#locale.language == 'es'} ? 'idiomas__actual'"
+           th:text="#{idioma.espanol}" hreflang="es">Español</a>
+        <span class="idiomas__separador">·</span>
+        <a th:href="@{${rutaActual}(idioma='en')}" th:classappend="${#locale.language == 'en'} ? 'idiomas__actual'"
+           th:text="#{idioma.ingles}" hreflang="en">English</a>
+    </span>
+</li>
+
+<!-- el mismo selector, para las paginas que no tienen menu -->
+<div th:fragment="idiomaSuelto" class="idiomas idiomas--suelto mb-4">
+    <a th:href="@{${rutaActual}(idioma='es')}" th:classappend="${#locale.language == 'es'} ? 'idiomas__actual'"
+       th:text="#{idioma.espanol}" hreflang="es">Español</a>
+    <span class="idiomas__separador">·</span>
+    <a th:href="@{${rutaActual}(idioma='en')}" th:classappend="${#locale.language == 'en'} ? 'idiomas__actual'"
+       th:text="#{idioma.ingles}" hreflang="en">English</a>
+</div>
+
+<!-- el panel con la foto de las paginas de ingresar y crear cuenta -->
+<section th:fragment="fotoDeAcceso(imagen, posicion, etiqueta, titulo, bajada)" class="acceso__foto">
+    <img th:src="@{${imagen}}" alt="" th:style="'object-position: ' + ${posicion} + ';'">
+    <p class="acceso__marca navbar-brand mb-0 fs-3" th:text="#{app.nombre}">OneDesK</p>
+
+    <div class="acceso__texto">
+        <p class="etiqueta mb-4" th:text="${etiqueta}">Cultivo indoor</p>
+        <h1 class="titulo-serif mb-4" th:utext="${titulo}">Todo el indoor</h1>
+        <p class="portada__bajada mb-0" th:text="${bajada}">Riego, luz y ventilación planta por planta.</p>
+    </div>
+</section>
+
+<!-- la portada con foto que abre cada pagina de adentro -->
+<header th:fragment="portada(clase, imagen, posicion, etiqueta, titulo, bajada)" class="portada" th:classappend="${clase}">
+    <img class="portada__foto" th:src="@{${imagen}}" alt="" th:style="'object-position: ' + ${posicion} + ';'">
+    <div class="container portada__contenido">
+        <p class="etiqueta mb-4" th:text="${etiqueta}">Cosechado en nuestros indoors</p>
+        <h1 class="titulo-serif mb-3" th:utext="${titulo}">Catálogo</h1>
+        <p class="portada__bajada mb-0" th:if="${bajada != null}" th:utext="${bajada}">La bajada de la portada.</p>
+    </div>
+</header>
+
+<!-- un numero grande con su etiqueta: los recuadros del resumen -->
+<div th:fragment="tarjeta(etiqueta, valor, color, nota)" class="card h-100 p-4">
+    <p class="etiqueta mb-3" th:text="${etiqueta}">Deuda</p>
+    <p class="dato-destacado mb-1" th:style="${color != null} ? 'color: ' + ${color} + ';'" th:text="${valor}">$3.000</p>
+    <p class="apagado small mb-0" th:if="${nota != null}" th:text="${nota}">sin atender</p>
+</div>
+
+<!-- un evento de la lista: el icono, que hay que hacer y en que planta. Lo que va despues (el boton
+     de atender o el puntito) lo pone cada pagina, porque el empleado atiende y el admin solo mira -->
+<th:block th:fragment="evento(e)">
+    <span class="icono-evento" th:switch="${e.tipo}">
+        <i th:case="'REGADO'" class="bi bi-droplet"></i>
+        <i th:case="'LUZ'" class="bi bi-lightbulb"></i>
+        <i th:case="*" class="bi bi-fan"></i>
+    </span>
+    <div class="flex-grow-1">
+        <p class="mb-0 fw-semibold" th:switch="${e.tipo}">
+            <span th:case="'REGADO'" th:text="#{evento.regado}">Riego</span>
+            <span th:case="'LUZ'" th:text="#{evento.luz}">Luz</span>
+            <span th:case="*" th:text="#{evento.ventilacion}">Ventilación</span>
+        </p>
+        <p class="mb-0 apagado small" th:text="${e.planta.genetica} + ' · ' + ${e.indoor.nombre}">OG Kush · Indoor 1</p>
+    </div>
+</th:block>
+
+<!-- en que anda una compra: lo ve el cliente en su historial y la administracion en sus tablas -->
+<td th:fragment="estadoDeCompra(compra)">
+    <span th:if="${compra.pendiente}">
+        <span class="punto-vivo punto-vivo--violeta me-2"></span>
+        <span style="color: var(--violeta-suave);" th:text="#{compra.estado.pendiente}">Esperando aprobación</span>
+    </span>
+    <span th:if="${compra.rechazada}">
+        <span class="punto-muerto me-2"></span><span class="apagado" th:text="#{compra.estado.rechazada}">Rechazada</span>
+    </span>
+    <span th:if="${compra.aprobada and compra.pagado}">
+        <span class="punto-muerto me-2"></span>
+        <span class="apagado" th:text="#{compra.estado.pagada(${#temporals.format(compra.fechaPago, 'dd/MM')})}">Pagada</span>
+    </span>
+    <span th:if="${compra.aprobada and !compra.pagado}">
+        <span class="punto-vivo me-2"></span>
+        <span style="color: var(--verde-suave);" th:text="#{compra.estado.impaga}">Aprobada · impaga</span>
+    </span>
+</td>
 
 <!-- el resultado de la ultima accion: exito en verde, error en rosa -->
 <div th:fragment="avisos">
@@ -75,10 +152,6 @@
         <i class="bi bi-exclamation-circle"></i><span th:text="${error}">Algo salió mal</span>
     </div>
 </div>
-
-<th:block th:fragment="scripts">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</th:block>
 
 </body>
 </html>

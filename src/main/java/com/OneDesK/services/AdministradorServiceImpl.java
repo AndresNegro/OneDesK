@@ -70,8 +70,7 @@ public class AdministradorServiceImpl implements AdministradorService {
 		Administrador administrador = new Administrador(nombre, apellido, email, contrasenia);
 
 		if (personaRepository.existsByEmail(administrador.getEmail())) {
-			throw new EmailDuplicadoException(
-					"Ya existe una persona registrada con el email " + administrador.getEmail());
+			throw new EmailDuplicadoException("error.email.duplicado", administrador.getEmail());
 		}
 		return repositorio.save(administrador);
 	}
@@ -256,8 +255,7 @@ public class AdministradorServiceImpl implements AdministradorService {
 		verificarAdministrador(adminId);
 		Usuario usuario = usuarioService.buscar(usuarioId);
 		if (usuario.isAprobado()) {
-			throw new OperacionInvalidaException("El usuario " + usuario.getEmail()
-					+ " ya esta aprobado: solo se rechazan solicitudes pendientes");
+			throw new OperacionInvalidaException("error.solicitud.ya.aprobada", usuario.getEmail());
 		}
 		// un pendiente no pudo comprar, asi que no tiene compras: se borra con su deuda en cero
 		usuarioRepository.delete(usuario);
@@ -314,7 +312,7 @@ public class AdministradorServiceImpl implements AdministradorService {
 	// un id de usuario o de empleado no esta en la tabla Administrador, asi que tambien se rechaza
 	private void verificarAdministrador(int adminId) {
 		if (!repositorio.existsById(adminId)) {
-			throw new RecursoNoEncontradoException("No existe el administrador " + adminId);
+			throw new RecursoNoEncontradoException("error.no.existe.admin", adminId);
 		}
 	}
 }

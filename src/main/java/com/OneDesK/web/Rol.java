@@ -7,9 +7,9 @@ import com.OneDesK.modelo.Persona;
 /** Que tipo de persona ingreso, y a que pagina va al entrar. */
 public enum Rol {
 
-	USUARIO("/catalogo"),
-	EMPLEADO("/empleado"),
-	ADMINISTRADOR("/admin");
+	USUARIO(CatalogoController.CATALOGO_URL),
+	EMPLEADO(EmpleadoController.EMPLEADO_URL),
+	ADMINISTRADOR(AdminController.ADMIN_URL);
 
 	private final String inicio;
 

@@ -92,7 +92,7 @@ public class Compra extends Persistible{
 
     private void verificarPendiente() {
         if (estado != EstadoCompra.PENDIENTE) {
-            throw new OperacionInvalidaException("La compra ya fue " + (isAprobada() ? "aprobada" : "rechazada"));
+            throw new OperacionInvalidaException(isAprobada() ? "error.compra.ya.aprobada" : "error.compra.ya.rechazada");
         }
     }
 
@@ -104,10 +104,10 @@ public class Compra extends Persistible{
     // sin setPagado: una compra pagada no vuelve a quedar impaga
     public void marcarComoPagada() {
         if (pagado) {
-            throw new OperacionInvalidaException("La compra ya esta pagada");
+            throw new OperacionInvalidaException("error.compra.ya.pagada");
         }
         if (!isAprobada()) {
-            throw new OperacionInvalidaException("La compra todavía no fue aprobada");
+            throw new OperacionInvalidaException("error.compra.sin.aprobar");
         }
         this.pagado = true;
         this.fechaPago = LocalDate.now();

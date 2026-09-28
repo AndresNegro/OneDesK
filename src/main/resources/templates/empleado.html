@@ -1,58 +1,46 @@
 <!doctype html>
-<html lang="es" data-bs-theme="dark" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragmentos :: cabeza('Panel del empleado')}"></head>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head>
+<title th:text="#{pagina.empleado}">Panel del empleado</title>
+</head>
 <body>
 
-<nav th:replace="~{fragmentos :: menuPanel('Panel del empleado', '/empleado')}"></nav>
+<th:block layout:fragment="menu">
+<nav th:replace="~{fragmentos :: menuPanel(#{pagina.empleado}, '/empleado')}"></nav>
+</th:block>
 
-<header class="portada portada--baja">
-    <img class="portada__foto" th:src="@{/img/chalas-violeta.jpg}" alt="" style="object-position: 50% 40%;">
-    <div class="container portada__contenido">
-        <p class="etiqueta mb-4"
-           th:text="${empleado.nombre} + ' ' + ${empleado.apellido} + ' · ' + ${empleado.sectoresACargo.size()} + (${empleado.sectoresACargo.size() == 1} ? ' indoor a cargo' : ' indoors a cargo')">Andrés Negro · 2 indoors a cargo</p>
-        <h1 class="titulo-serif mb-3">Panel del <em>cultivo</em></h1>
-        <p class="portada__bajada mb-0">
-            <span class="punto-vivo punto-vivo--violeta me-2" th:if="${!pendientes.isEmpty()}"></span>
-            <span th:text="${pendientes.isEmpty()} ? 'No hay eventos sin atender' : ${pendientes.size()} + ' eventos sin atender'">3 eventos sin atender</span>
-        </p>
-    </div>
-</header>
+<th:block layout:fragment="contenido">
+
+<header th:replace="~{fragmentos :: portada('portada--baja', '/img/chalas-violeta.jpg', '50% 40%',
+        ${empleado.nombre} + ' ' + ${empleado.apellido} + ' · ' + (${empleado.sectoresACargo.size() == 1}
+            ? #{empleado.un.indoor} : #{empleado.indoores(${empleado.sectoresACargo.size()})}),
+        #{empleado.titulo},
+        ${pendientes.isEmpty()} ? #{empleado.sin.eventos} : #{empleado.eventos(${pendientes.size()})})}"></header>
 
 <main class="container pb-5">
 
     <div class="mt-4" th:replace="~{fragmentos :: avisos}"></div>
 
-    <div class="aviso mt-4" th:if="${empleado.sectoresACargo.isEmpty()}">
+    <div class="aviso mt-4" th:if="${empleado.estaSinIndoor()}">
         <i class="bi bi-info-circle"></i>
-        <p class="mb-0 apagado">Todavía no tenés indoors a cargo. Pedile a la administración que te asigne uno.</p>
+        <p class="mb-0 apagado" th:text="#{empleado.sin.indoor}">Todavía no tenés indoors a cargo.</p>
     </div>
 
     <div class="row g-4 mt-1">
 
         <div class="col-lg-7">
 
-            <h2 class="titulo-bloque">Eventos pendientes</h2>
+            <h2 class="titulo-bloque" th:text="#{empleado.eventos.titulo}">Eventos pendientes</h2>
 
             <div class="card mb-5">
-                <p class="apagado m-0 p-4" th:if="${pendientes.isEmpty()}">Todo al día: no hay eventos sin atender.</p>
+                <p class="apagado m-0 p-4" th:if="${pendientes.isEmpty()}" th:text="#{empleado.todo.al.dia}">Todo al día: no hay eventos sin atender.</p>
                 <div class="evento" th:each="e : ${pendientes}">
-                    <span class="icono-evento" th:switch="${e.tipo}">
-                        <i th:case="'REGADO'" class="bi bi-droplet"></i>
-                        <i th:case="'LUZ'" class="bi bi-lightbulb"></i>
-                        <i th:case="*" class="bi bi-fan"></i>
-                    </span>
-                    <div class="flex-grow-1">
-                        <p class="mb-0 fw-semibold" th:switch="${e.tipo}">
-                            <span th:case="'REGADO'">Riego</span>
-                            <span th:case="'LUZ'">Luz</span>
-                            <span th:case="*">Ventilación</span>
-                        </p>
-                        <p class="mb-0 apagado small" th:text="${e.planta.genetica} + ' · ' + ${e.planta.indoor.nombre}">OG Kush · Indoor 1</p>
-                    </div>
+                    <th:block th:replace="~{fragmentos :: evento(${e})}"></th:block>
                     <form th:action="@{/empleado/atender}" method="post">
-                        <input type="hidden" name="indoorId" th:value="${e.planta.indoor.id}">
+                        <input type="hidden" name="indoorId" th:value="${e.indoor.id}">
                         <input type="hidden" name="eventoId" th:value="${e.id}">
-                        <button type="submit" class="btn btn-sm btn-primary">Atender</button>
+                        <button type="submit" class="btn btn-sm btn-primary" th:text="#{empleado.atender}">Atender</button>
                     </form>
                 </div>
             </div>
@@ -60,20 +48,20 @@
             <th:block th:each="indoor : ${empleado.sectoresACargo}">
                 <h2 class="titulo-bloque">
                     <span th:text="${indoor.nombre}">Carpa grande</span>
-                    <span class="apagado fs-6 ms-2" th:text="${indoor.plantasEnCultivo()} + ' de ' + ${indoor.capacidad} + ' plantas'">3 de 20 plantas</span>
+                    <span class="apagado fs-6 ms-2" th:text="#{indoor.plantas.de(${indoor.plantasEnCultivo()}, ${indoor.capacidad})}">3 de 20 plantas</span>
                 </h2>
 
                 <div class="card mb-5">
-                    <p class="apagado m-0 p-4" th:if="${indoor.plantas.isEmpty()}">Este indoor todavía no tiene plantas.</p>
+                    <p class="apagado m-0 p-4" th:if="${indoor.plantas.isEmpty()}" th:text="#{empleado.indoor.vacio}">Este indoor todavía no tiene plantas.</p>
                     <div class="table-responsive" th:unless="${indoor.plantas.isEmpty()}">
                         <table class="table table-hover align-middle tabla-datos">
                             <thead>
                                 <tr>
-                                    <th scope="col" class="ps-4">Genética</th>
-                                    <th scope="col">Plantada</th>
-                                    <th scope="col">Luz</th>
-                                    <th scope="col">Ventilador</th>
-                                    <th scope="col" class="pe-4">Estado</th>
+                                    <th scope="col" class="ps-4" th:text="#{tabla.genetica}">Genética</th>
+                                    <th scope="col" th:text="#{tabla.plantada}">Plantada</th>
+                                    <th scope="col" th:text="#{tabla.luz}">Luz</th>
+                                    <th scope="col" th:text="#{tabla.ventilador}">Ventilador</th>
+                                    <th scope="col" class="pe-4" th:text="#{tabla.estado}">Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -82,14 +70,14 @@
                                     <td class="apagado" th:text="${#temporals.format(p.fechaPlantado, 'dd/MM/yyyy')}">28/06/2026</td>
                                     <td class="text-nowrap">
                                         <span th:class="${p.luz and !p.cosechada} ? 'punto-vivo me-2' : 'punto-muerto me-2'"></span>
-                                        <span th:text="${p.cosechada} ? '—' : (${p.luz} ? 'Encendida' : 'Apagada')">Encendida</span>
+                                        <span th:text="${p.cosechada} ? '—' : (${p.luz} ? #{planta.encendida} : #{planta.apagada})">Encendida</span>
                                     </td>
                                     <td class="text-nowrap">
                                         <span th:class="${p.ventilador and !p.cosechada} ? 'punto-vivo me-2' : 'punto-muerto me-2'"></span>
-                                        <span th:text="${p.cosechada} ? '—' : (${p.ventilador} ? 'Encendido' : 'Apagado')">Apagado</span>
+                                        <span th:text="${p.cosechada} ? '—' : (${p.ventilador} ? #{planta.encendido} : #{planta.apagado})">Apagado</span>
                                     </td>
                                     <td class="pe-4"
-                                        th:text="${p.cosechada} ? 'Cosechada el ' + ${#temporals.format(p.fechaCosecha, 'dd/MM/yyyy')} : 'En cultivo'">En cultivo</td>
+                                        th:text="${p.cosechada} ? #{planta.cosechada(${#temporals.format(p.fechaCosecha, 'dd/MM/yyyy')})} : #{planta.en.cultivo}">En cultivo</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -98,101 +86,101 @@
             </th:block>
         </div>
 
-        <div class="col-lg-5" th:unless="${empleado.sectoresACargo.isEmpty()}">
+        <div class="col-lg-5" th:unless="${empleado.estaSinIndoor()}">
 
-            <h2 class="titulo-bloque">Registrar cosecha</h2>
+            <h2 class="titulo-bloque" th:text="#{empleado.cosecha.titulo}">Registrar cosecha</h2>
 
             <div class="panel-destacado p-4 mb-5">
-                <p class="apagado m-0" th:if="${enCultivo.isEmpty()}">No hay plantas en cultivo para cosechar.</p>
+                <p class="apagado m-0" th:if="${enCultivo.isEmpty()}" th:text="#{empleado.sin.plantas}">No hay plantas en cultivo para cosechar.</p>
                 <form th:action="@{/empleado/cosechar}" method="post" th:unless="${enCultivo.isEmpty()}">
                     <div class="mb-4">
-                        <label for="planta" class="form-label">Planta</label>
+                        <label for="planta" class="form-label" th:text="#{campo.planta}">Planta</label>
                         <select class="form-select" id="planta" name="plantaId" required>
                             <option th:each="p : ${enCultivo}" th:value="${p.id}"
-                                    th:text="${p.genetica} + ' · ' + ${p.indoor.nombre} + ' · plantada el ' + ${#temporals.format(p.fechaPlantado, 'dd/MM/yyyy')}">OG Kush</option>
+                                    th:text="${p.genetica} + ' · ' + ${p.indoor.nombre} + ' · ' + #{planta.plantada.el(${#temporals.format(p.fechaPlantado, 'dd/MM/yyyy')})}">OG Kush</option>
                         </select>
                     </div>
 
                     <div class="mb-4">
-                        <label for="cantidad" class="form-label">Gramos cosechados</label>
+                        <label for="cantidad" class="form-label" th:text="#{campo.gramos.cosechados}">Gramos cosechados</label>
                         <input type="number" class="form-control" id="cantidad" name="cantidad" min="1" required>
-                        <div class="form-text">Se suma al stock del producto de esa genética.</div>
+                        <div class="form-text" th:text="#{empleado.cosecha.ayuda}">Se suma al stock del producto de esa genética.</div>
                     </div>
 
                     <div class="aviso mb-4">
                         <i class="bi bi-info-circle"></i>
-                        <p class="mb-0 apagado small">
+                        <p class="mb-0 apagado small" th:text="#{empleado.cosecha.aviso}">
                             Si la genética todavía no está en el catálogo, primero hay que darla de alta con su precio.
                         </p>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100">Registrar cosecha</button>
+                    <button type="submit" class="btn btn-primary w-100" th:text="#{empleado.cosecha.boton}">Registrar cosecha</button>
                 </form>
             </div>
 
-            <h2 class="titulo-bloque">Plantar</h2>
+            <h2 class="titulo-bloque" th:text="#{plantar.titulo}">Plantar</h2>
 
             <div class="card p-4 mb-5">
                 <form th:action="@{/empleado/plantar}" method="post">
                     <div class="row g-3">
                         <div class="col-sm-6">
-                            <label for="plantar-indoor" class="form-label">Indoor</label>
+                            <label for="plantar-indoor" class="form-label" th:text="#{campo.indoor}">Indoor</label>
                             <select class="form-select" id="plantar-indoor" name="indoorId" required>
                                 <option th:each="i : ${empleado.sectoresACargo}" th:value="${i.id}" th:disabled="${i.lleno}"
                                         th:text="${i.nombre} + ' (' + ${i.plantasEnCultivo()} + '/' + ${i.capacidad} + ')'">Indoor 1</option>
                             </select>
                         </div>
                         <div class="col-sm-6">
-                            <label for="plantar-genetica" class="form-label">Genética</label>
+                            <label for="plantar-genetica" class="form-label" th:text="#{tabla.genetica}">Genética</label>
                             <input type="text" class="form-control" id="plantar-genetica" name="genetica" required>
                         </div>
                         <div class="col-sm-6">
-                            <label for="plantar-germinado" class="form-label">Germinó</label>
+                            <label for="plantar-germinado" class="form-label" th:text="#{campo.germino}">Germinó</label>
                             <input type="date" class="form-control" id="plantar-germinado" name="fechaGerminado" th:max="${hoy}" required>
                         </div>
                         <div class="col-sm-6">
-                            <label for="plantar-plantado" class="form-label">Plantada</label>
+                            <label for="plantar-plantado" class="form-label" th:text="#{tabla.plantada}">Plantada</label>
                             <input type="date" class="form-control" id="plantar-plantado" name="fechaPlantado" th:value="${hoy}" th:max="${hoy}" required>
                         </div>
                         <div class="col-4">
-                            <label for="plantar-riego" class="form-label">Riego</label>
+                            <label for="plantar-riego" class="form-label" th:text="#{campo.riego}">Riego</label>
                             <input type="number" class="form-control" id="plantar-riego" name="tiempoRegado" min="1" value="720" required>
                         </div>
                         <div class="col-4">
-                            <label for="plantar-luz" class="form-label">Luz</label>
+                            <label for="plantar-luz" class="form-label" th:text="#{tabla.luz}">Luz</label>
                             <input type="number" class="form-control" id="plantar-luz" name="tiempoLuz" min="1" value="720" required>
                         </div>
                         <div class="col-4">
-                            <label for="plantar-ventilacion" class="form-label">Ventil.</label>
+                            <label for="plantar-ventilacion" class="form-label" th:text="#{campo.ventilacion}">Ventil.</label>
                             <input type="number" class="form-control" id="plantar-ventilacion" name="tiempoVentilacion" min="1" value="240" required>
                         </div>
                     </div>
-                    <div class="form-text mb-4">Los tiempos son los minutos entre cada evento.</div>
-                    <button type="submit" class="btn btn-outline-primary w-100">Plantar</button>
+                    <div class="form-text mb-4" th:text="#{plantar.ayuda}">Los tiempos son los minutos entre cada evento.</div>
+                    <button type="submit" class="btn btn-outline-primary w-100" th:text="#{plantar.boton}">Plantar</button>
                 </form>
             </div>
 
-            <h2 class="titulo-bloque">Alta de producto</h2>
+            <h2 class="titulo-bloque" th:text="#{producto.alta.titulo}">Alta de producto</h2>
 
             <div class="card p-4">
                 <form th:action="@{/empleado/productos}" method="post">
                     <div class="mb-3">
-                        <label for="genetica" class="form-label">Genética</label>
+                        <label for="genetica" class="form-label" th:text="#{tabla.genetica}">Genética</label>
                         <input type="text" class="form-control" id="genetica" name="genetica"
                                placeholder="Northern Lights" required>
-                        <div class="form-text">No puede repetirse una genética ya cargada.</div>
+                        <div class="form-text" th:text="#{producto.alta.ayuda}">No puede repetirse una genética ya cargada.</div>
                     </div>
 
                     <div class="mb-4">
-                        <label for="precio" class="form-label">Precio</label>
+                        <label for="precio" class="form-label" th:text="#{campo.precio}">Precio</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
                             <input type="number" class="form-control" id="precio" name="precio" min="1" required>
                         </div>
-                        <div class="form-text">Arranca con stock 0: el stock entra con las cosechas.</div>
+                        <div class="form-text" th:text="#{producto.alta.stock}">Arranca con stock 0: el stock entra con las cosechas.</div>
                     </div>
 
-                    <button type="submit" class="btn btn-outline-primary w-100">Dar de alta</button>
+                    <button type="submit" class="btn btn-outline-primary w-100" th:text="#{producto.alta.boton}">Dar de alta</button>
                 </form>
             </div>
         </div>
@@ -200,6 +188,7 @@
     </div>
 </main>
 
-<th:block th:replace="~{fragmentos :: scripts}"></th:block>
+</th:block>
+
 </body>
 </html>

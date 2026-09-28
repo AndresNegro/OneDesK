@@ -1,5 +1,6 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.excepciones.DatoInvalidoException;
 import com.OneDesK.excepciones.OperacionInvalidaException;
 
 import jakarta.persistence.Column;
@@ -33,10 +34,10 @@ public class LimitesDeCompra extends Persistible {
 	/** Cambia los dos a la vez, para no quedar nunca con un minimo mayor al maximo. */
 	public void cambiar(int minimoGramos, int maximoGramos) {
 		if (minimoGramos < 1) {
-			throw new IllegalArgumentException("El mínimo tiene que ser de al menos 1 g");
+			throw new DatoInvalidoException("error.limite.minimo");
 		}
 		if (maximoGramos < minimoGramos) {
-			throw new IllegalArgumentException("El máximo no puede ser menor que el mínimo");
+			throw new DatoInvalidoException("error.limite.maximo");
 		}
 		this.minimoGramos = minimoGramos;
 		this.maximoGramos = maximoGramos;
@@ -45,8 +46,7 @@ public class LimitesDeCompra extends Persistible {
 	/** Rechaza una compra con menos gramos que el minimo o mas que el maximo. */
 	public void verificar(int gramos) {
 		if (gramos < minimoGramos || gramos > maximoGramos) {
-			throw new OperacionInvalidaException("Cada compra tiene que ser de entre " + minimoGramos + " g y "
-					+ maximoGramos + " g en total: pediste " + gramos + " g");
+			throw new OperacionInvalidaException("error.gramos.fuera.de.limite", minimoGramos, maximoGramos, gramos);
 		}
 	}
 }

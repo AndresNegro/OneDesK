@@ -2,6 +2,7 @@ package com.OneDesK.modelo;
 
 
 import com.OneDesK.evento.*;
+import com.OneDesK.excepciones.DatoInvalidoException;
 import com.OneDesK.excepciones.OperacionInvalidaException;
 
 import jakarta.persistence.Column;
@@ -46,11 +47,10 @@ public class EmpleadoIndoor extends Empleado {
 
     public void atenderEvento(Evento e) {
         if (!estaAsignadoA(e.getIndoor())) {
-            throw new OperacionInvalidaException(
-                    "El empleado " + getNombre() + " no esta asignado al indoor de ese evento");
+            throw new OperacionInvalidaException("error.evento.de.otro.indoor", getNombre());
         }
         if (e.getRealizado()) {
-            throw new OperacionInvalidaException("El evento ya fue atendido");
+            throw new OperacionInvalidaException("error.evento.atendido");
         }
         e.setRealizado(true);
         aplicarEfectoEnPlanta(e);
@@ -69,14 +69,14 @@ public class EmpleadoIndoor extends Empleado {
 
     public void addIndoor(Indoor i) {
         if (estaAsignadoA(i)) {
-            throw new OperacionInvalidaException("El empleado " + getNombre() + " ya esta asignado a ese indoor");
+            throw new OperacionInvalidaException("error.empleado.ya.asignado", getNombre());
         }
         sectoresACargo.add(i);
     }
 
     public void deleteIndoor(Indoor i) {
         if (!sectoresACargo.remove(i)) {
-            throw new OperacionInvalidaException("El empleado " + getNombre() + " no esta asignado a ese indoor");
+            throw new OperacionInvalidaException("error.empleado.no.asignado", getNombre());
         }
     }
 
@@ -84,7 +84,7 @@ public class EmpleadoIndoor extends Empleado {
 
     public void setSalarioMensual(int sm) {
         if (sm <= 0) {
-            throw new IllegalArgumentException("El salario mensual debe ser mayor a cero");
+            throw new DatoInvalidoException("error.salario");
         }
         this.salarioMensual = sm;
     }

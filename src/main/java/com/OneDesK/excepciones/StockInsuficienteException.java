@@ -1,8 +1,8 @@
 package com.OneDesK.excepciones;
 
-public class StockInsuficienteException extends RuntimeException {
+public class StockInsuficienteException extends ExcepcionDeNegocio {
 
-	public StockInsuficienteException(String mensaje) {
-		super(mensaje);
+	public StockInsuficienteException(String clave, Object... argumentos) {
+		super(clave, argumentos);
 	}
 }
