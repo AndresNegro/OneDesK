@@ -21,4 +21,9 @@ public final class DatosDePrueba {
 	public static Indoor indoor() {
 		return new Indoor(nombreDeIndoor(), CAPACIDAD);
 	}
+
+	/** Un email que todavia no esta registrado: la base no deja dos personas con el mismo. */
+	public static String email() {
+		return "prueba-" + UUID.randomUUID().toString().substring(0, 8) + "@test.com";
+	}
 }

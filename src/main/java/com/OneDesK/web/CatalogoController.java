@@ -39,8 +39,6 @@ public class CatalogoController extends BaseController {
 	@Autowired
 	private ProductoService productoService;
 	@Autowired
-	private Mensajes mensajes;
-	@Autowired
 	private CompraService compraService;
 	@Autowired
 	private UsuarioService usuarioService;

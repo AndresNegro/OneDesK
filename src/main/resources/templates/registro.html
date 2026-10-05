@@ -27,32 +27,35 @@
                 <div class="row g-3">
                     <div class="col-sm-6">
                         <label for="nombre" class="form-label" th:text="#{campo.nombre}">Nombre</label>
-                        <input type="text" class="form-control" th:field="*{nombre}" required>
+                        <input type="text" class="form-control" th:field="*{nombre}">
+                        <p class="error-de-campo" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}">Motivo</p>
                     </div>
 
                     <div class="col-sm-6">
                         <label for="apellido" class="form-label" th:text="#{campo.apellido}">Apellido</label>
-                        <input type="text" class="form-control" th:field="*{apellido}" required>
+                        <input type="text" class="form-control" th:field="*{apellido}">
+                        <p class="error-de-campo" th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}">Motivo</p>
                     </div>
 
                     <div class="col-12">
                         <label for="email" class="form-label" th:text="#{campo.email}">Email</label>
                         <input type="email" class="form-control" th:field="*{email}"
-                               th:placeholder="#{campo.email.ejemplo}" required>
+                               th:placeholder="#{campo.email.ejemplo}">
+                        <p class="error-de-campo" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Motivo</p>
                         <div class="form-text" th:text="#{registro.email.ayuda}">No puede estar registrado por otra persona.</div>
                     </div>
 
                     <div class="col-sm-6">
                         <label for="contrasenia" class="form-label" th:text="#{campo.contrasenia}">Contraseña</label>
-                        <input type="password" class="form-control" th:field="*{contrasenia}"
-                               minlength="5" required>
+                        <input type="password" class="form-control" th:field="*{contrasenia}">
+                        <p class="error-de-campo" th:if="${#fields.hasErrors('contrasenia')}" th:errors="*{contrasenia}">Motivo</p>
                         <div class="form-text" th:text="#{registro.contrasenia.ayuda}">Al menos 5 caracteres.</div>
                     </div>
 
                     <div class="col-sm-6">
                         <label for="repetir" class="form-label" th:text="#{registro.repetir}">Repetila</label>
-                        <input type="password" class="form-control" th:field="*{repetir}"
-                               minlength="5" required>
+                        <input type="password" class="form-control" th:field="*{repetir}">
+                        <p class="error-de-campo" th:if="${#fields.hasErrors('repetir')}" th:errors="*{repetir}">Motivo</p>
                     </div>
                 </div>
 

@@ -27,12 +27,14 @@
                 <div class="mb-4">
                     <label for="email" class="form-label" th:text="#{campo.email}">Email</label>
                     <input type="email" class="form-control form-control-lg" th:field="*{email}"
-                           th:placeholder="#{campo.email.ejemplo}" required autofocus>
+                           th:placeholder="#{campo.email.ejemplo}" autofocus>
+                    <p class="error-de-campo" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Motivo</p>
                 </div>
 
                 <div class="mb-5">
                     <label for="contrasenia" class="form-label" th:text="#{campo.contrasenia}">Contraseña</label>
-                    <input type="password" class="form-control form-control-lg" th:field="*{contrasenia}" required>
+                    <input type="password" class="form-control form-control-lg" th:field="*{contrasenia}">
+                    <p class="error-de-campo" th:if="${#fields.hasErrors('contrasenia')}" th:errors="*{contrasenia}">Motivo</p>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-lg w-100">

@@ -26,8 +26,6 @@ public class MisComprasController extends BaseController {
 	@Autowired
 	private CompraService compraService;
 	@Autowired
-	private Mensajes mensajes;
-	@Autowired
 	private UsuarioService usuarioService;
 
 	@GetMapping(value = MIS_COMPRAS_URL)

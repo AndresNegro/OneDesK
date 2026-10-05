@@ -164,7 +164,7 @@ public class CircuitosWebTest {
 		assertEquals(0, contar("SELECT COUNT(*) FROM Persona WHERE email = 'juan@web.test'"));
 	}
 
-	// Un email ya usado vuelve al registro con el error
+	// Un email ya usado vuelve al registro con el error abajo del campo, y no se crea nada
 	@Test
 	public void registroConEmailRepetidoMuestraElError() {
 		Navegador nuevo = new Navegador(puerto);
@@ -174,7 +174,8 @@ public class CircuitosWebTest {
 				"contrasenia", CLAVE, "repetir", CLAVE);
 
 		assertEquals("/registro", nuevo.ruta());
-		assertTrue(nuevo.html().contains("Ya existe una persona registrada con el email admin@web.test"));
+		assertTrue(nuevo.html().contains("Ya hay una cuenta con ese email"));
+		assertEquals(1, contar("SELECT COUNT(*) FROM Persona WHERE email = 'admin@web.test'"));
 	}
 
 	// Con la contrasenia equivocada vuelve al login con el error y sin sesion
@@ -231,6 +232,30 @@ public class CircuitosWebTest {
 		assertTrue(cliente.html().contains("The order must have at least one item"));
 
 		assertTrue(cliente.abrir("/catalogo?idioma=es").contains("Cosechado en nuestros indoors"));
+	}
+
+	// Un formulario incompleto vuelve con el motivo: abajo del campo, o arriba si es un panel
+	@Test
+	public void unFormularioIncompletoVuelveConElMotivo() {
+		Navegador anonimo = new Navegador(puerto);
+
+		// ingresar sin contrasenia: el motivo sale abajo del campo y no se abre ninguna sesion
+		anonimo.abrir("/");
+		anonimo.enviar("/ingresar", "email", "admin@web.test", "contrasenia", "");
+		assertEquals("/ingresar", anonimo.ruta());
+		assertTrue(anonimo.html().contains("La contraseña no puede estar vacía"));
+
+		// las dos contrasenias distintas, en el registro
+		anonimo.abrir("/registro");
+		anonimo.enviar("/registro", "nombre", "Juan", "apellido", "Perez", "email", "juan@web.test",
+				"contrasenia", CLAVE, "repetir", "otra-clave");
+		assertTrue(anonimo.html().contains("Las contraseñas no coinciden"));
+		assertEquals(0, contar("SELECT COUNT(*) FROM Persona WHERE email = 'juan@web.test'"));
+
+		// en el panel no hay lugar abajo del campo: los motivos salen todos como aviso arriba
+		admin.enviar("/admin/indoors", "nombre", "   ", "capacidad", "0");
+		assertTrue(admin.html().contains("El nombre no puede estar vacío"));
+		assertTrue(admin.html().contains("La capacidad tiene que ser de al menos una planta"));
 	}
 
 	// Nadie entra a la pagina de otro rol escribiendo la direccion: vuelve a la suya

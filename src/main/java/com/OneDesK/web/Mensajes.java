@@ -4,6 +4,7 @@ import java.util.Locale;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.context.NoSuchMessageException;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,5 +20,17 @@ public class Mensajes {
 
 	public String de(String clave, Locale idioma, Object... argumentos) {
 		return mensajes.getMessage(clave, argumentos, idioma);
+	}
+
+	/**
+	 * El texto de esa clave, o el de la de respaldo si la primera no esta escrita. Sirve para los
+	 * errores que arma Spring con sus propias claves, como una letra donde va un numero.
+	 */
+	public String deOSino(String clave, String respaldo, Locale idioma, Object... argumentos) {
+		try {
+			return mensajes.getMessage(clave, argumentos, idioma);
+		} catch (NoSuchMessageException noEstaEscrita) {
+			return mensajes.getMessage(respaldo, null, idioma);
+		}
 	}
 }

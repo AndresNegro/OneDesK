@@ -5,8 +5,12 @@ import java.util.Locale;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,6 +29,10 @@ import com.OneDesK.web.formularios.FormularioDeEvento;
 import com.OneDesK.web.formularios.FormularioDePlanta;
 import com.OneDesK.web.formularios.FormularioDeProducto;
 
+import com.OneDesK.web.validadores.ValidadorDePlanta;
+import com.OneDesK.web.validadores.ValidadorDeCosecha;
+import com.OneDesK.web.validadores.ValidadorDeProducto;
+
 import jakarta.servlet.http.HttpSession;
 
 /** El panel del empleado: atender eventos, plantar y cosechar en los indoors que tiene a cargo. */
@@ -40,11 +48,21 @@ public class EmpleadoController extends BaseController {
 	@Autowired
 	private EmpleadoIndoorService empleadoService;
 	@Autowired
-	private Mensajes mensajes;
-	@Autowired
 	private RegistroProduccionService registroProduccionService;
 	@Autowired
 	private ProductoService productoService;
+	@Autowired
+	private ValidadorDePlanta validadorDePlanta;
+	@Autowired
+	private ValidadorDeCosecha validadorDeCosecha;
+	@Autowired
+	private ValidadorDeProducto validadorDeProducto;
+
+	/** Los validadores que revisan los formularios de esta pagina, antes de que Spring los llene. */
+	@InitBinder(value = FORM_ATTRIBUTE)
+	public void engancharValidadores(WebDataBinder binder) {
+		enganchar(binder, validadorDePlanta, validadorDeCosecha, validadorDeProducto);
+	}
 
 	@GetMapping(value = EMPLEADO_URL)
 	public String panel(HttpSession sesion, Model modelo) {
@@ -66,8 +84,11 @@ public class EmpleadoController extends BaseController {
 	}
 
 	@PostMapping(value = PLANTAR_URL)
-	public String plantar(@ModelAttribute(FORM_ATTRIBUTE) FormularioDePlanta form, HttpSession sesion, Locale idioma,
-			RedirectAttributes flash) {
+	public String plantar(@Validated @ModelAttribute(FORM_ATTRIBUTE) FormularioDePlanta form, BindingResult errores,
+			HttpSession sesion, Locale idioma, RedirectAttributes flash) {
+		if (errores.hasErrors()) {
+			return avisar(errores, idioma, flash, EMPLEADO_URL);
+		}
 		Planta planta = new Planta(form.getGenetica(), form.getFechaPlantado(), form.getFechaGerminado(),
 				form.getTiempoRegado(), form.getTiempoLuz(), form.getTiempoVentilacion());
 		empleadoService.plantar(Sesion.personaId(sesion), form.getIndoorId(), planta);
@@ -77,8 +98,11 @@ public class EmpleadoController extends BaseController {
 
 	// el formulario manda solo la planta: el indoor se busca entre los que el empleado tiene a cargo
 	@PostMapping(value = COSECHAR_URL)
-	public String cosechar(@ModelAttribute(FORM_ATTRIBUTE) FormularioDeCosecha form, HttpSession sesion, Locale idioma,
-			RedirectAttributes flash) {
+	public String cosechar(@Validated @ModelAttribute(FORM_ATTRIBUTE) FormularioDeCosecha form, BindingResult errores,
+			HttpSession sesion, Locale idioma, RedirectAttributes flash) {
+		if (errores.hasErrors()) {
+			return avisar(errores, idioma, flash, EMPLEADO_URL);
+		}
 		int empleadoId = Sesion.personaId(sesion);
 		Indoor indoor = indoorDeLaPlanta(empleadoService.buscar(empleadoId), form.getPlantaId());
 		registroProduccionService.registrarCosecha(empleadoId, indoor.getId(), form.getPlantaId(), form.getCantidad());
@@ -87,7 +111,11 @@ public class EmpleadoController extends BaseController {
 	}
 
 	@PostMapping(value = PRODUCTOS_URL)
-	public String altaProducto(@ModelAttribute(FORM_ATTRIBUTE) FormularioDeProducto form, Locale idioma, RedirectAttributes flash) {
+	public String altaProducto(@Validated @ModelAttribute(FORM_ATTRIBUTE) FormularioDeProducto form,
+			BindingResult errores, Locale idioma, RedirectAttributes flash) {
+		if (errores.hasErrors()) {
+			return avisar(errores, idioma, flash, EMPLEADO_URL);
+		}
 		productoService.crearProducto(form.getGenetica(), form.getPrecio());
 		flash.addFlashAttribute(EXITO, mensajes.de("exito.producto", idioma, form.getGenetica().trim()));
 		return redirect(EMPLEADO_URL);

@@ -151,6 +151,12 @@
     <div class="aviso-accion aviso-accion--error" th:if="${error}" role="alert">
         <i class="bi bi-exclamation-circle"></i><span th:text="${error}">Algo salió mal</span>
     </div>
+    <div class="aviso-accion aviso-accion--error" th:if="${errores}" role="alert">
+        <i class="bi bi-exclamation-circle"></i>
+        <ul class="aviso-accion__lista">
+            <li th:each="motivo : ${errores}" th:text="${motivo}">El nombre no puede estar vacío</li>
+        </ul>
+    </div>
 </div>
 
 </body>

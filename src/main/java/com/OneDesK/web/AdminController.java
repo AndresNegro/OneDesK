@@ -6,8 +6,12 @@ import java.util.Locale;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,6 +35,12 @@ import com.OneDesK.web.formularios.FormularioDeProducto;
 import com.OneDesK.web.formularios.FormularioDeSalario;
 import com.OneDesK.web.formularios.FormularioDeStock;
 import com.OneDesK.web.formularios.FormularioDeTope;
+
+import com.OneDesK.web.validadores.ValidadorDeIndoor;
+import com.OneDesK.web.validadores.ValidadorDePlanta;
+import com.OneDesK.web.validadores.ValidadorDeEmpleado;
+import com.OneDesK.web.validadores.ValidadorDeProducto;
+import com.OneDesK.web.validadores.ValidadorDeLimites;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -70,7 +80,22 @@ public class AdminController extends BaseController {
 	@Autowired
 	private AdministradorService admin;
 	@Autowired
-	private Mensajes mensajes;
+	private ValidadorDeIndoor validadorDeIndoor;
+	@Autowired
+	private ValidadorDePlanta validadorDePlanta;
+	@Autowired
+	private ValidadorDeEmpleado validadorDeEmpleado;
+	@Autowired
+	private ValidadorDeProducto validadorDeProducto;
+	@Autowired
+	private ValidadorDeLimites validadorDeLimites;
+
+	/** Los validadores que revisan los formularios de esta pagina, antes de que Spring los llene. */
+	@InitBinder(value = FORM_ATTRIBUTE)
+	public void engancharValidadores(WebDataBinder binder) {
+		enganchar(binder, validadorDeIndoor, validadorDePlanta, validadorDeEmpleado, validadorDeProducto,
+				validadorDeLimites);
+	}
 
 	@GetMapping(value = ADMIN_URL)
 	public String panel(HttpSession sesion, Model modelo) {
@@ -119,16 +144,22 @@ public class AdminController extends BaseController {
 	// --- indoors y empleados ---
 
 	@PostMapping(value = CREAR_INDOOR_URL)
-	public String crearIndoor(@ModelAttribute(FORM_ATTRIBUTE) FormularioDeIndoor form, HttpSession sesion, Locale idioma,
-			RedirectAttributes flash) {
+	public String crearIndoor(@Validated @ModelAttribute(FORM_ATTRIBUTE) FormularioDeIndoor form, BindingResult errores,
+			HttpSession sesion, Locale idioma, RedirectAttributes flash) {
+		if (errores.hasErrors()) {
+			return avisar(errores, idioma, flash, SECCION_INDOORS);
+		}
 		Indoor indoor = admin.crearIndoor(Sesion.personaId(sesion), form.getNombre(), form.getCapacidad());
 		flash.addFlashAttribute(EXITO, mensajes.de("exito.indoor.creado", idioma, indoor.getNombre()));
 		return redirect(SECCION_INDOORS);
 	}
 
 	@PostMapping(value = EDITAR_INDOOR_URL)
-	public String editarIndoor(@ModelAttribute(FORM_ATTRIBUTE) FormularioDeIndoor form, HttpSession sesion, Locale idioma,
-			RedirectAttributes flash) {
+	public String editarIndoor(@Validated @ModelAttribute(FORM_ATTRIBUTE) FormularioDeIndoor form, BindingResult errores,
+			HttpSession sesion, Locale idioma, RedirectAttributes flash) {
+		if (errores.hasErrors()) {
+			return avisar(errores, idioma, flash, SECCION_INDOORS);
+		}
 		Indoor indoor = admin.editarIndoor(Sesion.personaId(sesion), form.getIndoorId(), form.getNombre(),
 				form.getCapacidad());
 		flash.addFlashAttribute(EXITO, mensajes.de("exito.indoor.editado", idioma, indoor.getNombre()));
@@ -136,8 +167,11 @@ public class AdminController extends BaseController {
 	}
 
 	@PostMapping(value = PLANTAR_URL)
-	public String plantar(@ModelAttribute(FORM_ATTRIBUTE) FormularioDePlanta form, HttpSession sesion, Locale idioma,
-			RedirectAttributes flash) {
+	public String plantar(@Validated @ModelAttribute(FORM_ATTRIBUTE) FormularioDePlanta form, BindingResult errores,
+			HttpSession sesion, Locale idioma, RedirectAttributes flash) {
+		if (errores.hasErrors()) {
+			return avisar(errores, idioma, flash, SECCION_INDOORS);
+		}
 		Planta planta = new Planta(form.getGenetica(), form.getFechaPlantado(), form.getFechaGerminado(),
 				form.getTiempoRegado(), form.getTiempoLuz(), form.getTiempoVentilacion());
 		admin.plantar(Sesion.personaId(sesion), form.getIndoorId(), planta);
@@ -146,8 +180,11 @@ public class AdminController extends BaseController {
 	}
 
 	@PostMapping(value = EMPLEADOS_URL)
-	public String registrarEmpleado(@ModelAttribute(FORM_ATTRIBUTE) FormularioDeEmpleado form, HttpSession sesion,
-			Locale idioma, RedirectAttributes flash) {
+	public String registrarEmpleado(@Validated @ModelAttribute(FORM_ATTRIBUTE) FormularioDeEmpleado form,
+			BindingResult errores, HttpSession sesion, Locale idioma, RedirectAttributes flash) {
+		if (errores.hasErrors()) {
+			return avisar(errores, idioma, flash, SECCION_INDOORS);
+		}
 		admin.registrarEmpleado(Sesion.personaId(sesion), form.getNombre(), form.getApellido(), form.getEmail(),
 				form.getContrasenia(), form.getSalario());
 		flash.addFlashAttribute(EXITO,
@@ -182,8 +219,11 @@ public class AdminController extends BaseController {
 	// --- productos ---
 
 	@PostMapping(value = PRODUCTOS_URL)
-	public String crearProducto(@ModelAttribute(FORM_ATTRIBUTE) FormularioDeProducto form, HttpSession sesion, Locale idioma,
-			RedirectAttributes flash) {
+	public String crearProducto(@Validated @ModelAttribute(FORM_ATTRIBUTE) FormularioDeProducto form,
+			BindingResult errores, HttpSession sesion, Locale idioma, RedirectAttributes flash) {
+		if (errores.hasErrors()) {
+			return avisar(errores, idioma, flash, SECCION_PRODUCTOS);
+		}
 		admin.crearProducto(Sesion.personaId(sesion), form.getGenetica(), form.getPrecio());
 		flash.addFlashAttribute(EXITO, mensajes.de("exito.producto", idioma, form.getGenetica().trim()));
 		return redirect(SECCION_PRODUCTOS);
@@ -260,8 +300,11 @@ public class AdminController extends BaseController {
 	}
 
 	@PostMapping(value = LIMITES_URL)
-	public String limites(@ModelAttribute(FORM_ATTRIBUTE) FormularioDeLimites form, HttpSession sesion, Locale idioma,
-			RedirectAttributes flash) {
+	public String limites(@Validated @ModelAttribute(FORM_ATTRIBUTE) FormularioDeLimites form, BindingResult errores,
+			HttpSession sesion, Locale idioma, RedirectAttributes flash) {
+		if (errores.hasErrors()) {
+			return avisar(errores, idioma, flash, SECCION_COMPRAS);
+		}
 		admin.cambiarLimites(Sesion.personaId(sesion), form.getMinimo(), form.getMaximo());
 		flash.addFlashAttribute(EXITO, mensajes.de("exito.limites", idioma, form.getMinimo(), form.getMaximo()));
 		return redirect(SECCION_COMPRAS);
