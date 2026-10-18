@@ -24,6 +24,7 @@ import com.OneDesK.web.formularios.FormularioDeRegistro;
 import com.OneDesK.web.validadores.ValidadorDeIngreso;
 import com.OneDesK.web.validadores.ValidadorDeRegistro;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
 /** Ingresar, pedir una cuenta y salir. Son las unicas paginas que se ven sin sesion. */
@@ -63,14 +64,14 @@ public class AccesoController extends BaseController {
 
 	@PostMapping(value = INGRESAR_URL)
 	public String ingresar(@Validated @ModelAttribute(FORM_ATTRIBUTE) FormularioDeIngreso form,
-			BindingResult errores, HttpSession sesion) {
+			BindingResult errores, HttpServletRequest pedido) {
 		// la pagina vuelve a mostrarse con el motivo abajo del campo que fallo
 		if (errores.hasErrors()) {
 			return "index";
 		}
 		Persona persona = accesoService.ingresar(form.getEmail(), form.getContrasenia());
-		Sesion.iniciar(sesion, persona);
-		return redirect(Sesion.rol(sesion).getInicio());
+		Sesion.iniciar(pedido, persona);
+		return redirect(Sesion.rol(pedido.getSession()).getInicio());
 	}
 
 	@GetMapping(value = REGISTRO_URL)

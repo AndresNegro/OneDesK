@@ -2,6 +2,7 @@ package com.OneDesK.web;
 
 import com.OneDesK.modelo.Persona;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
 /**
@@ -18,7 +19,15 @@ public final class Sesion {
 	private Sesion() {
 	}
 
-	public static void iniciar(HttpSession sesion, Persona persona) {
+	/**
+	 * Abre la sesion de quien acaba de ingresar. Lo primero que hace es cambiarle el id: si alguien
+	 * le fijo uno antes de que entrara (poniendolo en un link, por ejemplo), ese id deja de servir y
+	 * no puede quedarse adentro de su sesion. Lo que ya habia guardado, como el idioma, se conserva.
+	 */
+	public static void iniciar(HttpServletRequest pedido, Persona persona) {
+		pedido.getSession();
+		pedido.changeSessionId();
+		HttpSession sesion = pedido.getSession();
 		sesion.setAttribute(PERSONA_ID, persona.getId());
 		sesion.setAttribute(ROL, Rol.de(persona));
 		sesion.setAttribute(NOMBRE, persona.getNombre() + " " + persona.getApellido());

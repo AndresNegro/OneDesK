@@ -3,10 +3,16 @@ package com.OneDesK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.time.Duration;
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import org.springframework.boot.web.servlet.server.Session;
 
 import com.OneDesK.services.AdministradorService;
 import com.OneDesK.services.CompraService;
@@ -43,6 +49,8 @@ public class ContextoSpringTest {
 	private TaskService taskService;
 	@Autowired
 	private JdbcTemplate jdbc;
+	@Autowired
+	private ServerProperties servidor;
 
 	// Levanta la aplicacion completa y verifica que Spring pueda crear e inyectar todos los services,
 	// incluido el TaskService, que necesita el TaskScheduler que crea @EnableScheduling
@@ -73,6 +81,14 @@ public class ContextoSpringTest {
 		} finally {
 			indoor.borrar();
 		}
+	}
+
+	// La sesion se cierra sola despues de media hora sin usarla, y viaja solo en la cookie
+	@Test
+	public void laSesionCaducaYNoViajaEnLaDireccion() {
+		assertEquals(Duration.ofMinutes(30), servidor.getServlet().getSession().getTimeout());
+		assertEquals(Set.of(Session.SessionTrackingMode.COOKIE),
+				servidor.getServlet().getSession().getTrackingModes());
 	}
 
 	// Los tests trabajan sobre onedesk_test y nunca sobre la base real onedesk (ver BaseDeTest)

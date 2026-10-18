@@ -2,6 +2,7 @@ package com.OneDesK.web;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -256,6 +257,23 @@ public class CircuitosWebTest {
 		admin.enviar("/admin/indoors", "nombre", "   ", "capacidad", "0");
 		assertTrue(admin.html().contains("El nombre no puede estar vacío"));
 		assertTrue(admin.html().contains("La capacidad tiene que ser de al menos una planta"));
+	}
+
+	// Al ingresar, la sesion cambia de id: un id que alguien hubiera fijado antes ya no sirve.
+	// Lo que estaba guardado, como el idioma elegido, sigue estando despues de entrar.
+	@Test
+	public void alIngresarLaSesionCambiaDeId() {
+		registrarUsuario("cliente@web.test", 0);
+		Navegador cliente = new Navegador(puerto);
+		cliente.abrir("/?idioma=en");
+		String idAntes = cliente.idDeSesion();
+
+		cliente.enviar("/ingresar", "email", "cliente@web.test", "contrasenia", CLAVE);
+
+		assertEquals("/catalogo", cliente.ruta());
+		assertNotNull(idAntes, "No se habia abierto ninguna sesion antes de ingresar");
+		assertNotEquals(idAntes, cliente.idDeSesion(), "La sesion mantuvo el id con el que entro");
+		assertTrue(cliente.html().contains("Harvested in our indoors"), "Se perdio el idioma elegido");
 	}
 
 	// Nadie entra a la pagina de otro rol escribiendo la direccion: vuelve a la suya

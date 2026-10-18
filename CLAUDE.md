@@ -16,11 +16,16 @@ Sirve además como plantilla: los proyectos nuevos arrancan copiando estas decis
 | Build | Maven (sin wrapper: se usa el `mvn` de la máquina) |
 | Framework | Spring Boot 3.5.15 — starters `data-jpa`, `web`, `thymeleaf` |
 | Base de datos | MySQL 8 (`mysql-connector-j`) |
-| Vistas | Thymeleaf + Bootstrap 5.3 y bootstrap-icons por CDN |
+| Vistas | Thymeleaf + `thymeleaf-layout-dialect` + Bootstrap 5.3 y bootstrap-icons por CDN |
+| Desarrollo | `spring-boot-devtools` (reinicia al compilar y no cachea plantillas ni mensajes) |
 | Tests | JUnit 5 + `spring-boot-starter-test` |
 
-No se usa Spring Security, ni Lombok, ni DTOs, ni mappers. La sesión, los roles y la validación
-están escritos a mano, y las entidades viajan directo a las vistas.
+No se usa Spring Security, ni Lombok, ni DTOs, ni mappers, ni Bean Validation. La sesión, los roles
+y la validación están escritos a mano, y las entidades viajan directo a las vistas.
+
+Las dos dependencias que no vienen en un starter llevan su versión escrita, porque Spring Boot 3 ya
+no administra la del layout dialect. Al sumar una dependencia hay que regenerar el `.classpath` de
+Eclipse: `mvn eclipse:clean eclipse:eclipse` y F5 en el proyecto.
 
 ## Comandos
 
@@ -45,13 +50,16 @@ src/main/java/com/OneDesK/
   repositories/       interfaces JpaRepository
   services/           interfaz + Impl por cada servicio
   web/                controllers, sesión, roles, manejo de errores
-  excepciones/        una RuntimeException por regla de negocio
+    formularios/      una clase por formulario, con sus campos y nada más
+    validadores/      un Validator de Spring por formulario con reglas
+  excepciones/        una RuntimeException por regla de negocio, con su clave de mensaje
   helpers/            utilidades sin estado (ValidationUtils)
   config/             runners y tareas que corren al arrancar
 src/main/resources/
   application.properties
+  messages.properties, messages_en.properties   todos los textos, en los dos idiomas
   database/           scripts SQL del esquema
-  templates/          vistas Thymeleaf
+  templates/          layout.html, fragmentos.html y una página por pantalla
   static/css, static/img
 ```
 
@@ -146,6 +154,10 @@ credencial en `application.properties` ni en el código.
   El login, el registro, el CSS y las imágenes quedan abiertos.
 - La sesión viaja solo en la cookie (`server.servlet.session.tracking-modes=cookie`), para que el id
   no aparezca en la URL.
+- **Al ingresar, la sesión cambia de id** (`pedido.changeSessionId()` en `Sesion.iniciar`): si
+  alguien le fijó uno a la persona antes de que entrara, ese id deja de servir. Lo que ya estaba
+  guardado, como el idioma, se conserva.
+- Se cierra sola después de media hora sin usarla (`server.servlet.session.timeout=30m`).
 - Salir va por POST, para que un link suelto no cierre la sesión.
 
 ### Errores: un solo lugar
@@ -154,13 +166,85 @@ credencial en `application.properties` ni en el código.
 `error` y redirige a la página anterior. **Los controllers no llevan try/catch.** Del `Referer` se
 usa solo el path, nunca el dominio, así no se puede redirigir a otro sitio.
 
+Las excepciones no llevan el texto del error sino **su clave y sus datos**, y `ManejoDeErrores` las
+traduce al idioma de quien las va a leer:
+
+```java
+throw new OperacionInvalidaException("error.indoor.lleno", nombre, plantasEnCultivo(), capacidad);
+```
+
+`ExcepcionDeNegocio` es la base de las de negocio y `DatoInvalidoException` hace lo mismo con las
+validaciones del modelo, sin dejar de ser una `IllegalArgumentException`.
+
 Las vistas muestran el resultado con el fragmento `avisos` (`exito` en verde, `error` en rosa).
 
 ### Controllers
 
-`@Controller` de Thymeleaf, nunca `@RestController`. Cada `@RequestParam` lleva su nombre escrito
-(`@RequestParam("email") String email`): sin eso el nombre depende de que se compile con `-parameters`,
-y hay un test que lo verifica (`NombresDeParametrosTest`). Después de un POST siempre se redirige.
+`@Controller` de Thymeleaf, nunca `@RestController`. Todos heredan de `BaseController`, que junta lo
+que comparten: el nombre con el que viaja el formulario (`FORM_ATTRIBUTE`), los de los avisos
+(`EXITO`, `ERROR`, `ERRORES`), `redirect(ruta)` y los dos métodos de validación. También lo hereda
+`ManejoDeErrores`. Después de un POST siempre se redirige, salvo cuando hay que volver a mostrar un
+formulario con sus errores.
+
+Cada dirección es una constante del controller, y se usa en la anotación y en los redirect:
+
+```java
+public static final String MIS_COMPRAS_URL = "/mis-compras";
+public static final String PAGAR_URL = MIS_COMPRAS_URL + "/{compraId}/pagar";
+
+@PostMapping(value = PAGAR_URL)
+public String pagar(@PathVariable("compraId") int compraId, ...) {
+    ...
+    return redirect(MIS_COMPRAS_URL);
+}
+```
+
+Las usan también `Rol` (la página de inicio de cada rol), `ControlDeAcceso` y `ConfiguracionWeb`.
+En las plantillas y en los tests las direcciones van escritas: si el test usara la constante, un
+error en la constante lo haría pasar igual.
+
+Cada `@RequestParam`, `@PathVariable` y `@ModelAttribute` lleva su nombre escrito: sin eso el nombre
+depende de que se compile con `-parameters`, y hay un test que lo verifica
+(`NombresDeParametrosTest`).
+
+### Formularios
+
+Un formulario de varios campos no se recibe con varios `@RequestParam` sino con su clase de
+`web/formularios`, que son objetos con campos, getters y setters y nada más:
+
+```java
+@PostMapping(value = PLANTAR_URL)
+public String plantar(@Validated @ModelAttribute(FORM_ATTRIBUTE) FormularioDePlanta form,
+        BindingResult errores, ...) {
+```
+
+Las acciones de un solo dato (aprobar la compra 14) siguen con `@RequestParam`.
+
+Las páginas de un solo formulario (ingresar, crear cuenta) usan `th:object` y `th:field`, y el GET
+deja el formulario vacío en el modelo. Los paneles, que tienen muchos formularios juntos, usan los
+`name` de siempre: el binding funciona igual y el HTML no se llena de atributos.
+
+### Validaciones
+
+Lo que se puede mirar del formulario (campos vacíos, números que no dan, dos contraseñas que no
+coinciden) va en un validador de `web/validadores`, que extiende `ValidadorDeFormulario<T>`. Pueden
+inyectar repositorios: el de registro avisa que el email ya está tomado antes de intentar guardar.
+
+Cada controller engancha los suyos con `@InitBinder`, y los rechazos se escriben con la clave del
+mensaje, nunca con el texto:
+
+```java
+@InitBinder(value = FORM_ATTRIBUTE)
+public void engancharValidadores(WebDataBinder binder) {
+    enganchar(binder, validadorDeIngreso, validadorDeRegistro);
+}
+```
+
+El motivo se muestra abajo del campo con `th:errors` en las páginas de un solo formulario, y arriba,
+todos juntos, en los paneles (`avisar(...)` de `BaseController`).
+
+**Las reglas del negocio no se repiten acá**: que el indoor no esté lleno o que alcance el stock lo
+sigue haciendo cumplir el modelo, que es el único que puede hacerlo siempre.
 
 ### Servicios
 
@@ -200,13 +284,40 @@ Otras piezas:
   (`CircuitosWebTest`, `FlujoCompletoTest`).
 - Hay tests que verifican las restricciones de la base (`RestriccionesDeLaBaseTest`) y el mapeo de
   las relaciones (`MapeoRelacionesTest`), no solo la lógica.
+- Los validadores se prueban solos, sin levantar Spring (`ValidadoresTest`), salvo el de registro,
+  que consulta la base y por eso corre con `@DataJpaTest` (`ValidadorDeRegistroTest`).
 
 Todos los tests piden la misma configuración para que Spring reutilice el contexto entre clases.
 
+Dos cosas que hacen perder tiempo si no se saben: cuando Maven compila sobre una corrida anterior
+pueden quedar clases viejas y los tests fallan con un `NoClassDefFoundError` de algo que sí existe
+(se arregla con `mvn clean test`), y conviene cerrar la aplicación antes de correr la suite.
+
 ## Vistas
 
-`fragmentos.html` tiene lo que se repite: la cabeza, los dos menús (usuario y panel), el botón de
-salir y los avisos. Cada página los incluye con `th:replace`.
+El esqueleto de todas las páginas está en `layout.html`, con tres huecos: `menu`, `contenido` y
+`scripts`. Cada página se declara con `layout:decorate="~{layout}"` y escribe solo lo suyo, incluido
+su `<title>`, que se junta con el del layout ("Catálogo" queda como "Catálogo · OneDesK").
+
+`fragmentos.html` tiene las piezas que se repiten entre páginas: los dos menús, salir, el selector
+de idioma, la portada con foto, las tarjetas de números, el estado de una compra, un evento y los
+avisos. Cada página las incluye con `th:replace`. **Layout para la estructura, fragmentos para las
+piezas.**
+
+## Textos e idiomas
+
+Ningún texto se escribe en el HTML ni en el código: todos salen de `messages.properties` (español,
+el de por defecto) y `messages_en.properties`, con las mismas claves. En las plantillas se usan con
+`#{clave}`, y los que llevan datos con `#{clave(${dato})}`.
+
+El idioma se cambia con `?idioma=en` desde cualquier página y queda guardado en la sesión
+(`LocaleChangeInterceptor` y `SessionLocaleResolver` en `ConfiguracionWeb`). El selector está en los
+menús y en las dos páginas que no tienen menú. Como Thymeleaf 3.1 ya no da acceso al pedido, la
+dirección actual llega al modelo por `RutaActual`, un `@ControllerAdvice`.
+
+En el código los textos se piden con `Mensajes`: `mensajes.de("exito.indoor.creado", idioma, nombre)`.
+Ojo con `MessageFormat`: a los números les pone separador de miles, así que los ids van como
+`{0,number,#}`.
 
 El CSS (`static/css/onedesk.css`) **pisa las variables de Bootstrap**, no sus reglas, así el HTML
 sigue usando las clases del framework. La identidad está declarada como variables en `:root`.

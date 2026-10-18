@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 class Navegador {
 
 	private final String base;
+	private final CookieManager galletitas = new CookieManager();
 	private final HttpClient cliente;
 	private String paginaActual;
 	private String html = "";
@@ -24,7 +25,7 @@ class Navegador {
 	Navegador(int puerto) {
 		this.base = "http://localhost:" + puerto;
 		this.cliente = HttpClient.newBuilder()
-				.cookieHandler(new CookieManager())
+				.cookieHandler(galletitas)
 				.followRedirects(HttpClient.Redirect.NORMAL)
 				.build();
 		this.paginaActual = base + "/";
@@ -61,6 +62,15 @@ class Navegador {
 
 	String html() {
 		return html;
+	}
+
+	/** El id de sesion que le dio la aplicacion, o null si todavia no tiene ninguna. */
+	String idDeSesion() {
+		return galletitas.getCookieStore().getCookies().stream()
+				.filter(galletita -> "JSESSIONID".equals(galletita.getName()))
+				.map(java.net.HttpCookie::getValue)
+				.findFirst()
+				.orElse(null);
 	}
 
 	private String enviar(HttpRequest.Builder pedido) {
