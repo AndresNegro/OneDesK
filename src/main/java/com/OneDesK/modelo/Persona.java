@@ -1,5 +1,7 @@
 package com.OneDesK.modelo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import com.OneDesK.excepciones.DatoInvalidoException;
 
 import com.OneDesK.helpers.ValidationUtils;
@@ -58,6 +60,8 @@ public abstract class Persona extends Persistible {
         this.email = email.trim().toLowerCase();
     }
 
+    // la API devuelve personas: la contrasenia no viaja nunca, ni siquiera cifrada
+    @JsonIgnore
     public String getContrasenia() { return contrasenia; }
     public void setContrasenia(String contrasenia) {
         if (!ValidationUtils.tieneMasDe(contrasenia, 5)) {

@@ -1,5 +1,7 @@
 package com.OneDesK.services;
 
+import java.util.List;
+
 import com.OneDesK.modelo.Usuario;
 
 public interface UsuarioService {
@@ -10,4 +12,7 @@ public interface UsuarioService {
 	public Usuario asignarTopeCredito(int usuarioId, int tope);
 
 	public Usuario buscar(int usuarioId);
+
+	/** Los clientes que el administrador ya aprobo, ordenados por apellido. */
+	public List<Usuario> listarAprobados();
 }

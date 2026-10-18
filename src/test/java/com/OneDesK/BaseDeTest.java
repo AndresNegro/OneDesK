@@ -32,8 +32,13 @@ public class BaseDeTest implements ContextCustomizerFactory {
 
 		@Override
 		public void customizeContext(ConfigurableApplicationContext contexto, MergedContextConfiguration configuracion) {
-			// los datos de ejemplo tambien se apagan: cada test arma los suyos
-			TestPropertyValues.of("spring.datasource.url=" + URL, "onedesk.demo.activo=false").applyTo(contexto);
+			// los datos de ejemplo tambien se apagan: cada test arma los suyos.
+			// El pool chico es por una razon concreta: Spring deja varios contextos vivos a la vez y cada
+			// uno abre el suyo, asi que con los 10 que vienen por defecto (mas la aplicacion corriendo en
+			// paralelo) se llega al limite de conexiones de MySQL y los contextos que faltan no arrancan:
+			// "Unable to determine Dialect without JDBC metadata".
+			TestPropertyValues.of("spring.datasource.url=" + URL, "onedesk.demo.activo=false",
+					"spring.datasource.hikari.maximum-pool-size=4").applyTo(contexto);
 		}
 
 		// todos los tests piden lo mismo: asi Spring reutiliza el contexto entre clases de test

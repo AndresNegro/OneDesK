@@ -1,5 +1,7 @@
 package com.OneDesK.services;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,12 @@ public class UsuarioServiceImpl implements UsuarioService {
 	private UsuarioRepository repositorio;
 	@Autowired
 	private PersonaRepository personaRepository;
+
+	@Override
+	@Transactional
+	public List<Usuario> listarAprobados() {
+		return repositorio.findByAprobadoTrueOrderByApellidoAscNombreAsc();
+	}
 
 	@Override
 	@Transactional

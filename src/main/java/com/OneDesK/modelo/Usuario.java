@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.OneDesK.excepciones.DatoInvalidoException;
 import com.OneDesK.excepciones.OperacionInvalidaException;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -97,6 +98,7 @@ public class Usuario extends Persona {
     }
 
     // no modificable: agregar o sacar compras tiene que pasar por los metodos que recalculan la deuda
+    @JsonIgnore
     public List<Compra> getCompras() { return Collections.unmodifiableList(compras); }
     public Deuda getDeuda() { return deuda; }
 
