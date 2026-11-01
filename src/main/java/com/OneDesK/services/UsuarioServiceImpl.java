@@ -1,24 +1,45 @@
 package com.OneDesK.services;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.OneDesK.excepciones.EmailDuplicadoException;
 import com.OneDesK.excepciones.RecursoNoEncontradoException;
+import com.OneDesK.dtos.DTO;
 import com.OneDesK.modelo.Usuario;
 import com.OneDesK.repositories.PersonaRepository;
 import com.OneDesK.repositories.UsuarioRepository;
 
 @Service
-public class UsuarioServiceImpl implements UsuarioService {
+public class UsuarioServiceImpl extends ExponibleServiceImpl<Usuario> implements UsuarioService {
+
+	/** Por la API se muestran los clientes aprobados, no las solicitudes pendientes. */
+	@Override
+	protected List<Usuario> aExponer() {
+		return listarAprobados();
+	}
+
 
 	@Autowired
 	private UsuarioRepository repositorio;
 	@Autowired
 	private PersonaRepository personaRepository;
+	@Autowired
+	private ModelMapper mapeador;
+
+	@Override
+	@Transactional
+	public List<DTO> exponerParaAdmin() {
+		List<Usuario> usuarios = repositorio.findAll();
+
+		return usuarios.stream().map(usuario -> mapeador.map(usuario, usuario.dtoParaAdmin()))
+				.collect(Collectors.toList());
+	}
 
 	@Override
 	@Transactional

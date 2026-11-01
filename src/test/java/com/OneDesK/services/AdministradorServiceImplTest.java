@@ -1,5 +1,6 @@
 package com.OneDesK.services;
 
+import com.OneDesK.config.ConfiguracionDeMapeo;
 import com.OneDesK.DatosDePrueba;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,7 +42,7 @@ import com.OneDesK.modelo.Usuario;
 // por los datos que crea cada test, porque la base puede tener otros cargados.
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({ AdministradorServiceImpl.class, IndoorServiceImpl.class, EmpleadoIndoorServiceImpl.class,
+@Import({ ConfiguracionDeMapeo.class, AdministradorServiceImpl.class, IndoorServiceImpl.class, EmpleadoIndoorServiceImpl.class,
 		ProductoServiceImpl.class, UsuarioServiceImpl.class, CompraServiceImpl.class,
 		RegistroProduccionServiceImpl.class, LimitesDeCompraServiceImpl.class })
 public class AdministradorServiceImplTest {

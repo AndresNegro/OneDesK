@@ -6,6 +6,9 @@ import java.util.Collections;
 import java.util.List;
 
 import com.OneDesK.excepciones.DatoInvalidoException;
+import com.OneDesK.dtos.DTO;
+import com.OneDesK.dtos.UsuarioAdminDTO;
+import com.OneDesK.dtos.UsuarioDTO;
 import com.OneDesK.excepciones.OperacionInvalidaException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -18,7 +21,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 @Entity
 @Table(name="Usuario")
-public class Usuario extends Persona {
+public class Usuario extends Persona implements Exponible {
 	@OneToMany (mappedBy="usuario", cascade= CascadeType.ALL, orphanRemoval = true )
     private List<Compra> compras;
 	@OneToOne(cascade=CascadeType.ALL,  orphanRemoval=true)
@@ -42,6 +45,16 @@ public class Usuario extends Persona {
     }
 
     public boolean isAprobado() { return aprobado; }
+
+    @Override
+    public Class<? extends DTO> dtoParaApi() {
+        return UsuarioDTO.class;
+    }
+
+    @Override
+    public Class<? extends DTO> dtoParaAdmin() {
+        return UsuarioAdminDTO.class;
+    }
 
     /** El administrador acepta la solicitud de registro y le asigna el tope de credito en el mismo paso. */
     public void aprobar(int topeCredito) {

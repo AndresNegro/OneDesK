@@ -1,5 +1,6 @@
 package com.OneDesK.services;
 
+import com.OneDesK.config.ConfiguracionDeMapeo;
 import com.OneDesK.DatosDePrueba;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,7 +31,7 @@ import com.OneDesK.modelo.Usuario;
 // se registran las personas, se planta, se cosecha, se vende, se cobra y se anula.
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({ UsuarioServiceImpl.class, EmpleadoIndoorServiceImpl.class, IndoorServiceImpl.class,
+@Import({ ConfiguracionDeMapeo.class, UsuarioServiceImpl.class, EmpleadoIndoorServiceImpl.class, IndoorServiceImpl.class,
 		ProductoServiceImpl.class, RegistroProduccionServiceImpl.class, CompraServiceImpl.class,
 		LimitesDeCompraServiceImpl.class })
 public class FlujoCompletoTest {

@@ -1,5 +1,7 @@
 package com.OneDesK.services;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,10 +13,16 @@ import com.OneDesK.modelo.Planta;
 import com.OneDesK.repositories.IndoorRepository;
 
 @Service
-public class IndoorServiceImpl implements IndoorService {
+public class IndoorServiceImpl extends ExponibleServiceImpl<Indoor> implements IndoorService {
 
 	@Autowired
 	private IndoorRepository repositorio;
+
+	/** Por la API se muestran todos los indoors: son pocos y son el estado del negocio. */
+	@Override
+	protected List<Indoor> aExponer() {
+		return repositorio.findAll();
+	}
 
 	@Override
 	@Transactional

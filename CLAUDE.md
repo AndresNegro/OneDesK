@@ -20,8 +20,9 @@ Sirve además como plantilla: los proyectos nuevos arrancan copiando estas decis
 | Desarrollo | `spring-boot-devtools` (reinicia al compilar y no cachea plantillas ni mensajes) |
 | Tests | JUnit 5 + `spring-boot-starter-test` |
 
-No se usa Spring Security, ni Lombok, ni DTOs, ni mappers, ni Bean Validation. La sesión, los roles
-y la validación están escritos a mano, y las entidades viajan directo a las vistas.
+No se usa Spring Security, ni Lombok, ni mappers, ni Bean Validation. La sesión, los roles y la
+validación están escritos a mano, y las entidades viajan directo a las vistas de Thymeleaf. Por la
+API, en cambio, viajan DTOs: ver "API REST".
 
 Las dos dependencias que no vienen en un starter llevan su versión escrita, porque Spring Boot 3 ya
 no administra la del layout dialect. Al sumar una dependencia hay que regenerar el `.classpath` de
@@ -52,6 +53,8 @@ src/main/java/com/OneDesK/
   web/                controllers, sesión, roles, manejo de errores
     formularios/      una clase por formulario, con sus campos y nada más
     validadores/      un Validator de Spring por formulario con reglas
+    rest/             las APIs: un @RestController por recurso
+  dtos/               lo que viaja por la API: datos sueltos, sin reglas ni relaciones
   excepciones/        una RuntimeException por regla de negocio, con su clave de mensaje
   helpers/            utilidades sin estado (ValidationUtils)
   config/             runners y tareas que corren al arrancar
@@ -292,6 +295,79 @@ Todos los tests piden la misma configuración para que Spring reutilice el conte
 Dos cosas que hacen perder tiempo si no se saben: cuando Maven compila sobre una corrida anterior
 pueden quedar clases viejas y los tests fallan con un `NoClassDefFoundError` de algo que sí existe
 (se arregla con `mvn clean test`), y conviene cerrar la aplicación antes de correr la suite.
+
+## API REST
+
+Las APIs viven en `web/rest`, una por recurso, con el mismo formato que los controllers: la
+dirección es una constante y el método la usa en la anotación.
+
+```java
+@RestController
+public class ProductoAPI {
+
+    public static final String LISTAR_PRODUCTOS_URL = "/api/productos";
+
+    @GetMapping(value = LISTAR_PRODUCTOS_URL,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<ProductoDTO>> listar() { ... }
+}
+```
+
+**Por la API no viajan entidades, viajan DTOs.** Un DTO (`dtos/`) hereda de `BaseDTO` (que trae el
+`id`) y tiene campos, getters y setters y nada más. Los DTO se heredan entre sí cuando una vista
+necesita más datos: `UsuarioAdminDTO extends UsuarioDTO` agrega lo que solo ve la administración.
+
+Los arma **ModelMapper**, copiando los campos que se llaman igual en la entidad y en el DTO. Por eso
+las propiedades se nombran igual de los dos lados (`getNombreCompleto()` en `Persona`).
+
+La entidad no construye el DTO: implementa `Exponible` y solo dice **cuál** le corresponde.
+
+```java
+@Override
+public Class<? extends DTO> dtoParaApi() {
+    return UsuarioDTO.class;
+}
+
+@Override
+public Class<? extends DTO> dtoParaAdmin() {
+    return UsuarioAdminDTO.class;
+}
+```
+
+Lo que **no es una copia** (la deuda, que se recalcula; las plantas en cultivo, que son una cuenta)
+se completa con un `setPostConverter` en `ConfiguracionDeMapeo`, que es el único lugar donde está
+escrito. El mapeador usa la estrategia estricta: solo copia lo que coincide exacto, nada de adivinar
+por parecido.
+
+La conversión la hace el service, no la API: `ExponibleServiceImpl` la escribe una sola vez y cada
+service solo dice qué entidades muestra.
+
+```java
+public class ProductoServiceImpl extends ExponibleServiceImpl<Producto> implements ProductoService {
+
+    /** Por la API se muestran las geneticas con stock, que son las que se pueden comprar. */
+    @Override
+    protected List<Producto> aExponer() {
+        return listarProductos();
+    }
+```
+
+Está en el service porque la conversión necesita la transacción abierta: armar el DTO de un cliente
+le pregunta la deuda, que se recalcula leyendo sus compras. La API queda en una línea:
+`servicio.exponer()`, y devuelve `List<DTO>`.
+
+Un detalle de los tests: los que levantan solo un pedazo de la aplicación (`@DataJpaTest`) no cargan
+las configuraciones, así que los que usan un service que expone necesitan
+`@Import(ConfiguracionDeMapeo.class)`.
+
+Así la API no arrastra las relaciones de JPA ni se rompe cuando el modelo cambia, y de paso no hay
+que ir tapando campos con `@JsonIgnore`. Los de `Persona.getContrasenia()` y `Usuario.getCompras()`
+quedaron igual, por si alguna vez se serializa una entidad por error.
+
+Dos cosas de los media types, probadas: `produces` hace que a quien pida otro formato se le conteste
+406, y `consumes` deja afuera a quien no mande `Content-Type`. En un GET eso significa que el
+navegador recibe 415 y hay que pedirlo desde Postman o con el header puesto.
 
 ## Vistas
 

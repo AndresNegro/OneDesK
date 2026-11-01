@@ -31,7 +31,7 @@ import com.OneDesK.services.UsuarioServiceImpl;
 // Se cuenta solo lo de ejemplo (@onedesk.demo y los tres indoors), por si la base de test tuviera otra cosa.
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({ DatosDeEjemplo.class, AdministradorServiceImpl.class, IndoorServiceImpl.class,
+@Import({ ConfiguracionDeMapeo.class, DatosDeEjemplo.class, AdministradorServiceImpl.class, IndoorServiceImpl.class,
 		EmpleadoIndoorServiceImpl.class, ProductoServiceImpl.class, UsuarioServiceImpl.class, CompraServiceImpl.class,
 		RegistroProduccionServiceImpl.class, GeneradorDeEventosServiceImpl.class, LimitesDeCompraServiceImpl.class })
 public class DatosDeEjemploTest {

@@ -11,6 +11,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
+import com.OneDesK.config.ConfiguracionDeMapeo;
 import com.OneDesK.excepciones.EmailDuplicadoException;
 import com.OneDesK.excepciones.RecursoNoEncontradoException;
 import com.OneDesK.modelo.Usuario;
@@ -18,7 +19,7 @@ import com.OneDesK.modelo.Usuario;
 // Contra MySQL con el service real: cada resultado se comprueba leyendo la base, no el objeto en memoria
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(UsuarioServiceImpl.class)
+@Import({ ConfiguracionDeMapeo.class, UsuarioServiceImpl.class })
 public class UsuarioServiceImplTest {
 
 	@Autowired

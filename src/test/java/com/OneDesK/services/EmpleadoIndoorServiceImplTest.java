@@ -1,5 +1,6 @@
 package com.OneDesK.services;
 
+import com.OneDesK.config.ConfiguracionDeMapeo;
 import com.OneDesK.DatosDePrueba;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,7 +34,7 @@ import com.OneDesK.modelo.Usuario;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({ EmpleadoIndoorServiceImpl.class, IndoorServiceImpl.class })
+@Import({ ConfiguracionDeMapeo.class, EmpleadoIndoorServiceImpl.class, IndoorServiceImpl.class })
 public class EmpleadoIndoorServiceImplTest {
 
 	@Autowired

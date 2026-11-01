@@ -1,5 +1,7 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.dtos.DTO;
+import com.OneDesK.dtos.IndoorDTO;
 import com.OneDesK.evento.Evento;
 import com.OneDesK.excepciones.DatoInvalidoException;
 import com.OneDesK.excepciones.OperacionInvalidaException;
@@ -19,7 +21,7 @@ import java.util.List;
 
 @Entity
 @Table(name="Indoor")
-public class Indoor extends Persistible{
+public class Indoor extends Persistible implements Exponible {
 	@Column(name="nombre", unique=true)
 	private String nombre;
 	// cuantas plantas en cultivo entran a la vez: las cosechadas ya no ocupan lugar
@@ -43,6 +45,16 @@ public class Indoor extends Persistible{
     public Indoor(String nombre, int capacidad) {
         this();
         editar(nombre, capacidad);
+    }
+
+    @Override
+    public Class<? extends DTO> dtoParaApi() {
+        return IndoorDTO.class;
+    }
+
+    @Override
+    public Class<? extends DTO> dtoParaAdmin() {
+        return IndoorDTO.class;
     }
 
     public String getNombre() { return nombre; }

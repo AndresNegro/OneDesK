@@ -1,5 +1,6 @@
 package com.OneDesK.services;
 
+import com.OneDesK.config.ConfiguracionDeMapeo;
 import com.OneDesK.DatosDePrueba;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,7 +33,7 @@ import com.OneDesK.modelo.Planta;
 // La planta usa riego cada 60 minutos, luz cada 120 y ventilacion cada 30.
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({ GeneradorDeEventosServiceImpl.class, IndoorServiceImpl.class, EmpleadoIndoorServiceImpl.class })
+@Import({ ConfiguracionDeMapeo.class, GeneradorDeEventosServiceImpl.class, IndoorServiceImpl.class, EmpleadoIndoorServiceImpl.class })
 public class GeneradorDeEventosServiceImplTest {
 
 	@Autowired

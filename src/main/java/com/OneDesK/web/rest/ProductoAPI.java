@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.OneDesK.modelo.Producto;
+import com.OneDesK.dtos.DTO;
 import com.OneDesK.services.ProductoService;
 
 /**
@@ -33,8 +33,8 @@ public class ProductoAPI {
 	@GetMapping(value = LISTAR_PRODUCTOS_URL,
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<List<Producto>> listar() {
-		List<Producto> productos = this.servicio.listarProductos();
+	public ResponseEntity<List<DTO>> listar() {
+		List<DTO> productos = this.servicio.exponer();
 
 		return ResponseEntity.ok(productos);
 	}

@@ -1,5 +1,7 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.dtos.DTO;
+import com.OneDesK.dtos.ProductoDTO;
 import com.OneDesK.excepciones.DatoInvalidoException;
 import com.OneDesK.excepciones.StockInsuficienteException;
 
@@ -9,7 +11,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name="Producto")
-public class Producto extends Persistible{
+public class Producto extends Persistible implements Exponible {
 	@Column(name="genetica", unique=true)
     private String genetica;
 	@Column(name="stock")
@@ -38,6 +40,16 @@ public class Producto extends Persistible{
     }
 
     // sin setGenetica: la genetica es unica y es lo que usa la cosecha para encontrar el producto
+    @Override
+    public Class<? extends DTO> dtoParaApi() {
+        return ProductoDTO.class;
+    }
+
+    @Override
+    public Class<? extends DTO> dtoParaAdmin() {
+        return ProductoDTO.class;
+    }
+
     public String getGenetica() { return genetica; }
     // sin setStock: el stock cambia por cosechas (reponerStock), compras (descontarStock)
     // o un ajuste del administrador (fijarStock, ajustarStock), siempre validado

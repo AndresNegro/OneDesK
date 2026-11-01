@@ -1,5 +1,6 @@
 package com.OneDesK.services;
 
+import com.OneDesK.config.ConfiguracionDeMapeo;
 import com.OneDesK.DatosDePrueba;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,7 +31,7 @@ import com.OneDesK.modelo.RegistroProduccion;
 // Contra H2 con repositorios reales: la cosecha cruza indoor, planta, empleado y producto
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({ RegistroProduccionServiceImpl.class, ProductoServiceImpl.class })
+@Import({ ConfiguracionDeMapeo.class, RegistroProduccionServiceImpl.class, ProductoServiceImpl.class })
 public class RegistroProduccionServiceImplTest {
 
 	@Autowired

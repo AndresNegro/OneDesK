@@ -44,6 +44,11 @@ public abstract class Persona extends Persistible {
         this.nombre = nombre.trim();
     }
 
+    /** Nombre y apellido juntos: se llama igual que en el DTO para que el mapeo sea directo. */
+    public String getNombreCompleto() {
+        return getNombre() + " " + getApellido();
+    }
+
     public String getApellido() { return apellido; }
     public void setApellido(String apellido) {
         if (!ValidationUtils.tieneTexto(apellido)) {

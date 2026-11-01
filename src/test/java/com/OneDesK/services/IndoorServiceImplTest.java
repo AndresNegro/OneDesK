@@ -1,5 +1,6 @@
 package com.OneDesK.services;
 
+import com.OneDesK.config.ConfiguracionDeMapeo;
 import com.OneDesK.DatosDePrueba;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,7 +27,7 @@ import com.OneDesK.modelo.Planta;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(IndoorServiceImpl.class)
+@Import({ ConfiguracionDeMapeo.class, IndoorServiceImpl.class })
 public class IndoorServiceImplTest {
 
 	@Autowired

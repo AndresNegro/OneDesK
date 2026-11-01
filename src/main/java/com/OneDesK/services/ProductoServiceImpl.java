@@ -12,7 +12,14 @@ import com.OneDesK.modelo.Producto;
 import com.OneDesK.repositories.ProductoRepository;
 
 @Service
-public class ProductoServiceImpl implements ProductoService {
+public class ProductoServiceImpl extends ExponibleServiceImpl<Producto> implements ProductoService {
+
+	/** Por la API se muestran las geneticas con stock, que son las que se pueden comprar. */
+	@Override
+	protected List<Producto> aExponer() {
+		return listarProductos();
+	}
+
 
 	private static final int SIN_STOCK = 0;
 

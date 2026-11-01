@@ -1,9 +1,10 @@
 package com.OneDesK.services;
 
+
 import com.OneDesK.modelo.Indoor;
 import com.OneDesK.modelo.Planta;
 
-public interface IndoorService {
+public interface IndoorService extends ExponibleService {
 
 	/** Crea un indoor con un nombre que no puede repetirse y la cantidad de plantas que entran. */
 	public Indoor crearIndoor(String nombre, int capacidad);

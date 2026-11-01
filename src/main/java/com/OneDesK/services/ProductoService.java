@@ -2,9 +2,10 @@ package com.OneDesK.services;
 
 import java.util.List;
 
+
 import com.OneDesK.modelo.Producto;
 
-public interface ProductoService {
+public interface ProductoService extends ExponibleService {
 
 	/** Da de alta un producto sin stock: el stock entra despues, con las cosechas. */
 	public Producto crearProducto(String genetica, int precio);
