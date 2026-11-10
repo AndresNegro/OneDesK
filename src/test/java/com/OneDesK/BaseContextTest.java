@@ -14,6 +14,9 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
+import com.OneDesK.dtos.TokenDTO;
+import com.OneDesK.web.formularios.FormularioDeIngreso;
+import com.OneDesK.web.rest.AutenticacionAPI;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -34,6 +37,8 @@ public abstract class BaseContextTest {
 	private int puerto;
 	@Autowired
 	private ObjectMapper lectorDeJson;
+
+	private String token;
 
 	protected int puerto() {
 		return this.puerto;
@@ -90,7 +95,48 @@ public abstract class BaseContextTest {
 		}
 	}
 
+	/**
+	 * Entra a la API y se queda con el token: desde aca, todos los pedidos de este test lo mandan en
+	 * la cabecera Authorization, igual que haria el programa que la consume.
+	 */
+	protected void entrarComo(String email, String contrasenia) {
+		FormularioDeIngreso credenciales = new FormularioDeIngreso();
+		credenciales.setEmail(email);
+		credenciales.setContrasenia(contrasenia);
+
+		HttpResponse<String> respuesta = post(AutenticacionAPI.LOGIN_URL, comoJson(credenciales));
+		if (respuesta.statusCode() != 200) {
+			throw new AssertionError("No se pudo entrar a la API: " + respuesta.statusCode() + " " + respuesta.body());
+		}
+		this.token = leer(respuesta, TokenDTO.class).getToken();
+	}
+
+	/** Sigue con otro token, para probar uno falso o cambiado. */
+	protected void conToken(String token) {
+		this.token = token;
+	}
+
+	/** Deja de mandar el token, para probar que sin el la API no contesta. */
+	protected void salir() {
+		this.token = null;
+	}
+
+	protected String getToken() {
+		return this.token;
+	}
+
+	protected <T> T leer(HttpResponse<String> respuesta, Class<T> clase) {
+		try {
+			return lectorDeJson.readValue(respuesta.body(), clase);
+		} catch (JsonProcessingException e) {
+			throw new AssertionError("No se pudo leer el JSON: " + respuesta.body(), e);
+		}
+	}
+
 	private HttpResponse<String> enviar(HttpRequest.Builder pedido) {
+		if (this.token != null) {
+			pedido.header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token);
+		}
 		try {
 			return HttpClient.newHttpClient().send(pedido.build(),
 					HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));

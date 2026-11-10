@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
+import com.OneDesK.config.ConfiguracionDeContrasenias;
 import com.OneDesK.config.ConfiguracionDeMapeo;
 import com.OneDesK.excepciones.OperacionInvalidaException;
 import com.OneDesK.excepciones.RecursoNoEncontradoException;
@@ -22,7 +23,7 @@ import com.OneDesK.modelo.Producto;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({ ConfiguracionDeMapeo.class, ProductoServiceImpl.class })
+@Import({ ConfiguracionDeMapeo.class, ConfiguracionDeContrasenias.class, ProductoServiceImpl.class })
 public class ProductoServiceImplTest {
 
 	@Autowired

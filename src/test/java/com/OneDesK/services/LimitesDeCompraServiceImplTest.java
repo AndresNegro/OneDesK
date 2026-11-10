@@ -11,12 +11,13 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
+import com.OneDesK.config.ConfiguracionDeContrasenias;
 import com.OneDesK.modelo.LimitesDeCompra;
 
 // Los limites de gramos contra MySQL: hay una sola fila de configuracion y se crea sola la primera vez
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(LimitesDeCompraServiceImpl.class)
+@Import({ ConfiguracionDeContrasenias.class, LimitesDeCompraServiceImpl.class })
 public class LimitesDeCompraServiceImplTest {
 
 	@Autowired

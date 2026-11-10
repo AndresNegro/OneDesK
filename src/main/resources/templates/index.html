@@ -23,18 +23,25 @@
 
             <div th:replace="~{fragmentos :: avisos}"></div>
 
-            <form th:action="@{/ingresar}" method="post" th:object="${form}">
+            <!-- el motivo lo deja Spring Security en la direccion al volver (ver FalloAlIngresar) -->
+            <div class="aviso-accion aviso-accion--error" th:if="${param.error}" role="alert">
+                <i class="bi bi-exclamation-circle"></i><span th:text="#{error.credenciales}">Error</span>
+            </div>
+            <div class="aviso-accion aviso-accion--error" th:if="${param.pendiente}" role="alert">
+                <i class="bi bi-exclamation-circle"></i><span th:text="#{error.cuenta.pendiente}">Pendiente</span>
+            </div>
+
+            <form th:action="@{/ingresar}" method="post">
                 <div class="mb-4">
                     <label for="email" class="form-label" th:text="#{campo.email}">Email</label>
-                    <input type="email" class="form-control form-control-lg" th:field="*{email}"
-                           th:placeholder="#{campo.email.ejemplo}" autofocus>
-                    <p class="error-de-campo" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Motivo</p>
+                    <input type="email" id="email" name="email" class="form-control form-control-lg"
+                           th:placeholder="#{campo.email.ejemplo}" required autofocus>
                 </div>
 
                 <div class="mb-5">
                     <label for="contrasenia" class="form-label" th:text="#{campo.contrasenia}">Contraseña</label>
-                    <input type="password" class="form-control form-control-lg" th:field="*{contrasenia}">
-                    <p class="error-de-campo" th:if="${#fields.hasErrors('contrasenia')}" th:errors="*{contrasenia}">Motivo</p>
+                    <input type="password" id="contrasenia" name="contrasenia"
+                           class="form-control form-control-lg" required>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-lg w-100">

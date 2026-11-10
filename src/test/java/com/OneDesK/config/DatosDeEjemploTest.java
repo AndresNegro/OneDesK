@@ -15,6 +15,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.OneDesK.config.ConfiguracionDeContrasenias;
 import com.OneDesK.services.AdministradorService;
 import com.OneDesK.services.AdministradorServiceImpl;
 import com.OneDesK.services.CompraServiceImpl;
@@ -31,7 +32,7 @@ import com.OneDesK.services.UsuarioServiceImpl;
 // Se cuenta solo lo de ejemplo (@onedesk.demo y los tres indoors), por si la base de test tuviera otra cosa.
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({ ConfiguracionDeMapeo.class, DatosDeEjemplo.class, AdministradorServiceImpl.class, IndoorServiceImpl.class,
+@Import({ ConfiguracionDeMapeo.class, ConfiguracionDeContrasenias.class, DatosDeEjemplo.class, AdministradorServiceImpl.class, IndoorServiceImpl.class,
 		EmpleadoIndoorServiceImpl.class, ProductoServiceImpl.class, UsuarioServiceImpl.class, CompraServiceImpl.class,
 		RegistroProduccionServiceImpl.class, GeneradorDeEventosServiceImpl.class, LimitesDeCompraServiceImpl.class })
 public class DatosDeEjemploTest {

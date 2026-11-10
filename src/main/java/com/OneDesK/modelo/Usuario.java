@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.OneDesK.enums.Rol;
 import com.OneDesK.excepciones.DatoInvalidoException;
 import com.OneDesK.dtos.DTO;
 import com.OneDesK.dtos.UsuarioAdminDTO;
@@ -38,6 +39,7 @@ public class Usuario extends Persona implements Exponible {
 
     public Usuario(String nombre, String apellido, String email, String contrasenia) {
         super(nombre, apellido, email, contrasenia);
+        tomarRol(Rol.USUARIO);
         this.compras = new ArrayList<>();
         this.deuda = new Deuda();
         this.topeCredito = 0;
@@ -45,6 +47,12 @@ public class Usuario extends Persona implements Exponible {
     }
 
     public boolean isAprobado() { return aprobado; }
+
+    /** El cliente entra recien cuando le aprueban la solicitud de registro. */
+    @Override
+    public boolean estaHabilitada() {
+        return isAprobado();
+    }
 
     @Override
     public Class<? extends DTO> dtoParaApi() {

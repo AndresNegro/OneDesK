@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 
@@ -18,6 +19,8 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
+import com.OneDesK.enums.Permiso;
+import com.OneDesK.enums.Rol;
 import com.OneDesK.evento.Evento;
 import com.OneDesK.evento.EventoLuz;
 import com.OneDesK.evento.EventoVentilador;
@@ -250,6 +253,22 @@ public class MapeoRelacionesTest {
 
 		// un usuario y un empleado: la unicidad es sobre toda la tabla Persona
 		assertThrows(PersistenceException.class, () -> em.persistAndFlush(empleado));
+	}
+
+	// El rol de cada persona queda guardado en Persona_Rol y vuelve con ella
+	@Test
+	public void losRolesSeGuardanYSeRecuperan() {
+		Usuario cliente = nuevoUsuario(DatosDePrueba.email());
+		EmpleadoIndoor empleado = new EmpleadoIndoor("Ana", "Lopez", DatosDePrueba.email(), "12345", 500000);
+		em.persistAndFlush(cliente);
+		em.persistAndFlush(empleado);
+		int idCliente = cliente.getId();
+		int idEmpleado = empleado.getId();
+		em.clear();
+
+		assertEquals(Rol.USUARIO, em.find(Usuario.class, idCliente).getRol());
+		assertEquals(Rol.EMPLEADO, em.find(EmpleadoIndoor.class, idEmpleado).getRol());
+		assertTrue(em.find(Usuario.class, idCliente).puede(Permiso.COMPRAR));
 	}
 
 	// --- helpers ---

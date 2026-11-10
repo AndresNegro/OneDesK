@@ -14,20 +14,19 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.OneDesK.excepciones.DatoInvalidoException;
-import com.OneDesK.modelo.Persona;
-import com.OneDesK.services.AccesoService;
 import com.OneDesK.services.UsuarioService;
-import com.OneDesK.web.formularios.FormularioDeIngreso;
 import com.OneDesK.web.formularios.FormularioDeRegistro;
-
-import com.OneDesK.web.validadores.ValidadorDeIngreso;
 import com.OneDesK.web.validadores.ValidadorDeRegistro;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
-/** Ingresar, pedir una cuenta y salir. Son las unicas paginas que se ven sin sesion. */
+/**
+ * Ingresar, pedir una cuenta y salir. Son las unicas paginas que se ven sin sesion.
+ *
+ * El formulario de ingreso no se recibe aca: lo procesa Spring Security en /ingresar, y lo mismo
+ * salir en /salir (ver ConfiguracionDeSeguridad). Lo que queda es mostrar la pagina y el motivo
+ * cuando alguien no pudo entrar.
+ */
 @Controller
 public class AccesoController extends BaseController {
 
@@ -37,41 +36,23 @@ public class AccesoController extends BaseController {
 	public static final String SALIR_URL = "/salir";
 
 	@Autowired
-	private AccesoService accesoService;
-	@Autowired
 	private UsuarioService usuarioService;
-	@Autowired
-	private ValidadorDeIngreso validadorDeIngreso;
 	@Autowired
 	private ValidadorDeRegistro validadorDeRegistro;
 
 	/** Los validadores que revisan los formularios de esta pagina, antes de que Spring los llene. */
 	@InitBinder(value = FORM_ATTRIBUTE)
 	public void engancharValidadores(WebDataBinder binder) {
-		enganchar(binder, validadorDeIngreso, validadorDeRegistro);
+		enganchar(binder, validadorDeRegistro);
 	}
 
 	// con la sesion abierta, el login lleva directo a la pagina de inicio de su rol
 	@GetMapping(value = LOGIN_URL)
-	public String login(HttpSession sesion, Model modelo) {
+	public String login(HttpSession sesion) {
 		if (Sesion.ingreso(sesion)) {
-			return redirect(Sesion.rol(sesion).getInicio());
+			return redirect(PaginaDeInicio.de(Sesion.rol(sesion)));
 		}
-		// el formulario vacio es el que la pagina completa con th:field
-		modelo.addAttribute(FORM_ATTRIBUTE, new FormularioDeIngreso());
 		return "index";
-	}
-
-	@PostMapping(value = INGRESAR_URL)
-	public String ingresar(@Validated @ModelAttribute(FORM_ATTRIBUTE) FormularioDeIngreso form,
-			BindingResult errores, HttpServletRequest pedido) {
-		// la pagina vuelve a mostrarse con el motivo abajo del campo que fallo
-		if (errores.hasErrors()) {
-			return "index";
-		}
-		Persona persona = accesoService.ingresar(form.getEmail(), form.getContrasenia());
-		Sesion.iniciar(pedido, persona);
-		return redirect(Sesion.rol(pedido.getSession()).getInicio());
 	}
 
 	@GetMapping(value = REGISTRO_URL)
@@ -89,12 +70,6 @@ public class AccesoController extends BaseController {
 		}
 		usuarioService.registrar(form.getNombre(), form.getApellido(), form.getEmail(), form.getContrasenia());
 		flash.addFlashAttribute(EXITO, mensajes.de("exito.solicitud", idioma));
-		return redirect(LOGIN_URL);
-	}
-
-	@PostMapping(value = SALIR_URL)
-	public String salir(HttpSession sesion) {
-		sesion.invalidate();
 		return redirect(LOGIN_URL);
 	}
 }

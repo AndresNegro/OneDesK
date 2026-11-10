@@ -87,6 +87,32 @@
         <optional>true</optional>
 	  </dependency>
 
+      <!-- acceso: login, autorizacion por permisos y contrasenias encriptadas con BCrypt -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-security</artifactId>
+	  </dependency>
+
+      <!-- los tokens JWT de la API. La implementacion y el lector de JSON van en runtime: el codigo
+           solo usa la interfaz de jjwt-api -->
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-api</artifactId>
+        <version>0.12.6</version>
+	  </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-impl</artifactId>
+        <version>0.12.6</version>
+        <scope>runtime</scope>
+	  </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-jackson</artifactId>
+        <version>0.12.6</version>
+        <scope>runtime</scope>
+	  </dependency>
+
       <!-- arma los DTO copiando los campos que se llaman igual, para no escribirlos a mano -->
       <dependency>
         <groupId>org.modelmapper</groupId>

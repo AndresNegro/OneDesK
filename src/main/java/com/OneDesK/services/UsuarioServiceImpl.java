@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,8 @@ public class UsuarioServiceImpl extends ExponibleServiceImpl<Usuario> implements
 	@Autowired
 	private PersonaRepository personaRepository;
 	@Autowired
+	private PasswordEncoder encriptador;
+	@Autowired
 	private ModelMapper mapeador;
 
 	@Override
@@ -51,6 +54,7 @@ public class UsuarioServiceImpl extends ExponibleServiceImpl<Usuario> implements
 	@Transactional
 	public Usuario registrar(String nombre, String apellido, String email, String contrasenia) {
 		Usuario usuario = new Usuario(nombre, apellido, email, contrasenia);
+		usuario.encriptarContrasenia(encriptador);
 
 		// se consulta con el email que ya normalizo Persona, asi las mayusculas no esquivan el chequeo
 		if (personaRepository.existsByEmail(usuario.getEmail())) {

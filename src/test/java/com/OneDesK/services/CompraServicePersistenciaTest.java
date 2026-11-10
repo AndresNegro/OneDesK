@@ -16,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
+import com.OneDesK.config.ConfiguracionDeContrasenias;
 import com.OneDesK.modelo.Compra;
 import com.OneDesK.modelo.Producto;
 import com.OneDesK.modelo.Usuario;
@@ -23,7 +24,7 @@ import com.OneDesK.modelo.Usuario;
 // Complementa a CompraServiceImplTest con casos de persistencia: anulaciones combinadas y varios productos por compra
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({ CompraServiceImpl.class, LimitesDeCompraServiceImpl.class })
+@Import({ ConfiguracionDeContrasenias.class, CompraServiceImpl.class, LimitesDeCompraServiceImpl.class })
 public class CompraServicePersistenciaTest {
 
 	@Autowired

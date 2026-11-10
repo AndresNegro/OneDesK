@@ -50,15 +50,19 @@ public class ApiRestTest extends BaseContextTest {
 
 	private int producto;
 	private Indoor indoor;
+	private String emailDelAdmin;
 
 	@BeforeEach
 	public void cargarDatos() {
 		producto = productoService.crearProducto(GENETICA, 1200).getId();
 		productoService.fijarStock(producto, 50);
-		int admin = administradorService.registrar("Ana", "Admin", DatosDePrueba.email(), CLAVE).getId();
+		emailDelAdmin = DatosDePrueba.email();
+		int admin = administradorService.registrar("Ana", "Admin", emailDelAdmin, CLAVE).getId();
 		int usuario = usuarioService.registrar("Juan", "Perez", EMAIL, CLAVE).getId();
 		administradorService.aprobarUsuario(admin, usuario, 5000);
 		indoor = indoorService.crearIndoor(DatosDePrueba.nombreDeIndoor(), DatosDePrueba.CAPACIDAD);
+		// la API pide token: el resto de los tests la usa como la usaria un cliente ya autenticado
+		entrarComo(EMAIL, CLAVE);
 	}
 
 	@AfterEach
@@ -140,6 +144,9 @@ public class ApiRestTest extends BaseContextTest {
 	public void elAdministradorVeMasDatosDeCadaCliente() {
 		String pendiente = DatosDePrueba.email();
 		usuarioService.registrar("Sin", "Aprobar", pendiente, CLAVE);
+
+		// los datos de la administracion los ve quien tiene el permiso de administrar, no cualquiera
+		entrarComo(emailDelAdmin, CLAVE);
 
 		List<UsuarioAdminDTO> usuarios = leerLista(get(UsuarioAdminAPI.LISTAR_USUARIOS_ADMIN_URL),
 				UsuarioAdminDTO.class);

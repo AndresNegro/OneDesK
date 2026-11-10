@@ -240,11 +240,13 @@ public class CircuitosWebTest {
 	public void unFormularioIncompletoVuelveConElMotivo() {
 		Navegador anonimo = new Navegador(puerto);
 
-		// ingresar sin contrasenia: el motivo sale abajo del campo y no se abre ninguna sesion
+		// ingresar sin contrasenia: vuelve al login con el motivo y no se abre ninguna sesion.
+		// Spring Security contesta lo mismo que con la contrasenia equivocada, para no decir
+		// si ese email existe
 		anonimo.abrir("/");
 		anonimo.enviar("/ingresar", "email", "admin@web.test", "contrasenia", "");
-		assertEquals("/ingresar", anonimo.ruta());
-		assertTrue(anonimo.html().contains("La contraseña no puede estar vacía"));
+		assertEquals("/", anonimo.ruta());
+		assertTrue(anonimo.html().contains("Email o contraseña incorrectos"));
 
 		// las dos contrasenias distintas, en el registro
 		anonimo.abrir("/registro");
@@ -292,6 +294,30 @@ public class CircuitosWebTest {
 		assertEquals("/empleado", empleado.ruta());
 		admin.abrir("/mis-compras");
 		assertEquals("/admin", admin.ruta());
+	}
+
+	// Un POST sin el token CSRF no se acepta, aunque la sesion este abierta: es lo que impide que
+	// un formulario puesto en otro sitio haga algo con la sesion de quien lo abre sin querer
+	@Test
+	public void unFormularioSinElTokenNoSeAcepta() {
+		int codigo = admin.enviarSinToken("/admin/limites", "minimo", "99", "maximo", "999");
+
+		assertEquals(403, codigo);
+		assertEquals(0, contar("SELECT COUNT(*) FROM LimitesDeCompra WHERE minimoGramos = 99"));
+	}
+
+	// La contrasenia no se guarda como se escribio: en la base queda el hash de BCrypt
+	@Test
+	public void lasContraseniasSeGuardanEncriptadas() {
+		registrarUsuario("cliente@web.test", 0);
+
+		String guardada = jdbc.queryForObject("SELECT contraseña FROM Persona WHERE email = ?",
+				String.class, "cliente@web.test");
+
+		assertNotEquals(CLAVE, guardada);
+		assertTrue(guardada.startsWith("$2"), "La contrasenia quedo guardada sin encriptar");
+		// y aun asi se puede entrar con la que se escribio
+		assertEquals("/catalogo", ingresar("cliente@web.test").ruta());
 	}
 
 	// Salir cierra la sesion: las paginas privadas vuelven a mandar al login

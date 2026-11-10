@@ -3,6 +3,7 @@ package com.OneDesK.services;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,8 @@ public class EmpleadoIndoorServiceImpl implements EmpleadoIndoorService {
 	@Autowired
 	private PersonaRepository personaRepository;
 	@Autowired
+	private PasswordEncoder encriptador;
+	@Autowired
 	private IndoorService indoorService;
 
 	@Override
@@ -34,6 +37,7 @@ public class EmpleadoIndoorServiceImpl implements EmpleadoIndoorService {
 	public EmpleadoIndoor registrar(String nombre, String apellido, String email, String contrasenia,
 			int salarioMensual) {
 		EmpleadoIndoor empleado = new EmpleadoIndoor(nombre, apellido, email, contrasenia, salarioMensual);
+		empleado.encriptarContrasenia(encriptador);
 
 		if (personaRepository.existsByEmail(empleado.getEmail())) {
 			throw new EmailDuplicadoException("error.email.duplicado", empleado.getEmail());

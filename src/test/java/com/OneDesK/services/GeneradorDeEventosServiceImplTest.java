@@ -1,5 +1,6 @@
 package com.OneDesK.services;
 
+import com.OneDesK.config.ConfiguracionDeContrasenias;
 import com.OneDesK.config.ConfiguracionDeMapeo;
 import com.OneDesK.DatosDePrueba;
 
@@ -33,7 +34,7 @@ import com.OneDesK.modelo.Planta;
 // La planta usa riego cada 60 minutos, luz cada 120 y ventilacion cada 30.
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({ ConfiguracionDeMapeo.class, GeneradorDeEventosServiceImpl.class, IndoorServiceImpl.class, EmpleadoIndoorServiceImpl.class })
+@Import({ ConfiguracionDeMapeo.class, ConfiguracionDeContrasenias.class, GeneradorDeEventosServiceImpl.class, IndoorServiceImpl.class, EmpleadoIndoorServiceImpl.class })
 public class GeneradorDeEventosServiceImplTest {
 
 	@Autowired

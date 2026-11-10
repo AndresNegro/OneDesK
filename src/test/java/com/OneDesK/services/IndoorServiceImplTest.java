@@ -1,5 +1,6 @@
 package com.OneDesK.services;
 
+import com.OneDesK.config.ConfiguracionDeContrasenias;
 import com.OneDesK.config.ConfiguracionDeMapeo;
 import com.OneDesK.DatosDePrueba;
 
@@ -27,7 +28,7 @@ import com.OneDesK.modelo.Planta;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({ ConfiguracionDeMapeo.class, IndoorServiceImpl.class })
+@Import({ ConfiguracionDeMapeo.class, ConfiguracionDeContrasenias.class, IndoorServiceImpl.class })
 public class IndoorServiceImplTest {
 
 	@Autowired

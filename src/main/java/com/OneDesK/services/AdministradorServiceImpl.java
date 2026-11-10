@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +42,8 @@ public class AdministradorServiceImpl implements AdministradorService {
 	@Autowired
 	private PersonaRepository personaRepository;
 	@Autowired
+	private PasswordEncoder encriptador;
+	@Autowired
 	private IndoorRepository indoorRepository;
 	@Autowired
 	private EmpleadoIndoorRepository empleadoRepository;
@@ -68,6 +71,7 @@ public class AdministradorServiceImpl implements AdministradorService {
 	@Transactional
 	public Administrador registrar(String nombre, String apellido, String email, String contrasenia) {
 		Administrador administrador = new Administrador(nombre, apellido, email, contrasenia);
+		administrador.encriptarContrasenia(encriptador);
 
 		if (personaRepository.existsByEmail(administrador.getEmail())) {
 			throw new EmailDuplicadoException("error.email.duplicado", administrador.getEmail());

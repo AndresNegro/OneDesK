@@ -1,5 +1,7 @@
 package com.OneDesK.modelo;
 
+import com.OneDesK.enums.Rol;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
@@ -18,6 +20,7 @@ public class Administrador extends Persona {
 
 	public Administrador(String nombre, String apellido, String email, String contrasenia) {
 		super(nombre, apellido, email, contrasenia);
+		tomarRol(Rol.ADMINISTRADOR);
 	}
 
 	@Override

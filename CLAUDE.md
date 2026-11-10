@@ -20,9 +20,12 @@ Sirve además como plantilla: los proyectos nuevos arrancan copiando estas decis
 | Desarrollo | `spring-boot-devtools` (reinicia al compilar y no cachea plantillas ni mensajes) |
 | Tests | JUnit 5 + `spring-boot-starter-test` |
 
-No se usa Spring Security, ni Lombok, ni mappers, ni Bean Validation. La sesión, los roles y la
-validación están escritos a mano, y las entidades viajan directo a las vistas de Thymeleaf. Por la
-API, en cambio, viajan DTOs: ver "API REST".
+El acceso lo maneja **Spring Security**: login, contraseñas encriptadas con BCrypt, autorización por
+permisos y, en la API, tokens **JWT** (`jjwt`). Ver "Acceso".
+
+No se usa Lombok, ni Bean Validation. La validación de los formularios está escrita a mano, y las
+entidades viajan directo a las vistas de Thymeleaf. Por la API, en cambio, viajan DTOs: ver
+"API REST".
 
 Las dos dependencias que no vienen en un starter llevan su versión escrita, porque Spring Boot 3 ya
 no administra la del layout dialect. Al sumar una dependencia hay que regenerar el `.classpath` de
@@ -48,6 +51,8 @@ src/main/java/com/OneDesK/
   App.java            arranque de Spring Boot
   modelo/             entidades JPA con las reglas de negocio adentro
   evento/             Evento y sus subclases (luz, regado, ventilador)
+  enums/              Rol y Permiso: quien es cada persona y que puede hacer
+  seguridad/          login, permisos y tokens JWT (lo propio de Spring Security)
   repositories/       interfaces JpaRepository
   services/           interfaz + Impl por cada servicio
   web/                controllers, sesión, roles, manejo de errores
@@ -121,8 +126,18 @@ Los servicios coordinan y persisten, pero la regla la hace cumplir el objeto.
 
 ### Base de datos: el esquema se escribe a mano
 
-Los scripts están en `src/main/resources/database/` (`create_db.sql`, `drop_db.sql`,
-`crear_base_test.sql`). Hibernate **nunca** modifica el esquema:
+Los scripts están en `src/main/resources/database/` y van **versionados**: `create_db_1.0.0.sql` es
+el esquema original y cada cambio agrega una versión nueva con **solo lo que cambia**, más su
+`drop_db_1.0.X.sql` (que lo deshace) y, si hace falta, su `init_db_1.0.X.sql` (los datos que esa
+versión necesita, y la migración de los que ya estaban). Para armar la base se corren en orden:
+
+```
+create_db_1.0.0.sql → create_db_1.0.1.sql → init_db_1.0.1.sql → ...
+```
+
+`crear_base_test.sql` queda aparte: crea la base de los tests y se corre una sola vez, como root.
+
+Hibernate **nunca** modifica el esquema:
 
 ```properties
 spring.jpa.hibernate.ddl-auto=validate
@@ -132,7 +147,8 @@ spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.Ph
 El naming strategy estándar es obligatorio: el de Spring Boot convierte a `snake_case` aunque el
 nombre esté puesto a mano en `@Column`, y `fechaCompra` pasaba a buscarse como `fecha_compra`.
 
-Al cambiar una entidad hay que actualizar el script SQL en el mismo commit: si no coinciden, la
+Al cambiar una entidad hay que escribir la versión nueva del script en el mismo commit, y correrla
+en las dos bases (`onedesk` y `onedesk_test`): si el esquema no coincide con las entidades, la
 aplicación no arranca (que es justamente para lo que está `validate`).
 
 ### Credenciales: fuera del repositorio
@@ -143,23 +159,79 @@ aplicación no arranca (que es justamente para lo que está `validate`).
 spring.config.import=optional:file:db-local.properties
 ```
 
-Ahí van la contraseña de la base y las credenciales del primer administrador. Nunca se escribe una
-credencial en `application.properties` ni en el código.
+Ahí van la contraseña de la base, las credenciales del primer administrador y la clave con la que se
+firman los tokens JWT (`onedesk.jwt.secreto`). Nunca se escribe una credencial en
+`application.properties` ni en el código.
 
-### Acceso: sesión y roles propios
+### Acceso: Spring Security con roles y permisos propios
 
-- `enum Rol` (`USUARIO`, `EMPLEADO`, `ADMINISTRADOR`), cada uno con su página de inicio, y un
-  `Rol.de(Persona)` que lo deduce del tipo.
+Quién puede entrar a cada cosa está en `config/ConfiguracionDeSeguridad`, con **dos reglas
+separadas** porque son dos mundos: la API no tiene sesión ni formulario (cada pedido trae su token)
+y la web sí. Las piezas propias viven en `seguridad/`.
+
+Las zonas **no se autorizan por rol sino por permiso**: la página pide lo que hay que saber hacer
+para verla, y qué rol tiene ese permiso lo decide el enum `Rol`.
+
+```java
+.requestMatchers(bajoLaRuta(AdminController.ADMIN_URL)).hasAuthority(Permiso.ADMINISTRAR_NEGOCIO.name())
+```
+
+**La web**
+
+- `formLogin` sobre las páginas propias: `loginPage` es `/` y el formulario va a `/ingresar`, con
+  los campos `email` y `contrasenia`. El controller ya no recibe ese POST, solo muestra la página.
+- `DetallesDePersonaService` (un `UserDetailsService`) busca por email en `Persona`, y
+  `DetallesDePersona` traduce cada rol a dos cosas: el rol con el prefijo `ROLE_` que Spring espera,
+  y cada uno de sus permisos, que son con los que se autorizan las páginas.
+- Que un cliente sin aprobar no entre **lo decide el modelo**: `Persona.estaHabilitada()` es `true` y
+  `Usuario` la responde con `isAprobado()`. Spring lo rechaza con `DisabledException`, y
+  `FalloAlIngresar` manda a `/?pendiente`; cualquier otro fallo va a `/?error`, igual para el email
+  que no existe y para la contraseña equivocada, para no decir si esa cuenta está.
+- `ExitoAlIngresar` guarda en la sesión el id y el nombre (lo que las páginas releen en cada pedido)
+  y manda a la página de inicio del rol.
+- `AccesoDenegado`: a quien ya entró y pide una zona que no le toca no se le muestra un 403, se lo
+  manda a su página de inicio. La excepción es un pedido sin token CSRF, que sí se rechaza con 403.
+- **CSRF activo**: Thymeleaf agrega el campo `_csrf` en cada `<form th:action=...>`, así que las
+  páginas no cambian. El `Navegador` de los tests lo lee del HTML y lo manda, como un navegador.
+
+**La API**
+
+- `POST /api/login` (en `AutenticacionAPI`) devuelve el token; de ahí en más va en la cabecera
+  `Authorization: Bearer ...`. Solo ese login y el registro (`/api/usuarios/register`) son públicos.
+- `FiltroJwt` lee el token de cada pedido y, si es válido, deja dicho quién lo mandó; no rechaza a
+  nadie, de eso se encarga la regla de autorización. Sin token la API contesta **401**, con token
+  pero sin el permiso, **403**: no hay redirecciones, del otro lado no hay navegador.
+- `JwtService` firma y revisa. La clave sale de `onedesk.jwt.secreto` (en `db-local.properties`); si
+  no hay ninguna se genera una al arrancar y los tokens duran hasta el próximo reinicio.
+- Los errores de la API los traduce `ManejoDeErroresApi`, un `@RestControllerAdvice` solo para
+  `web/rest`: el motivo en texto y el código que corresponde, no una redirección.
+
+**Las contraseñas**
+
+- Se guardan encriptadas con BCrypt. El bean está en `config/ConfiguracionDeContrasenias`, aparte de
+  la seguridad web, para que los tests de `@DataJpaTest` lo importen sin levantar toda la web.
+- Encripta **la entidad**: `persona.encriptarContrasenia(encriptador)`, que los services llaman
+  apenas la crean. Si ya está encriptada no hace nada, así no se encripta dos veces.
+- `MigracionDeContrasenias` encripta al arrancar las que quedaron en claro de antes
+  (`onedesk.contrasenias.migrar`). Es idempotente: puede quedar prendida.
+
+**Lo de antes que sigue igual**
+
+- En `enums/`, `Rol` (`USUARIO`, `EMPLEADO`, `ADMINISTRADOR`) y `Permiso` (`COMPRAR`,
+  `CUIDAR_PLANTAS`, `ADMINISTRAR_NEGOCIO`): cada rol se declara con los permisos que tiene y
+  contesta `puede(Permiso)`; nadie recorre sus permisos desde afuera. El rol también lleva escrito
+  su `id`, que es el de la tabla `Rol`: así reordenar el enum no cambia lo que ya está guardado.
+- Los roles están en la base (`Rol` y `Persona_Rol`) y los toma **cada persona al construirse**
+  (`tomarRol(...)` en el constructor de `Usuario`, `EmpleadoIndoor` y `Administrador`), no un
+  `instanceof` de afuera. `RolComoId` es el `AttributeConverter` que los guarda por su id.
+- A qué página entra cada rol lo dice `PaginaDeInicio`, que vive en `web/` porque es una dirección.
 - `Sesion` es un helper estático sobre `HttpSession`. Guarda **el id y no la entidad**, así cada
-  pedido lee los datos actualizados de la base.
-- `ControlDeAcceso` es un `HandlerInterceptor` registrado en `ConfiguracionWeb` solo sobre las rutas
-  privadas: sin sesión manda al login, con el rol equivocado manda a la página de inicio de su rol.
-  El login, el registro, el CSS y las imágenes quedan abiertos.
+  pedido lee los datos actualizados de la base. La llena `ExitoAlIngresar` y nadie más.
 - La sesión viaja solo en la cookie (`server.servlet.session.tracking-modes=cookie`), para que el id
   no aparezca en la URL.
-- **Al ingresar, la sesión cambia de id** (`pedido.changeSessionId()` en `Sesion.iniciar`): si
-  alguien le fijó uno a la persona antes de que entrara, ese id deja de servir. Lo que ya estaba
-  guardado, como el idioma, se conserva.
+- **Al ingresar, la sesión cambia de id** (`sessionFixation().changeSessionId()`): si alguien le fijó
+  uno a la persona antes de que entrara, ese id deja de servir. Lo que ya estaba guardado, como el
+  idioma, se conserva.
 - Se cierra sola después de media hora sin usarla (`server.servlet.session.timeout=30m`).
 - Salir va por POST, para que un link suelto no cierre la sesión.
 
@@ -268,7 +340,8 @@ Van en `config/`, como `ApplicationRunner` (con `@Order` cuando importa la secue
 ## Tests
 
 Los tests corren **contra MySQL de verdad**, no contra H2: la base `onedesk_test`, separada de la
-base real. Se crea una sola vez con `crear_base_test.sql` (como root) y después con `create_db.sql`.
+base real. Se crea una sola vez con `crear_base_test.sql` (como root) y después con los
+`create_db_1.0.X.sql` en orden, igual que la base real.
 
 La URL se fuerza con `BaseDeTest`, un `ContextCustomizerFactory` registrado en
 `src/test/resources/META-INF/spring.factories`. **No se usa un `application.properties` de test**:
@@ -289,6 +362,10 @@ Otras piezas:
   las relaciones (`MapeoRelacionesTest`), no solo la lógica.
 - Los validadores se prueban solos, sin levantar Spring (`ValidadoresTest`), salvo el de registro,
   que consulta la base y por eso corre con `@DataJpaTest` (`ValidadorDeRegistroTest`).
+- La API se prueba con token de verdad: `BaseContextTest.entrarComo(email, clave)` hace el login,
+  se queda con el token y lo manda en los pedidos que siguen. `SeguridadDeLaApiTest` prueba lo
+  contrario: sin token, con un token falso, con la cuenta pendiente y con el cliente entrando donde
+  no le toca.
 
 Todos los tests piden la misma configuración para que Spring reutilice el contexto entre clases.
 
@@ -364,6 +441,8 @@ las configuraciones, así que los que usan un service que expone necesitan
 Así la API no arrastra las relaciones de JPA ni se rompe cuando el modelo cambia, y de paso no hay
 que ir tapando campos con `@JsonIgnore`. Los de `Persona.getContrasenia()` y `Usuario.getCompras()`
 quedaron igual, por si alguna vez se serializa una entidad por error.
+
+Todas las direcciones de la API piden token menos el login y el registro: ver "Acceso".
 
 Dos cosas de los media types, probadas: `produces` hace que a quien pida otro formato se le conteste
 406, y `consumes` deja afuera a quien no mande `Content-Type`. En un GET eso significa que el

@@ -2,6 +2,7 @@ package com.OneDesK.modelo;
 
 
 import com.OneDesK.evento.*;
+import com.OneDesK.enums.Rol;
 import com.OneDesK.excepciones.DatoInvalidoException;
 import com.OneDesK.excepciones.OperacionInvalidaException;
 
@@ -33,6 +34,7 @@ public class EmpleadoIndoor extends Empleado {
 
     public EmpleadoIndoor(String nombre, String apellido, String email, String contrasenia, int salarioMensual) {
         super(nombre, apellido, email, contrasenia);
+        tomarRol(Rol.EMPLEADO);
         this.sectoresACargo = new ArrayList<>();
         setSalarioMensual(salarioMensual);
     }

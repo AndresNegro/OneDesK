@@ -1,5 +1,6 @@
 package com.OneDesK.services;
 
+import com.OneDesK.config.ConfiguracionDeContrasenias;
 import com.OneDesK.config.ConfiguracionDeMapeo;
 import com.OneDesK.DatosDePrueba;
 
@@ -31,7 +32,7 @@ import com.OneDesK.modelo.Usuario;
 // se registran las personas, se planta, se cosecha, se vende, se cobra y se anula.
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({ ConfiguracionDeMapeo.class, UsuarioServiceImpl.class, EmpleadoIndoorServiceImpl.class, IndoorServiceImpl.class,
+@Import({ ConfiguracionDeMapeo.class, ConfiguracionDeContrasenias.class, UsuarioServiceImpl.class, EmpleadoIndoorServiceImpl.class, IndoorServiceImpl.class,
 		ProductoServiceImpl.class, RegistroProduccionServiceImpl.class, CompraServiceImpl.class,
 		LimitesDeCompraServiceImpl.class })
 public class FlujoCompletoTest {

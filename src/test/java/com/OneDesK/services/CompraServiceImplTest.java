@@ -19,6 +19,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
+import com.OneDesK.config.ConfiguracionDeContrasenias;
 import com.OneDesK.excepciones.OperacionInvalidaException;
 import com.OneDesK.excepciones.RecursoNoEncontradoException;
 import com.OneDesK.excepciones.StockInsuficienteException;
@@ -32,7 +33,7 @@ import com.OneDesK.modelo.Usuario;
 // hubiera tocado algo antes de rechazar la operacion, ese cambio aparece y el test falla.
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({ CompraServiceImpl.class, LimitesDeCompraServiceImpl.class })
+@Import({ ConfiguracionDeContrasenias.class, CompraServiceImpl.class, LimitesDeCompraServiceImpl.class })
 public class CompraServiceImplTest {
 
 	private static final int INEXISTENTE = 999999;

@@ -18,28 +18,6 @@ import com.OneDesK.web.formularios.FormularioDePlanta;
 // que campo rechazaron y con que clave, que es la que despues busca el texto en messages.properties.
 public class ValidadoresTest {
 
-	// Un login sin email ni contrasenia rechaza los dos campos, cada uno con su clave
-	@Test
-	public void elLoginPideLosDosCampos() {
-		FormularioDeIngreso form = new FormularioDeIngreso();
-		form.setEmail("   ");
-
-		Errores errores = revisar(new ValidadorDeIngreso(), form);
-
-		assertEquals("validacion.email.vacio", errores.claveDe("email"));
-		assertEquals("validacion.contrasenia.vacia", errores.claveDe("contrasenia"));
-	}
-
-	// Con los dos campos completos no hay nada que rechazar
-	@Test
-	public void unLoginCompletoPasa() {
-		FormularioDeIngreso form = new FormularioDeIngreso();
-		form.setEmail("andres@test.com");
-		form.setContrasenia("12345");
-
-		assertFalse(revisar(new ValidadorDeIngreso(), form).hayErrores());
-	}
-
 	// No se puede plantar con fecha futura ni germinar despues de plantada
 	@Test
 	public void lasFechasDeLaPlantaVanEnOrden() {
@@ -93,9 +71,9 @@ public class ValidadoresTest {
 	// engancha varios juntos: en ese caso no toca nada
 	@Test
 	public void unValidadorIgnoraLosFormulariosQueNoSonSuyos() {
-		FormularioDeLimites limites = new FormularioDeLimites();
+		FormularioDeIngreso otroFormulario = new FormularioDeIngreso();
 
-		assertFalse(revisar(new ValidadorDeIngreso(), limites).hayErrores());
+		assertFalse(revisar(new ValidadorDeLimites(), otroFormulario).hayErrores());
 	}
 
 	private Errores revisar(ValidadorDeFormulario<?> validador, Object form) {
