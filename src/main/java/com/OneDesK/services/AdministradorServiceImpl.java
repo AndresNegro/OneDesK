@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +44,8 @@ public class AdministradorServiceImpl implements AdministradorService {
 	private PersonaRepository personaRepository;
 	@Autowired
 	private PasswordEncoder encriptador;
+	@Autowired
+	private ApplicationEventPublisher avisos;
 	@Autowired
 	private IndoorRepository indoorRepository;
 	@Autowired
@@ -250,6 +253,8 @@ public class AdministradorServiceImpl implements AdministradorService {
 		verificarAdministrador(adminId);
 		Usuario usuario = usuarioService.buscar(usuarioId);
 		usuario.aprobar(topeCredito);
+		avisos.publishEvent(new CuentaAprobada(usuario.getNombreCompleto(), usuario.getEmail(), topeCredito));
+
 		return usuario;
 	}
 
@@ -261,8 +266,11 @@ public class AdministradorServiceImpl implements AdministradorService {
 		if (usuario.isAprobado()) {
 			throw new OperacionInvalidaException("error.solicitud.ya.aprobada", usuario.getEmail());
 		}
+		// los datos viajan en el aviso: cuando se manda el mail, esta persona ya no esta en la base
+		SolicitudRechazada aviso = new SolicitudRechazada(usuario.getNombreCompleto(), usuario.getEmail());
 		// un pendiente no pudo comprar, asi que no tiene compras: se borra con su deuda en cero
 		usuarioRepository.delete(usuario);
+		avisos.publishEvent(aviso);
 	}
 
 	@Override

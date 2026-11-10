@@ -93,6 +93,12 @@
         <artifactId>spring-boot-starter-security</artifactId>
 	  </dependency>
 
+      <!-- los avisos por mail: cuenta aprobada y solicitud rechazada -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-mail</artifactId>
+	  </dependency>
+
       <!-- los tokens JWT de la API. La implementacion y el lector de JSON van en runtime: el codigo
            solo usa la interfaz de jjwt-api -->
       <dependency>
@@ -156,6 +162,14 @@
 		<groupId>org.junit.platform</groupId>
 		<artifactId>junit-platform-commons</artifactId>
 		<version>1.14.0</version>
+		<scope>test</scope>
+	</dependency>
+
+	<!-- un servidor de mail de verdad, en memoria: los tests leen el mail que llego, sin mocks -->
+	<dependency>
+		<groupId>com.icegreen</groupId>
+		<artifactId>greenmail</artifactId>
+		<version>2.1.3</version>
 		<scope>test</scope>
 	</dependency>
 

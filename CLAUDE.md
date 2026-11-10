@@ -329,6 +329,29 @@ Interfaz + `Impl`. La implementación lleva `@Service`, y cada método público 
 Sobre una entidad ya gestionada **no se llama a `save()`**: el cambio se guarda solo al cerrar la
 transacción. `save()` sobre algo ya guardado hace merge, y el merge rompe los borrados posteriores.
 
+### Avisos por mail
+
+Cuando la administración aprueba o rechaza una solicitud, a esa persona le llega un mail. El service
+no lo manda: **publica un evento** (`CuentaAprobada`, `SolicitudRechazada`) y `AvisosPorCorreo` lo
+escucha con `@TransactionalEventListener`, o sea **después de que la transacción cerró bien**. Un
+mail no se puede volver atrás, así que primero se guarda y recién después se avisa; si la operación
+se deshace, el mail no sale (hay un test que lo prueba).
+
+El evento del rechazo lleva adentro el nombre y el email porque, para cuando se avisa, esa persona
+ya se borró de la base.
+
+`CorreoServiceImpl` arma el texto con `Mensajes` (los mails salen siempre en español: quien los
+recibe no está mirando la página) y lo manda con `JavaMailSender`. Dos cosas lo hacen inofensivo:
+
+- Con `onedesk.mail.activo=false` (lo de por defecto) no se manda nada y el aviso queda en el log.
+- Si falla el envío se anota en el log y la operación sigue: la cuenta quedó aprobada igual.
+
+Para que salgan de verdad hay que poner en `db-local.properties` el servidor y las credenciales
+(`spring.mail.host`, `port`, `username`, `password`), y `onedesk.mail.activo=true`.
+
+Los tests no usan mocks: `AvisosPorCorreoTest` levanta un servidor SMTP de verdad en memoria
+(GreenMail) y lee el mail que llegó, igual que los demás tests usan MySQL de verdad.
+
 ### Tareas de arranque y programadas
 
 Van en `config/`, como `ApplicationRunner` (con `@Order` cuando importa la secuencia) o escuchando
