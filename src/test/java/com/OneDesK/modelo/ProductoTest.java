@@ -120,4 +120,12 @@ public class ProductoTest {
 	public void unAjusteDeCeroSeRechaza() {
 		assertThrows(IllegalArgumentException.class, () -> kush.ajustarStock(0));
 	}
+
+	// Una reposicion tan grande que no entra en el stock se rechaza y el stock queda como estaba
+	@Test
+	public void unaReposicionQueDesbordaElStockSeRechaza() {
+		assertThrows(IllegalArgumentException.class, () -> kush.reponerStock(Integer.MAX_VALUE));
+
+		assertEquals(10, kush.getStock());
+	}
 }

@@ -116,7 +116,12 @@ public class CompraServiceImpl implements CompraService {
 			if (producto.getStock() < item.getCantidad()) {
 				throw new StockInsuficienteException("error.stock.insuficiente", producto.getGenetica(), producto.getStock(), item.getCantidad());
 			}
-			total += producto.getPrecio() * item.getCantidad();
+			// con int sin control un precio alto daba un total negativo, y el negativo pasaba el tope de credito
+			try {
+				total = Math.addExact(total, Math.multiplyExact(producto.getPrecio(), item.getCantidad()));
+			} catch (ArithmeticException e) {
+				throw new OperacionInvalidaException("error.compra.total.invalido");
+			}
 		}
 		return total;
 	}

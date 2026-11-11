@@ -63,7 +63,9 @@ public class ConfiguracionDeSeguridad {
 				.sessionManagement(sesion -> sesion.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(rutas -> rutas
 						.requestMatchers(AutenticacionAPI.LOGIN_URL, UsuarioAPI.GUARDAR_USUARIO_URL).permitAll()
-						.requestMatchers("/api/admin/**").hasAuthority(Permiso.ADMINISTRAR_NEGOCIO.name())
+						// la lista de clientes trae email, deuda y tope de cada uno: solo la ve la administracion
+						.requestMatchers("/api/admin/**", UsuarioAPI.LISTAR_USUARIOS_URL)
+								.hasAuthority(Permiso.ADMINISTRAR_NEGOCIO.name())
 						.anyRequest().authenticated())
 				// sin token valido la API contesta 401 y no manda a ninguna pagina: no hay a donde ir
 				.exceptionHandling(errores -> errores

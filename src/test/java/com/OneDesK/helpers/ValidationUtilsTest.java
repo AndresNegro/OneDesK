@@ -57,4 +57,11 @@ public class ValidationUtilsTest {
 		assertFalse(ValidationUtils.tieneTexto("   "));
 		assertFalse(ValidationUtils.tieneTexto(null));
 	}
+
+	// Un salto de linea o un tab dentro del email lo invalidan: si no, partian las lineas del log
+	@ParameterizedTest
+	@ValueSource(strings = { "eve\nfalso@test.com", "eve\tx@test.com", "eve\r@test.com" })
+	public void rechazaCaracteresDeControl(String email) {
+		assertFalse(ValidationUtils.isValidEmail(email));
+	}
 }

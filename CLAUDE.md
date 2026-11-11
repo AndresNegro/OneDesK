@@ -132,7 +132,7 @@ el esquema original y cada cambio agrega una versión nueva con **solo lo que ca
 versión necesita, y la migración de los que ya estaban). Para armar la base se corren en orden:
 
 ```
-create_db_1.0.0.sql → create_db_1.0.1.sql → init_db_1.0.1.sql → ...
+create_db_1.0.0.sql → create_db_1.0.1.sql → init_db_1.0.1.sql → create_db_1.0.2.sql → ...
 ```
 
 `crear_base_test.sql` queda aparte: crea la base de los tests y se corre una sola vez, como root.

@@ -45,7 +45,7 @@ public class ItemCompra extends Persistible {
     public int getPrecioUnitario() { return precioUnitario; }
 
     public int getPrecio() {
-        return precioUnitario * cantidad;
+        return Math.multiplyExact(precioUnitario, cantidad);
     }
 
     @Override

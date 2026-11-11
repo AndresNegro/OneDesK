@@ -1,6 +1,7 @@
 package com.OneDesK.web;
 
 import java.util.Locale;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -25,10 +26,24 @@ public class ConfiguracionWeb implements WebMvcConfigurer {
 		return resolutor;
 	}
 
+	/** Los idiomas que tienen archivo de mensajes. */
+	public static final Set<String> IDIOMAS = Set.of("es", "en");
+
+	// Solo se aceptan los idiomas que existen: cada idioma distinto queda guardado para siempre en
+	// la cache de mensajes de Spring, y sin este filtro cualquiera podia llenarla con ?idioma=inventado
 	@Bean
 	public LocaleChangeInterceptor cambioDeIdioma() {
-		LocaleChangeInterceptor cambio = new LocaleChangeInterceptor();
+		LocaleChangeInterceptor cambio = new LocaleChangeInterceptor() {
+			@Override
+			protected Locale parseLocaleValue(String valor) {
+				Locale pedido = super.parseLocaleValue(valor);
+				return pedido != null && IDIOMAS.contains(pedido.getLanguage())
+						? Locale.forLanguageTag(pedido.getLanguage())
+						: null;
+			}
+		};
 		cambio.setParamName(PARAMETRO_IDIOMA);
+		cambio.setIgnoreInvalidLocale(true);
 		return cambio;
 	}
 

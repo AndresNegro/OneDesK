@@ -8,7 +8,8 @@ public class ValidationUtils {
 			return false;
 		}
 		String limpio = email.trim();
-		if (limpio.contains(" ")) {
+		// ni espacios ni caracteres de control: un salto de linea en el email partia las lineas del log
+		if (limpio.chars().anyMatch(c -> Character.isWhitespace(c) || Character.isISOControl(c))) {
 			return false;
 		}
 

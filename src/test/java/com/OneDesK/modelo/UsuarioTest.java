@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.OneDesK.excepciones.OperacionInvalidaException;
 
@@ -202,6 +203,18 @@ public class UsuarioTest {
 		assertThrows(UnsupportedOperationException.class, () -> usuario.getCompras().add(compra));
 
 		assertEquals(0, usuario.montoDeDeuda());
+	}
+
+	// Una contrasenia que parece un hash se encripta igual: si no, quien se registra elegia su propio
+	// hash y su costo, y un costo alto dejaba trabado cada intento de ingresar
+	@Test
+	public void unaContraseniaConFormaDeHashSeEncriptaIgual() {
+		String conFormaDeHash = "$2a$31$abcdefghijklmnopqrstuvabcdefghijklmnopqrstuvwxyz01234";
+		Usuario usuario = new Usuario("Andres", "Negro", "andres@test.com", conFormaDeHash);
+
+		usuario.encriptarContrasenia(new BCryptPasswordEncoder(4));
+
+		assertTrue(usuario.getContrasenia().startsWith("$2a$04$"));
 	}
 
 	private Usuario nuevoUsuario(String email) {

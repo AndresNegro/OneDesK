@@ -105,6 +105,17 @@ public class CircuitosWebTest {
 		}
 	}
 
+	// Un idioma que no existe se ignora: la pagina sigue en espaniol y no hay error
+	@Test
+	public void unIdiomaInventadoSeIgnora() {
+		Navegador anonimo = new Navegador(puerto);
+
+		anonimo.abrir("/?idioma=zz-x-inventado");
+
+		assertEquals("/", anonimo.ruta());
+		assertTrue(anonimo.html().contains("Ingresar"));
+	}
+
 	// Registrarse deja una solicitud pendiente: no entra hasta que el admin la aprueba, y despues si
 	@Test
 	public void registrarseDejaUnaSolicitudQueElAdminAprueba() {

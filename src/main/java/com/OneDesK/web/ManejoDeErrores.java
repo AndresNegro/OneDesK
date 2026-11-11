@@ -5,6 +5,7 @@ import java.util.Locale;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -50,6 +51,14 @@ public class ManejoDeErrores extends BaseController {
 		return error.getMessage();
 	}
 
+	// dos personas cambiaron lo mismo a la vez (por ejemplo, el stock de un producto): gana la primera
+	// y la segunda vuelve a intentar con los datos nuevos
+	@ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+	public String cambioSimultaneo(HttpServletRequest pedido, Locale idioma, RedirectAttributes flash) {
+		flash.addFlashAttribute(ERROR, mensajes.getMessage("error.cambio.simultaneo", null, idioma));
+		return redirect(paginaAnterior(pedido));
+	}
+
 	// un campo vacio o con letras donde va un numero. BindException es el mismo caso pero en los
 	// formularios: cuando un campo no entra en el tipo del Formulario, Spring no llama al controller
 	@ExceptionHandler({ MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class,
@@ -68,7 +77,8 @@ public class ManejoDeErrores extends BaseController {
 		try {
 			URI uri = URI.create(referer);
 			String ruta = uri.getRawPath();
-			if (ruta == null || ruta.isBlank() || !ruta.startsWith("/")) {
+			// "//otro.sitio/x" tambien empieza con "/", pero el navegador lo toma como otro dominio
+			if (ruta == null || ruta.isBlank() || !ruta.startsWith("/") || ruta.startsWith("//")) {
 				return "/";
 			}
 			return uri.getRawQuery() == null ? ruta : ruta + "?" + uri.getRawQuery();

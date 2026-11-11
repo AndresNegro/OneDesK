@@ -98,7 +98,7 @@ public class Compra extends Persistible{
 
     public void addItem(ItemCompra i) {
         items.add(i);
-        precio += i.getPrecio();
+        precio = Math.addExact(precio, i.getPrecio());
     }
 
     // sin setPagado: una compra pagada no vuelve a quedar impaga

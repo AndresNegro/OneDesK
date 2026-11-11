@@ -122,10 +122,16 @@ public abstract class Persona extends Persistible {
 
     /**
      * Guarda encriptada la contrasenia que se recibio en claro. La llaman los services apenas crean
-     * la persona: en la base no queda ninguna contrasenia legible. Si ya estaba encriptada no hace
-     * nada, asi volver a llamarla (o la migracion de las viejas) no encripta el hash otra vez.
+     * la persona: en la base no queda ninguna contrasenia legible.
      */
+    // Encripta siempre, aunque lo escrito empiece como un hash: si se respetara, quien se registra
+    // podria elegir su propio hash y su costo, y un costo 31 deja cada login trabado por dias
     public void encriptarContrasenia(PasswordEncoder encriptador) {
+        this.contrasenia = encriptador.encode(this.contrasenia);
+    }
+
+    /** Solo para la migracion de arranque: encripta las guardadas que todavia estan en claro. */
+    public void migrarContraseniaSiEstaEnClaro(PasswordEncoder encriptador) {
         if (!tieneLaContraseniaEncriptada()) {
             this.contrasenia = encriptador.encode(this.contrasenia);
         }

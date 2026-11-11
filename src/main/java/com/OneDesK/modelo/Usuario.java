@@ -95,7 +95,7 @@ public class Usuario extends Persona implements Exponible {
         int total = 0;
         // una compra pendiente o rechazada todavia no se debe
         for (Compra c : compras) {
-            if (c.isAprobada() && !c.isPagado()) total += c.getPrecio();
+            if (c.isAprobada() && !c.isPagado()) total = Math.addExact(total, c.getPrecio());
         }
         deuda.setMonto(total);
     }
@@ -105,7 +105,7 @@ public class Usuario extends Persona implements Exponible {
         recalcularDeuda();
         int total = deuda.getMonto();
         for (Compra c : compras) {
-            if (c.isPendiente() && !c.isPagaAlAprobar()) total += c.getPrecio();
+            if (c.isPendiente() && !c.isPagaAlAprobar()) total = Math.addExact(total, c.getPrecio());
         }
         return total;
     }

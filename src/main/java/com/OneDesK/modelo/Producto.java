@@ -8,6 +8,7 @@ import com.OneDesK.excepciones.StockInsuficienteException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name="Producto")
@@ -18,6 +19,11 @@ public class Producto extends Persistible implements Exponible {
     private int stock;
 	@Column(name="precio")
     private int precio;
+	// bloqueo optimista: si otra compra cambio el stock entre que se leyo y se guardo, esta falla en
+	// lugar de pisarla (sin esto dos compras simultaneas vendian mas stock del que habia)
+	@Version
+	@Column(name="version")
+    private long version;
 
 	Producto(){
 
@@ -72,7 +78,12 @@ public class Producto extends Persistible implements Exponible {
 
     public void reponerStock(int cantidad) {
         validarCantidad(cantidad);
-        this.stock += cantidad;
+        // una cosecha enorme daba la vuelta al int y el stock quedaba negativo
+        try {
+            this.stock = Math.addExact(this.stock, cantidad);
+        } catch (ArithmeticException e) {
+            throw new DatoInvalidoException("error.cantidad.excesiva");
+        }
     }
 
     /** Correccion de inventario: deja el stock en el valor que se conto. */

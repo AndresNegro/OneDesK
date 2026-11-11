@@ -45,7 +45,7 @@ public class MigracionDeContrasenias implements ApplicationRunner {
 		List<Persona> enClaro = repositorio.findAll().stream()
 				.filter(persona -> !persona.tieneLaContraseniaEncriptada())
 				.toList();
-		enClaro.forEach(persona -> persona.encriptarContrasenia(encriptador));
+		enClaro.forEach(persona -> persona.migrarContraseniaSiEstaEnClaro(encriptador));
 		if (!enClaro.isEmpty()) {
 			log.info("Se encriptaron las contrasenias de {} personas que todavia estaban en claro", enClaro.size());
 		}

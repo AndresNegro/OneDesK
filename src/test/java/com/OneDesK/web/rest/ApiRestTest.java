@@ -93,9 +93,10 @@ public class ApiRestTest extends BaseContextTest {
 		assertEquals(producto, elNuestro.getId());
 	}
 
-	// GET /api/usuarios devuelve los clientes aprobados, con su deuda y su tope
+	// GET /api/usuarios devuelve a la administracion los clientes aprobados, con su deuda y su tope
 	@Test
 	public void losClientesAprobadosSeLeenPorLaApi() {
+		entrarComo(emailDelAdmin, CLAVE);
 		HttpResponse<String> respuesta = get(UsuarioAPI.LISTAR_USUARIOS_URL);
 
 		assertEquals(HttpStatus.OK.value(), respuesta.statusCode());
@@ -106,6 +107,14 @@ public class ApiRestTest extends BaseContextTest {
 		assertEquals("Juan Perez", elNuestro.getNombreCompleto());
 		assertEquals(5000, elNuestro.getTopeCredito());
 		assertEquals(0, elNuestro.getDeuda());
+	}
+
+	// Un cliente no puede leer la lista de clientes: traeria el email, la deuda y el tope de los demas
+	@Test
+	public void unClienteNoVeLaListaDeClientes() {
+		HttpResponse<String> respuesta = get(UsuarioAPI.LISTAR_USUARIOS_URL);
+
+		assertEquals(HttpStatus.FORBIDDEN.value(), respuesta.statusCode());
 	}
 
 	// La API dice que devuelve JSON (produces): a quien pida otro formato se le avisa con un 406,
