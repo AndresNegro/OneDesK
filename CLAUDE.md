@@ -95,7 +95,9 @@ repositorio): se nombra la variable o el lugar donde están, nunca el valor.
   `db-local.properties`). Probado en local con un tope de 512 MB: arranca en unos 15 s y no pasa de
   250 MB. Los scripts de `database/` corren de cero con `sql_require_primary_key=ON`, la regla que
   trae Aiven.
-- [ ] Subir el commit a GitHub.
+- [x] **2026-11-19** — Subir a `main` el hosting junto con el arreglo de seguridad del 10/11 (que
+  estaba sin subir y trae la versión 1.0.2 del esquema), para que la versión online salga con esos
+  arreglos.
 - [ ] Crear la cuenta de Aiven y el servicio MySQL del plan Free.
 - [ ] Correr en Aiven los scripts de `database/` en orden.
 - [ ] Crear la cuenta de Render y el Web Service desde este repositorio (con acceso al repo para que
