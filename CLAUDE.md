@@ -98,8 +98,15 @@ repositorio): se nombra la variable o el lugar donde están, nunca el valor.
 - [x] **2026-11-19** — Subir a `main` el hosting junto con el arreglo de seguridad del 10/11 (que
   estaba sin subir y trae la versión 1.0.2 del esquema), para que la versión online salga con esos
   arreglos.
-- [ ] Crear la cuenta de Aiven y el servicio MySQL del plan Free.
-- [ ] Correr en Aiven los scripts de `database/` en orden.
+- [x] **2026-11-19** — Crear la cuenta de Aiven y el servicio MySQL `onedesk` del plan Free, en
+  Estados Unidos (MySQL 8.4.11, como el local). Usuario `avnadmin`; el host y el puerto están en
+  *Connection information* del servicio. Tarda unos minutos en quedar *Running* y recién ahí existe
+  el host. La contraseña está en la consola de Aiven y en `~/.config/onedesk/aiven.cnf`, en la
+  máquina de Santiago (fuera del repo, solo para su usuario).
+- [x] **2026-11-19** — Crear la base `onedesk` (utf8mb4) y correr los scripts de `database/` en orden:
+  quedan 17 tablas y los 3 roles. Probado levantando la aplicación local contra Aiven: el
+  `validate` pasa. Aiven exige SSL, así que la URL lleva `?sslMode=REQUIRED`. El plan Free permite
+  46 conexiones; la aplicación usa hasta 10.
 - [ ] Crear la cuenta de Render y el Web Service desde este repositorio (con acceso al repo para que
   se actualice solo, o como repo público con la URL y publicando a mano).
 - [ ] Cargar las variables de entorno en Render.
