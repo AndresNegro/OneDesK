@@ -65,24 +65,84 @@ https://onedesk-l237.onrender.com
 
 ### Para publicar un proyecto nuevo hecho con esta plantilla
 
-Un proyecto que arranca copiando este (ver arriba) no queda listo para publicarse solo con eso.
-Para ponerlo online hace falta, además:
+Un proyecto que arranca copiando este (ver arriba) no queda listo para publicarse solo con eso. Este
+es el procedimiento completo, probado con OneDesK y con agendaVirtual, en orden. Las cuentas ya
+existen y se reusan: **un solo MySQL en Aiven** (cada proyecto es una base aparte adentro, con su
+usuario) y **una sola cuenta de Render** (cada proyecto es un Web Service). En la máquina de Santiago,
+los datos de cada proyecto van en `~/.config/<proyecto>/`, con permisos solo para su usuario, y la
+conexión de administrador de Aiven está en `~/.config/onedesk/aiven.cnf`.
 
-1. **Copiar el `Dockerfile` y el `.dockerignore`.** El `Dockerfile` no nombra el jar, así que sirve
-   tal cual mientras el proyecto siga con Java 17 y Maven. El `.dockerignore` tiene que dejar afuera
-   el archivo de credenciales locales, cualquiera sea su nombre.
-2. **Que toda la configuración se pueda pisar con variables de entorno.** Nada fijo en el código:
-   todo con `@Value("${...}")` o en `application.properties`, así Render lo reemplaza sin tocar
-   archivos. La URL de la base sigue apuntando a `localhost` en el repo; en el servidor la pisa
-   `SPRING_DATASOURCE_URL`.
-3. **Que el esquema se pueda armar de cero con los scripts en orden**, y que cada tabla tenga clave
-   primaria (Aiven no deja crear tablas sin una).
-4. **Una base nueva en Aiven y un Web Service nuevo en Render** para ese proyecto. Si Aiven no deja
-   crear otro MySQL gratis, se puede crear una base aparte dentro del mismo servicio, con su
-   propio usuario.
-5. **Probar en local con un tope de 512 MB** antes de publicar, como se hizo acá:
-   `systemd-run --user -p MemoryMax=512M ... java -jar target/<jar>`.
-6. **Llevar su propio "Registro de la puesta online"** en su CLAUDE.md, con estos mismos pasos.
+**1. Revisar el proyecto**
+
+- Que tenga `Dockerfile` (multietapa: Maven compila, el JRE corre) y `.dockerignore` que deje afuera
+  `target/`, `.git/` y el archivo de credenciales locales. Si no los tiene, copiar los de OneDesK:
+  no nombran el jar, sirven mientras siga con Java 17 y Maven.
+- Que **toda** la configuración se pueda pisar con variables de entorno (`@Value("${...}")` o
+  `application.properties`; Spring traduce `spring.datasource.url` en `SPRING_DATASOURCE_URL`).
+  Listar las que hay: `grep -rho '@Value("\${[^}:]*' src/main/java | sort -u`.
+- Ver si el repo es **público o privado** (`gh repo view <dueño>/<repo> --json visibility`): define
+  el paso 4.
+
+**2. Armar la base en Aiven**
+
+- `CREATE DATABASE <proyecto> CHARACTER SET utf8mb4` con `aiven.cnf`.
+- Correr los scripts de `database/` en orden de versión (`ls create_db_*.sql | sort -V`), cada
+  `create_db_X` seguido de su `init_db_X` si existe. Aiven es MySQL en Linux: distingue mayúsculas en
+  los nombres de tabla y exige **clave primaria en cada tabla** (`sql_require_primary_key`); si un
+  script falla, se arregla en el script, no en Aiven.
+- Crear el usuario de la aplicación solo con `SELECT, INSERT, UPDATE, DELETE` sobre esa base (con
+  `validate`, Hibernate no necesita más), con una contraseña al azar guardada en
+  `~/.config/<proyecto>/`.
+
+**3. Armar las variables y probar en local, igual que en el servidor**
+
+- Escribir `~/.config/<proyecto>/render.env` con todas las variables: la URL de la base (Aiven exige
+  SSL: `jdbc:mysql://<host>:<puerto>/<base>?sslMode=REQUIRED`), usuario y contraseña, secreto JWT
+  (`head -c 32 /dev/urandom | base64`), el primer usuario con contraseña al azar, y además:
+  - `PORT=8080` si el `Dockerfile` escucha fijo en 8080 (Render busca el puerto en `PORT`).
+  - `JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60 -XX:+UseSerialGC -Xss512k -XX:TieredStopAtLevel=1`
+    si el `Dockerfile` no limita la JVM: el plan Free tiene 512 MB.
+- Compilar (`mvn package -DskipTests`) y correr el jar **con esas mismas variables y 512 MB de tope**:
+  `systemd-run --user -p MemoryMax=512M -p MemorySwapMax=0 -E ... java -jar target/<jar>`. Si el
+  perfil de producción pone la cookie de sesión `Secure`, en local se pisa con
+  `SERVER_SERVLET_SESSION_COOKIE_SECURE=false` (sin HTTPS el navegador no la manda).
+- Tiene que arrancar (el `validate` pasa contra Aiven), dejar entrar al primer usuario y quedar por
+  debajo de 512 MB (`systemctl --user show <unidad> -p MemoryPeak`). Medido: OneDesK 250 MB,
+  agendaVirtual 350 MB.
+
+**4. Dejar el código donde Render lo vea**
+
+- **Repo público:** se conecta por *Public Git Repository* con la URL. Render **no publica solo**
+  con cada push: hay que tocar *Manual Deploy* después.
+- **Repo privado de otra cuenta:** Render solo ve los repos de la cuenta de GitHub con la que se
+  entró. Se crea una copia privada en esa cuenta y se agrega como segundo remoto:
+  `gh repo create Santiago-deb/<repo> --private` y `git remote add render <url>`. Con la copia sí
+  hay *Auto-Deploy*: cada `git push render main` publica. **Cada vez que se sube a `origin`, se sube
+  también a `render`.**
+
+**5. Crear el Web Service en Render**
+
+- *New → Web Service* → elegir el repo. En *Git Provider* aparecen los de la cuenta propia; si no
+  está, es el caso público o el privado del paso 4.
+- Revisar **antes de desplegar**: el repo es el correcto (OneDesK tomó primero un repo viejo con el
+  mismo nombre y falló), *Language* **Docker**, *Branch* `main`, *Region* **Virginia (US East)**,
+  *Compute* **Free**: abajo tiene que decir **$0 / month**, no $7.
+- *Environment Variables → Add from .env*: pegar todo `render.env`.
+- *Deploy web service*. El primer build tarda unos 3 minutos y el arranque, 60–70 s. Listo cuando el
+  log dice `Started App` y `Your service is live`.
+
+**6. Probar desde afuera**
+
+- La página pública da 200, `http://` redirige a `https://`, el primer usuario entra y llega a su
+  panel. La cookie de sesión tiene que venir `Secure`.
+
+**7. Registrar**
+
+- En el CLAUDE.md del proyecto, un "Registro de la puesta online" como el de abajo: cada paso con su
+  fecha, la dirección, cómo se actualiza y dónde están las credenciales (**nunca los valores**).
+
+Si el panel de Render no se puede manejar a mano, se puede manejar desde Zen en modo marionette por
+WebDriver BiDi: la pestaña de Render ya tiene la sesión iniciada.
 
 ### Registro de la puesta online
 
