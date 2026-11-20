@@ -44,6 +44,24 @@ mvn spring-boot:run
 La aplicación queda en `http://localhost:8080`. Para correr un solo test:
 `mvn test -Dtest=CompraServiceImplTest`.
 
+## Publicación
+
+La aplicación online corre gratis en **Render** (plan Free, como imagen de Docker) y la base, en el
+**MySQL gratis de Aiven**. Render arma la imagen solo con el `Dockerfile` cada vez que se sube un
+commit a `main`.
+
+- En el servidor no hay `db-local.properties`. Lo que va ahí se carga como **variables de entorno**
+  en Render, y Spring las traduce solas: `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`,
+  `SPRING_DATASOURCE_PASSWORD`, `ONEDESK_ADMIN_EMAIL`, `ONEDESK_ADMIN_CONTRASENIA`,
+  `ONEDESK_JWT_SECRETO` y, si se quieren las cuentas de ejemplo, `ONEDESK_DEMO_ACTIVO=true`.
+- La base de Aiven se arma igual que la local, corriendo los scripts de `database/` en orden. Cada
+  versión nueva del esquema hay que correrla también ahí **antes** de subir el commit: si no, el
+  `validate` no deja arrancar la versión nueva.
+- El plan gratis da 512 MB: el `Dockerfile` limita la JVM para que entre (probado: unos 250 MB).
+- Después de 15 minutos sin visitas, Render apaga la aplicación y la primera visita tarda cerca de
+  un minuto en despertarla. Mientras está dormida no corre la revisión de eventos programada: vuelve
+  a correr en el primer turno de 5 minutos después de despertar.
+
 ## Estructura
 
 ```
