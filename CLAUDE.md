@@ -47,8 +47,9 @@ La aplicación queda en `http://localhost:8080`. Para correr un solo test:
 ## Publicación
 
 La aplicación online corre gratis en **Render** (plan Free, como imagen de Docker) y la base, en el
-**MySQL gratis de Aiven**. Render arma la imagen solo con el `Dockerfile` cada vez que se sube un
-commit a `main`.
+**MySQL gratis de Aiven**. Render arma la imagen con el `Dockerfile` desde `main`; cada
+publicación nueva se dispara a mano (ver "Cómo se actualiza", al final del registro). Dirección:
+https://onedesk-l237.onrender.com
 
 - En el servidor no hay `db-local.properties`. Lo que va ahí se carga como **variables de entorno**
   en Render, y Spring las traduce solas: `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`,
@@ -107,10 +108,22 @@ repositorio): se nombra la variable o el lugar donde están, nunca el valor.
   quedan 17 tablas y los 3 roles. Probado levantando la aplicación local contra Aiven: el
   `validate` pasa. Aiven exige SSL, así que la URL lleva `?sslMode=REQUIRED`. El plan Free permite
   46 conexiones; la aplicación usa hasta 10.
-- [ ] Crear la cuenta de Render y el Web Service desde este repositorio (con acceso al repo para que
-  se actualice solo, o como repo público con la URL y publicando a mano).
-- [ ] Cargar las variables de entorno en Render.
-- [ ] Primera publicación y prueba: entrar como administrador y con una cuenta de ejemplo.
+- [x] **2026-11-19** — Crear el Web Service `OneDesK` en Render (Docker, plan Free, cuenta de
+  Santiago con GitHub). Primero tomó por error `Santiago-deb/OneDesK`, un repo privado viejo sin el
+  `Dockerfile`, y falló el build. Se cambió en *Settings → Build → Source → Edit → Public Git
+  Repository* a `https://github.com/AndresNegro/OneDesK`: el repo de Andrés no aparece en la lista
+  de *Git Provider* porque Render solo ve los repos de la cuenta de GitHub con la que se entró.
+- [x] **2026-11-19** — Cargar las 6 variables de entorno con *Environment → Add from .env*. El
+  archivo con los valores está en `~/.config/onedesk/render.env`, en la máquina de Santiago. La
+  contraseña del administrador (`admin@onedesk.local`) se generó al azar y está ahí. Las cuentas de
+  ejemplo quedan apagadas: su clave `demo1` es pública.
+- [x] **2026-11-19** — Primera publicación: **https://onedesk-l237.onrender.com**. Arranca en unos
+  60 s, crea el primer administrador y el ingreso como administrador anda.
+
+**Cómo se actualiza:** como es un repo público conectado por URL, Render **no publica solo** al
+subir commits (el *Auto-Deploy* es solo para repos conectados por *Git Provider*). Después de cada
+push a `main` hay que entrar al servicio en Render y tocar *Manual Deploy → Deploy latest commit*.
+Si el commit cambia el esquema, antes hay que correr el script nuevo en Aiven.
 
 ## Estructura
 
