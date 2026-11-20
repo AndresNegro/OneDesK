@@ -62,6 +62,27 @@ commit a `main`.
   un minuto en despertarla. Mientras está dormida no corre la revisión de eventos programada: vuelve
   a correr en el primer turno de 5 minutos después de despertar.
 
+### Para publicar un proyecto nuevo hecho con esta plantilla
+
+Un proyecto que arranca copiando este (ver arriba) no queda listo para publicarse solo con eso.
+Para ponerlo online hace falta, además:
+
+1. **Copiar el `Dockerfile` y el `.dockerignore`.** El `Dockerfile` no nombra el jar, así que sirve
+   tal cual mientras el proyecto siga con Java 17 y Maven. El `.dockerignore` tiene que dejar afuera
+   el archivo de credenciales locales, cualquiera sea su nombre.
+2. **Que toda la configuración se pueda pisar con variables de entorno.** Nada fijo en el código:
+   todo con `@Value("${...}")` o en `application.properties`, así Render lo reemplaza sin tocar
+   archivos. La URL de la base sigue apuntando a `localhost` en el repo; en el servidor la pisa
+   `SPRING_DATASOURCE_URL`.
+3. **Que el esquema se pueda armar de cero con los scripts en orden**, y que cada tabla tenga clave
+   primaria (Aiven no deja crear tablas sin una).
+4. **Una base nueva en Aiven y un Web Service nuevo en Render** para ese proyecto. Si Aiven no deja
+   crear otro MySQL gratis, se puede crear una base aparte dentro del mismo servicio, con su
+   propio usuario.
+5. **Probar en local con un tope de 512 MB** antes de publicar, como se hizo acá:
+   `systemd-run --user -p MemoryMax=512M ... java -jar target/<jar>`.
+6. **Llevar su propio "Registro de la puesta online"** en su CLAUDE.md, con estos mismos pasos.
+
 ### Registro de la puesta online
 
 Cada paso del armado del hosting se anota acá, con su fecha, apenas se hace: qué se hizo, en qué
