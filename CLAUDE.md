@@ -62,6 +62,26 @@ commit a `main`.
   un minuto en despertarla. Mientras está dormida no corre la revisión de eventos programada: vuelve
   a correr en el primer turno de 5 minutos después de despertar.
 
+### Registro de la puesta online
+
+Cada paso del armado del hosting se anota acá, con su fecha, apenas se hace: qué se hizo, en qué
+servicio y qué quedó pendiente. **Las credenciales no se escriben acá** (este archivo está en el
+repositorio): se nombra la variable o el lugar donde están, nunca el valor.
+
+- [x] **2026-11-19** — Elegir dónde publicar: Render (aplicación) + Aiven (MySQL), los dos gratis y
+  sin tarjeta. Se descartó Oracle Cloud Always Free (pide tarjeta y lleva más armado).
+- [x] **2026-11-19** — Agregar el `Dockerfile` y el `.dockerignore` (que deja afuera
+  `db-local.properties`). Probado en local con un tope de 512 MB: arranca en unos 15 s y no pasa de
+  250 MB. Los scripts de `database/` corren de cero con `sql_require_primary_key=ON`, la regla que
+  trae Aiven.
+- [ ] Subir el commit a GitHub.
+- [ ] Crear la cuenta de Aiven y el servicio MySQL del plan Free.
+- [ ] Correr en Aiven los scripts de `database/` en orden.
+- [ ] Crear la cuenta de Render y el Web Service desde este repositorio (con acceso al repo para que
+  se actualice solo, o como repo público con la URL y publicando a mano).
+- [ ] Cargar las variables de entorno en Render.
+- [ ] Primera publicación y prueba: entrar como administrador y con una cuenta de ejemplo.
+
 ## Estructura
 
 ```
